@@ -1,17 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Employee Tracker{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/main.css') }}">
+   
 </head>
 <body>
-    <!-- Navigation Menu -->
     <nav>
-        <a href="{{ url_for('home') }}">Home</a>
-        <a href="{{ url_for('employees') }}">Employees</a>
-        <a href="{{ url_for('about') }}">About</a>
+        <div class="nav-container">
+            <div class="nav-links"> <!-- New container for links -->
+                <a href="/">Home</a>
+                <a href="/employees">Employees</a>
+                <a href="/about">About</a>
+                <a href="{{ url_for('search_employees') }}">Search</a>
+                <a href="/department">Department</a>
+            </div>
+            <img src="{{ url_for('static', filename='images/doha institute.png') }}" class="logo" alt="Company Logo">
+        </div>
     </nav>
 
-    <!-- Content Block -->
-    {% block content %}{% endblock %}
+    <!-- Main Content Block -->
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>© 2024 Qatar University Employee Tracker. All rights reserved.</p>
+        </div>
+    </footer>
 </body>
 </html>

@@ -1,53 +1,52 @@
-<html>
-    <head>
-        <title>About Us | Employee Skills Tracker</title>
-    </head>
-    <body>
-       <section>
-        <h2>Our Mission</h2>
-        <p>At Qatar University, we empower our workforce through innovative skill-tracking
-             solutions designed to optimize productivity, foster professional growth,
-              and align employee capabilities with organizational objectives.
-               Our platform streamlines certification management and identifies
-                skill gaps to drive strategic workforce development.</p>
-       </section>
-       
-       <section>
-        <h2>Our Team</h2>
-        <p>Comprised of HR professionals, software engineers, 
-            and organizational development experts, 
-            our team brings decades of combined experience in human capital management. 
-            We're committed to delivering intuitive tools that simplify administrative
-             workflows while providing actionable insights for managers and employees alike.</p>
-       </section>
-       
-       <section>
-        <h2>Our Values</h2>
-        <p>We operate on three core principles:<br>
-        • <strong>Transparency</strong>: Clear visibility into skill inventories<br>
-        • <strong>Efficiency</strong>: Streamlined certification tracking<br>
-        • <strong>Growth</strong>: Data-driven professional development planning</p>
-       </section>
-       
-       <section>
-        <h2>Our History</h2>
-        <p>Established in 2025 as an initiative of Qatar University's Digital 
-            Transformation Office, this system evolved from faculty research into
-             a campus-wide solution now serving 5,000+ employees across 12 departments. 
-             Our proven methodology has reduced administrative overhead by 40% while improving 
-             compliance reporting accuracy.</p>
-       </section>
-       
-       <section>
-        <h2>Contact Us</h2>
-        <p>We welcome your questions and feedback:</p>
-        <address>
-            <strong>HR Development Team</strong><br>
-            Qatar University<br>
-            Al Tarfa, Doha, Qatar<br>
-            Email: <a href="mailto:hr-development@qu.edu.qa">hr-development@qu.edu.qa</a><br>
-            Phone: <a href="tel:+97444035555">+974 4403-5555</a> (Weekdays 8AM-4PM)
-        </address>
-       </section>
-    </body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}About Us | Employee Skills Tracker{% endblock %}
+
+{% block content %}
+<section>
+    <h2>Our Mission</h2>
+    <p>At Qatar University, we empower our workforce through innovative skill-tracking
+         solutions designed to optimize productivity, foster professional growth,
+          and align employee capabilities with organizational objectives.
+           Our platform streamlines certification management and identifies
+            skill gaps to drive strategic workforce development.</p>
+</section>
+
+<section>
+    <h2>Our Team</h2>
+    <p>Comprised of HR professionals, software engineers, 
+        and organizational development experts, 
+        our team brings decades of combined experience in human capital management. 
+        We're committed to delivering intuitive tools that simplify administrative
+         workflows while providing actionable insights for managers and employees alike.</p>
+</section>
+
+<section>
+    <h2>Our Values</h2>
+    <p>We operate on three core principles:<br>
+    • <strong>Transparency</strong>: Clear visibility into skill inventories<br>
+    • <strong>Efficiency</strong>: Streamlined certification tracking<br>
+    • <strong>Growth</strong>: Data-driven professional development planning</p>
+</section>
+
+<section>
+    <h2>Our History</h2>
+    <p>Established in 2025 as an initiative of Qatar University's Digital 
+        Transformation Office, this system evolved from faculty research into
+         a campus-wide solution now serving 5,000+ employees across 12 departments. 
+         Our proven methodology has reduced administrative overhead by 40% while improving 
+         compliance reporting accuracy.</p>
+</section>
+
+<section>
+    <h2>Contact Us</h2>
+    <p>We welcome your questions and feedback:</p>
+    <address>
+        <strong>HR Development Team</strong><br>
+        Qatar University<br>
+        Al Tarfa, Doha, Qatar<br>
+        Email: <a href="mailto:hr-development@qu.edu.qa">hr-development@qu.edu.qa</a><br>
+        Phone: <a href="tel:+97444035555">+974 4403-5555</a> (Weekdays 8AM-4PM)
+    </address>
+</section>
+{% endblock %}

@@ -14,19 +14,14 @@
             </tr>
         </thead>
         <tbody>
-            <!-- Hardcoded example for Week 1 (replace with loop in Week 2) -->
+            {% for employee in employees %}
             <tr>
-                <td>Lea Smith</td>
-                <td>IT</td>
-                <td>Python, Flask</td>
-                <td><a href="/employees/1" class="btn btn-primary btn-sm">View</a></td>
+                <td>{{ employee.name }}</td>
+                <td>{{ employee.department }}</td>
+                <td>{{ employee.skills.Technical|join(', ') }}</td>
+                <td><a href="{{ url_for('employee_detail', employee_id=employee.id) }}" class="btn btn-primary btn-sm">View</a></td>
             </tr>
-            <tr>
-                <td>John Doe</td>
-                <td>Marketing</td>
-                <td>SEO, Content</td>
-                <td><a href="/employees/1" class="btn btn-primary btn-sm">View</a></td>
-            </tr>
+            {% endfor %}
         </tbody>
     </table>
 {% endblock %}

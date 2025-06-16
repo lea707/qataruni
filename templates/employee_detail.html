@@ -2,5 +2,9 @@
 {% block content %}
 <h1>{{ employee.name }}</h1>
 <p>Department: {{ employee.department }}</p>
-<p>Skills: {{ employee.skills|join(', ') }}</p>
+<p>Skills:<br>
+    Technical: {{ employee.skills.Technical|join(', ') }}<br>
+    Business: {{ employee.skills.Business|join(', ') }}<br>
+    Languages: {{ employee.skills.Languages|join(', ') }}<br>
+</p>
 {% endblock %}
