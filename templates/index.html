@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Home | Employee Skills Tracker{% endblock %}
+
+{% block content %}
+    <h1>Welcome to Qatar University's Employee Tracker</h1>
+    <p>
+        This system helps HR and managers track employee skills and certifications.
+    </p>
+    <ul>
+        <li><a href="{{ url_for('employees') }}">View Employee Directory</a></li>
+        <li><a href="{{ url_for('about') }}">About This System</a></li>
+    </ul>
+{% endblock %}

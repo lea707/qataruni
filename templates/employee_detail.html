@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ employee.name }}</h1>
+<p>Department: {{ employee.department }}</p>
+<p>Skills: {{ employee.skills|join(', ') }}</p>
+{% endblock %}

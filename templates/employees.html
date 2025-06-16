@@ -1,0 +1,32 @@
+{% extends "base.html" %} 
+
+{% block title %}Employees | Employee Skills Tracker{% endblock %}
+
+{% block content %}
+    <h1>Employee Directory</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Skills</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Hardcoded example for Week 1 (replace with loop in Week 2) -->
+            <tr>
+                <td>Lea Smith</td>
+                <td>IT</td>
+                <td>Python, Flask</td>
+                <td><a href="/employees/1" class="btn btn-primary btn-sm">View</a></td>
+            </tr>
+            <tr>
+                <td>John Doe</td>
+                <td>Marketing</td>
+                <td>SEO, Content</td>
+                <td><a href="/employees/1" class="btn btn-primary btn-sm">View</a></td>
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}

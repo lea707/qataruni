@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Employee Tracker{% endblock %}</title>
+</head>
+<body>
+    <!-- Navigation Menu -->
+    <nav>
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('employees') }}">Employees</a>
+        <a href="{{ url_for('about') }}">About</a>
+    </nav>
+
+    <!-- Content Block -->
+    {% block content %}{% endblock %}
+</body>
+</html>
