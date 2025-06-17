@@ -1,0 +1,32 @@
+{
+    "employees": [
+        {
+            "id": 1,
+            "name": "rama el haj ",
+            "department": "HR",
+            "skills": {
+                "Technical": [],
+                "Business": [],
+                "Languages": []
+            }
+        },
+        {
+            "id": 2,
+            "name": "maher",
+            "department": "IT",
+            "skills": {
+                "Technical": [],
+                "Business": [],
+                "Languages": []
+            }
+        }
+    ],
+    "departments": [
+        "HR",
+        "IT",
+        "Finance",
+        "Research",
+        "marketing",
+        "administration"
+    ]
+}

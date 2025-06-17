@@ -1,40 +1,90 @@
-from models import Employee, Employee_collection
+import json
+import os
 
 class EmployeeService:
-    @staticmethod
-    def get_all_employees():
-        return Employee_collection.get_Employee_collection().get_employees()
+    def __init__(self):
+        self.data_file = "employees_data.txt"  # File to store data
+        self.employees = []
+        self.departments = ["HR", "IT", "Finance", "Research"]  # Default departments
+        self._load_data()  # Load data when the service starts
 
-    @staticmethod
-    def add_employee(form_data):
-        emp_collection = Employee_collection.get_Employee_collection()
-        emp_collection.add_employee(Employee(
-            id=form_data['id'],
-            name=form_data['name'],
-            department=form_data['department'],
-            skills=form_data['skills']
-        ))
-        return True
+        if not self.departments:
+            self.departments = ["HR", "IT", "Finance", "Research"]
+            self._save_data()
 
-    @staticmethod
-    def search_employees(filters):
-        employees = Employee_collection.get_Employee_collection().get_employees()
-        
-        if filters.get('id'):
-            employees = [e for e in employees if e.id == int(filters['id'])]
-        if filters.get('name'):
-            name_lower = filters['name'].lower()
-            employees = [e for e in employees if name_lower in e.name.lower()]
-        if filters.get('department'):
-            employees = [e for e in employees if e.department == filters['department']]
-        if filters.get('technical_skill'):
-            tech_lower = filters['technical_skill'].lower()
-            employees = [e for e in employees if any(tech_lower in s.lower() for s in e.skills['Technical'])]
-        # Add similar filters for business_skill and languages_skill
-        
-        return employees
+    def _load_data(self):
+        """Load employees from the file if it exists."""
+        if os.path.exists(self.data_file):
+            with open(self.data_file, 'r') as file:
+                try:
+                    data = json.load(file)
+                    self.employees = data.get("employees", [])
+                    self.departments = data.get("departments", self.departments)
+                except json.JSONDecodeError:
+                    # File is corrupt; start fresh
+                    self.employees = []
+                    self.departments = ["HR", "IT", "Finance", "Research"]
 
-    @staticmethod
-    def get_all_departments():
-        employees = Employee_collection.get_Employee_collection().get_employees()
-        return sorted({e.department for e in employees})
+    def _save_data(self):
+        """Save employees and departments to the file."""
+        with open(self.data_file, 'w') as file:
+            json.dump({
+                "employees": self.employees,
+                "departments": self.departments
+            }, file, indent=4)
+
+    def get(self, employee_id):
+        for employee in self.employees:
+            if employee["id"] == employee_id:
+                return employee
+        return None 
+       
+
+    def add_employee(self, form_data):
+      new_employee = {
+        "id": len(self.employees) + 1,
+        "name": form_data["name"],
+        "department": form_data["department"],
+        "skills": {
+            "Technical": [],
+            "Business": [],
+            "Languages": []
+        }
+    }
+      self.employees.append(new_employee)
+      self._save_data()
+
+    def search(self, filters):
+        results = self.employees
+        if 'department' in filters and filters['department']:
+            results = [e for e in results if e['department'] == filters['department']]
+        return results
+
+def _load_data(self):
+    """Load data from file with error handling"""
+    try:
+        if os.path.exists(self.data_file):
+            with open(self.data_file, 'r') as file:
+                data = json.load(file)
+                self.employees = data.get("employees", [])
+                self.departments = data.get("departments", [])
+            print(f"DEBUG: Loaded {len(self.employees)} employees from file")
+        else:
+            print("DEBUG: No data file found, using defaults")
+    except json.JSONDecodeError:
+        print("ERROR: Corrupt data file, resetting")
+        self.employees = []
+        self.departments = [] 
+
+    def add_department(self, name):
+        """Add a new department if it doesn't exist."""
+        if name not in self.departments:
+            self.departments.append(name)
+            self._save_data()
+            return True
+        return False  # Department already exists
+    def get_departments(self):
+        """Return all departments."""
+        return self.departments
+        self.employees.append(new_employee)
+        self._save_data()  

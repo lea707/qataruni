@@ -107,7 +107,25 @@ footer {
     background: #ff0000;
     color: rgb(39, 10, 10);
   }
-/* Department Listing Page */
+.boutton-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    position: relative;
+}
+  .boutton {
+    background: #a92727;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    
+  }
+  .boutton:hover {
+    background: #ff0000;
+    color: rgb(39, 10, 10);
+  }
 .department-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

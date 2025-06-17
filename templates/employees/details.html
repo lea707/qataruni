@@ -2,9 +2,13 @@
 {% block content %}
 <h1>{{ employee.name }}</h1>
 <p>Department: {{ employee.department }}</p>
-<p>Skills:<br>
-    Technical: {{ employee.skills.Technical|join(', ') }}<br>
-    Business: {{ employee.skills.Business|join(', ') }}<br>
-    Languages: {{ employee.skills.Languages|join(', ') }}<br>
-</p>
+<div class="skills">
+  <h3>Skills:</h3>
+  <ul>
+    {% for category, skills in employee.skills.items() %}
+      <li><strong>{{ category }}:</strong> {{ skills|join(', ') }}</li>
+    {% endfor %}
+  </ul>
+</div>
+<a href="{{ url_for('list_employees') }}">← Back to list</a>
 {% endblock %}
