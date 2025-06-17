@@ -1,0 +1,26 @@
+{% macro employee_card(employee) %}
+<div class="employee-card">
+  <h3>{{ employee.name }}</h3>
+  <p><strong>Department:</strong> {{ employee.department }}</p>
+  <div class="skills">
+    <h4>Skills:</h4>
+    <ul>
+      {% for skill in employee.skills.Technical %}
+        <li>🔹 {{ skill }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <a href="{{ url_for('employee_detail', employee_id=employee.id) }}" class="btn-view">View Profile</a>
+</div>
+{% endmacro %}
+
+{% macro skill_filter(category) %}
+<div class="form-group">
+  <label for="search_{{ category|lower }}">{{ category }} Skills:</label>
+  <input type="text" 
+         id="search_{{ category|lower }}" 
+         name="{{ category|lower }}_skill" 
+         placeholder="Filter {{ category }} skills..."
+         value="{{ request.args.get(category|lower + '_skill', '') }}">
+</div>
+{% endmacro %}

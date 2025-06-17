@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Departments | Employee Skills Tracker{% endblock %}
+
+{% block content %}
+<h1>All Departments</h1>
+
+<div class="department-list">
+  {% for dept in departments %}
+    <section class="department-card">
+      <h2>
+        <a href="{{ url_for('department', dept_name=dept) }}">
+          {{ dept }}
+        </a>
+      </h2>
+      <p class="employee-count">
+        {{ all_employees|selectattr('department', 'equalto', dept)|list|length }} employees
+      </p>
+      <div class="sample-employees">
+        {% for emp in all_employees|selectattr('department', 'equalto', dept)|batch(3)|first %}
+          <span>{{ emp.name }}</span>{% if not loop.last %}, {% endif %}
+        {% endfor %}
+        {% if (all_employees|selectattr('department', 'equalto', dept)|list|length) > 3 %}...{% endif %}
+      </div>
+    </section>
+  {% endfor %}
+</div>
+{% endblock %}

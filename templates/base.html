@@ -5,23 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Employee Tracker{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/main.css') }}">
-   
+    {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
     <nav>
         <div class="nav-container">
-            <div class="nav-links"> <!-- New container for links -->
+            <div class="nav-links">
                 <a href="/">Home</a>
                 <a href="/employees">Employees</a>
                 <a href="/about">About</a>
                 <a href="{{ url_for('search_employees') }}">Search</a>
-                <a href="/department">Department</a>
+                <a href="{{ url_for('department') }}">Departments</a>
             </div>
             <img src="{{ url_for('static', filename='images/doha institute.png') }}" class="logo" alt="Company Logo">
         </div>
     </nav>
 
-    <!-- Main Content Block -->
     <main class="content">
         {% block content %}{% endblock %}
     </main>

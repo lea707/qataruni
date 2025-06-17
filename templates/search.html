@@ -1,81 +1,124 @@
 {% extends "base.html" %}
 
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/search.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
 {% block title %}Search Employees | Employee Skills Tracker{% endblock %}
 
 {% block content %}
-    <h1>Search Employees</h1>
-    
-    <form method="GET" action="{{ url_for('search_employees') }}" class="search-form">
-        <div class="form-group">
-            <label for="search_id">Employee ID:</label>
-            <input type="number" id="search_id" name="id" value="{{ request.args.get('id', '') }}">
-        </div>
+<div class="search-page">
+    <div class="search-sidebar">
+        <h1><i class="fas fa-search"></i> Employee Search</h1>
+        
+        <form method="GET" action="{{ url_for('search_employees') }}" class="search-form">
+            <div class="form-group">
+                <label for="search_id"><i class="fas fa-id-card"></i> Employee ID:</label>
+                <input type="number" id="search_id" name="id" value="{{ request.args.get('id', '') }}" class="form-input">
+            </div>
 
-        <div class="form-group">
-            <label for="search_name">Name:</label>
-            <input type="text" id="search_name" name="name" value="{{ request.args.get('name', '') }}" placeholder="Enter name...">
-        </div>
+            <div class="form-group">
+                <label for="search_name"><i class="fas fa-user"></i> Name:</label>
+                <input type="text" id="search_name" name="name" value="{{ request.args.get('name', '') }}" placeholder="Enter name..." class="form-input">
+            </div>
 
-        <div class="form-group">
-            <label for="search_department">Department:</label>
-            <select id="search_department" name="department" class="form-control">
-              <option value="">All Departments</option>
-              <option value="Marketing" {% if request.args.get('department') == 'Marketing' %}selected{% endif %}>Marketing</option>
-              <option value="Admissions & Registration" {% if request.args.get('department') == 'Admissions & Registration' %}selected{% endif %}>Admissions & Registration</option>
-              <option value="Student Affairs" {% if request.args.get('department') == 'Student Affairs' %}selected{% endif %}>Student Affairs</option>
-              <option value="Human Resources" {% if request.args.get('department') == 'Human Resources' %}selected{% endif %}>Human Resources</option>
-              <option value="Finance & Procurement" {% if request.args.get('department') == 'Finance & Procurement' %}selected{% endif %}>Finance & Procurement</option>
-              <option value="IT Services" {% if request.args.get('department') == 'IT Services' %}selected{% endif %}>IT Services</option>
-              <option value="Research & Graduate Studies" {% if request.args.get('department') == 'Research & Graduate Studies' %}selected{% endif %}>Research & Graduate Studies</option>
-              <option value="Facilities & Maintenance" {% if request.args.get('department') == 'Facilities & Maintenance' %}selected{% endif %}>Facilities & Maintenance</option>
-              <option value="International Affairs" {% if request.args.get('department') == 'International Affairs' %}selected{% endif %}>International Affairs</option>
-            </select>
-          </div>
+            <div class="form-group">
+                <label for="search_department"><i class="fas fa-building"></i> Department:</label>
+                <select id="search_department" name="department" class="form-input">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept }}" {% if request.args.get('department') == dept %}selected{% endif %}>{{ dept }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="search_technical_skill"><i class="fas fa-cogs"></i> Technical Skills:</label>
+                <input type="text" id="search_technical_skill" name="technical_skill" value="{{ request.args.get('technical_skill', '') }}" placeholder="Enter technical skill..." class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="search_business_skill"><i class="fas fa-briefcase"></i> Business Skills:</label>
+                <input type="text" id="search_business_skill" name="business_skill" value="{{ request.args.get('business_skill', '') }}" placeholder="Enter business skill..." class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="search_languages_skill"><i class="fas fa-language"></i> Languages:</label>
+                <input type="text" id="search_languages_skill" name="languages_skill" value="{{ request.args.get('languages_skill', '') }}" placeholder="Enter language..." class="form-input">
+            </div>
+            <!-- Remove the extra empty form-group div -->
 
-        <div class="form-group">
-            <label for="search_skill">Technical Skill:</label>
-            <input type="text" id="search_skill" name="skill" value="{{ request.args.get('skill', '') }}" placeholder="Enter...">
-        </div>
-        <div class="form-group">
-            <label for="search_skill">Business Skill:</label>
-            <input type="text" id="search_skill" name="skill" value="{{ request.args.get('skill', '') }}" placeholder="Enter...">
-        </div>
-        <div class="form-group">
-            <label for="search_skill">Language Skill:</label>
-            <input type="text" id="search_skill" name="skill" value="{{ request.args.get('skill', '') }}" placeholder="Enter...">
-        </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <a href="{{ url_for('search_employees') }}" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
 
-        <button type="submit" class="btn btn-primary">Search</button>
-        <a href="{{ url_for('search_employees') }}" class="btn btn-secondary">Clear</a>
-    </form>
-
-    {% if employees %}
-        <h2>Search Results</h2>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Department</th>
-                    <th>Technical Skills</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for employee in employees %}
-                <tr>
-                    <td>{{ employee.id }}</td>
-                    <td>{{ employee.name }}</td>
-                    <td>{{ employee.department }}</td>
-                    <td>{{ employee.skills.Technical|join(', ') }}</td>
-                    <td>
-                        <a href="{{ url_for('employee_detail', employee_id=employee.id) }}" class="btn btn-primary btn-sm">View</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% elif request.args %}
-        <p class="no-results">No employees found matching your search criteria.</p>
-    {% endif %}
+    <div class="search-results">
+        {% if employees %}
+            <h2><i class="fas fa-users"></i> Search Results</h2>
+            <div class="table-container">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-id-card"></i> ID</th>
+                            <th><i class="fas fa-user"></i> Name</th>
+                            <th><i class="fas fa-building"></i> Department</th>
+                            <th><i class="fas fa-cogs"></i> Technical Skills</th>
+                            <th><i class="fas fa-eye"></i> Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>{{ employee.id }}</td>
+                            <td>{{ employee.name }}</td>
+                            <td>{{ employee.department }}</td>
+                            <td>{{ employee.skills.Technical|join(', ') }}</td>
+                            <td>
+                                <a href="{{ url_for('employee_detail', employee_id=employee.id) }}" class="btn btn-view">
+                                    <i class="fas fa-user-circle"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% elif request.args %}
+            <div class="no-results">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>No employees found matching your criteria</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deptSelect = document.getElementById('search_department');
+        
+        deptSelect.addEventListener('focus', function() {
+            // Calculate height based on content
+            const visibleOptions = Math.min(this.options.length, 5);
+            const optionHeight = 38; // px per option (adjust as needed)
+            this.size = visibleOptions;
+            this.style.height = `${visibleOptions * optionHeight}px`;
+        });
+        
+        deptSelect.addEventListener('blur', function() {
+            this.size = 1;
+            this.style.height = ''; // Reset to default
+        });
+        
+        deptSelect.addEventListener('change', function() {
+            this.size = 1;
+            this.style.height = '';
+            this.blur();
+        });
+    });
+    </script>
 {% endblock %}

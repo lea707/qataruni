@@ -1,24 +1,111 @@
 from flask import Flask, render_template, request, redirect, url_for
 
 employees = [
+    # Marketing Department
     {
-        "id": 1,
-        "name": "Lea Smith",
-        "department": "IT",
-        "skills": {
-            "Technical": ["Python (Flask)", "SQL", "Docker"],
-            "Business": ["Project Management"],
-            "Languages": {"English": "Fluent", "Arabic": "Native"}
-        }
-    },
-    {
-        "id": 2,
-        "name": "John Doe",
+        "id": 101,
+        "name": "Fatima Al-Mansoori",
         "department": "Marketing",
         "skills": {
-            "Technical": ["SEO", "Google Analytics", "Social Media Management"],
-            "Business": ["Content Strategy", "Brand Management"],
-            "Languages": {"English": "Native", "Arabic": "Intermediate"}
+            "Technical": ["Digital Advertising", "Google Analytics", "SEO"],
+            "Business": ["Brand Strategy", "Market Research"],
+            "Languages": {"Arabic": "Native", "English": "Fluent"}
+        }
+    },
+    
+    # Admissions & Registration
+    {
+        "id": 102,
+        "name": "Ahmed Al-Suwaidi",
+        "department": "Admissions & Registration",
+        "skills": {
+            "Technical": ["Banner System", "Data Entry"],
+            "Business": ["Student Counseling", "Policy Compliance"],
+            "Languages": {"Arabic": "Native", "French": "Intermediate"}
+        }
+    },
+    
+    # Student Affairs
+    {
+        "id": 103,
+        "name": "Mariam Al-Hashimi",
+        "department": "Student Affairs",
+        "skills": {
+            "Technical": ["Event Management Software"],
+            "Business": ["Conflict Resolution", "Student Mentoring"],
+            "Languages": {"Arabic": "Native", "English": "Fluent", "Urdu": "Basic"}
+        }
+    },
+    
+    # Human Resources
+    {
+        "id": 104,
+        "name": "Khalid Al-Nuaimi",
+        "department": "Human Resources",
+        "skills": {
+            "Technical": ["HRIS Systems", "Payroll Software"],
+            "Business": ["Recruitment", "Employee Relations"],
+            "Languages": {"Arabic": "Native", "English": "Professional"}
+        }
+    },
+    
+    # Finance & Procurement
+    {
+        "id": 105,
+        "name": "Noura Al-Khalifa",
+        "department": "Finance & Procurement",
+        "skills": {
+            "Technical": ["SAP FI", "Excel Advanced"],
+            "Business": ["Vendor Negotiation", "Budget Analysis"],
+            "Languages": {"Arabic": "Native", "English": "Fluent"}
+        }
+    },
+    
+    # IT Services
+    {
+        "id": 106,
+        "name": "Ali Al-Sulaiti",
+        "department": "IT Services",
+        "skills": {
+            "Technical": ["Python", "Network Security", "Docker"],
+            "Business": ["Project Management"],
+            "Languages": {"Arabic": "Native", "English": "Fluent"}
+        }
+    },
+    
+    # Research & Graduate Studies
+    {
+        "id": 107,
+        "name": "Dr. Yasmin Al-Mohannadi",
+        "department": "Research & Graduate Studies",
+        "skills": {
+            "Technical": ["SPSS", "LaTeX"],
+            "Business": ["Grant Writing", "Academic Publishing"],
+            "Languages": {"Arabic": "Native", "English": "Fluent", "German": "Intermediate"}
+        }
+    },
+    
+    # Facilities & Maintenance
+    {
+        "id": 108,
+        "name": "Ibrahim Al-Hamar",
+        "department": "Facilities & Maintenance",
+        "skills": {
+            "Technical": ["HVAC Systems", "Electrical Maintenance"],
+            "Business": ["Vendor Management"],
+            "Languages": {"Arabic": "Native", "Hindi": "Conversational"}
+        }
+    },
+    
+    # International Affairs
+    {
+        "id": 109,
+        "name": "Layla Al-Ansari",
+        "department": "International Affairs",
+        "skills": {
+            "Technical": ["Immigration Software"],
+            "Business": ["Cross-Cultural Communication", "Partnership Development"],
+            "Languages": {"Arabic": "Native", "English": "Fluent", "Spanish": "Intermediate"}
         }
     }
 ]
@@ -55,18 +142,19 @@ def init_routes(app):
 
     @app.route('/employees/<int:employee_id>')
     def employee_detail(employee_id):
-     try:
-        employee = next((e for e in employees if e['id'] == employee_id), None)
-        if not employee:
-            return render_template(
-                '404.html',
-                employee_id=employee_id,
-                path=request.path
-            ), 404
-        return render_template('employee_detail.html', employee=employee)
-     except Exception as e:
-        app.logger.error(f"Error fetching employee {employee_id}: {str(e)}")
-        return render_template('500.html'), 500
+        try:
+            employee = next((e for e in employees if e['id'] == employee_id), None)
+            if not employee:
+                return render_template(
+                    '404.html',
+                    employee_id=employee_id,
+                    path=request.path
+                ), 404
+            return render_template('employee_detail.html', employee=employee)
+        except Exception as e:
+            app.logger.error(f"Error fetching employee {employee_id}: {str(e)}")
+            return render_template('500.html'), 500
+
     @app.route('/about')
     def about():
         """About page with contact info"""
@@ -75,10 +163,15 @@ def init_routes(app):
     @app.route('/search', methods=['GET'])
     def search_employees():
         """Search employees based on various criteria"""
+        # Extract all unique departments from your employees data
+        departments = sorted({e['department'] for e in employees})
+        
         search_id = request.args.get('id')
         search_name = request.args.get('name', '').lower()
         search_department = request.args.get('department')
-        search_skill = request.args.get('skill', '').lower()
+        technical_skill = request.args.get('technical_skill', '').lower()
+        business_skill = request.args.get('business_skill', '').lower()
+        languages_skill = request.args.get('languages_skill', '').lower()
 
         filtered_employees = employees
 
@@ -91,26 +184,53 @@ def init_routes(app):
         if search_department:
             filtered_employees = [e for e in filtered_employees if e['department'] == search_department]
         
-        if search_skill:
+        if technical_skill:
             filtered_employees = [
                 e for e in filtered_employees 
-                if any(search_skill in skill.lower() for skill in e['skills']['Technical'])
+                if any(technical_skill in s.lower() 
+                      for s in e['skills']['Technical'])
+            ]
+        
+        if business_skill:
+            filtered_employees = [
+                e for e in filtered_employees 
+                if any(business_skill in s.lower() 
+                      for s in e['skills']['Business'])
+            ]
+            
+        if languages_skill:
+            filtered_employees = [
+                e for e in filtered_employees 
+                if any(languages_skill in lang.lower() 
+                      for lang in e['skills']['Languages'].keys())
             ]
 
-        return render_template('search.html', employees=filtered_employees)
+        return render_template(
+            'search.html', 
+            employees=filtered_employees,
+            departments=departments
+        )
 
-    @app.route('/department/<dept_name>')
-    def department(dept_name):
-        dept_employees = [e for e in employees if e['department'].lower() == dept_name.lower()]
-        return render_template('department.html', 
-                            employees=dept_employees,
-                            department=dept_name)
-    
+    @app.route('/department')  # Handles "/department" URL
+    @app.route('/department/<dept_name>')  # Keeps your existing filtered view
+    def department(dept_name=None):
+        if dept_name:
+            # Existing single-department logic
+            dept_employees = [e for e in employees 
+                             if e['department'].lower() == dept_name.lower()]
+            return render_template('department.html', 
+                                employees=dept_employees,
+                                department=dept_name)
+        else:
+            # New: List all departments
+            departments = sorted({e['department'] for e in employees})  # Unique sorted list
+            return render_template('departments_list.html', 
+                                departments=departments,
+                                all_employees=employees)  # Pass full list for counting
 
     @app.errorhandler(404)
     def page_not_found(error):
         """Handle 404 errors for both employee and non-employee pages"""
-        # Get employee_id from either view_args or by parsing the path
         employee_id = None
         if request.view_args:
             employee_id = request.view_args.get('employee_id')
