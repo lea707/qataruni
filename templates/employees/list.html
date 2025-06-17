@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_macros.html" import employee_card %}
+
+{% block content %}
+<h1>Employee Directory</h1>
+<div class="employee-grid">
+  {% for employee in employees %}
+    {{ employee_card(employee) }}
+  {% endfor %}
+</div>
+<a href="{{ url_for('add_employee') }}" class="boutton">Add Employee</a>
+
+{% endblock %}
