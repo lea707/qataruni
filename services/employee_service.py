@@ -38,28 +38,45 @@ class EmployeeService:
             if employee["id"] == employee_id:
                 return employee
         return None 
-       
-
     def add_employee(self, form_data):
-      new_employee = {
-        "id": len(self.employees) + 1,
-        "name": form_data["name"],
-        "department": form_data["department"],
-        "skills": {
-            "Technical": [],
-            "Business": [],
-            "Languages": []
+        new_employee = {
+            "id": len(self.employees) + 1,
+            "name": form_data["name"],
+            "department": form_data["department"],
+            "skills": {
+                "Technical": [
+                    form_data.get("technical_skill_1", "").strip(),
+                    form_data.get("technical_skill_2", "").strip(),
+                    form_data.get("technical_skill_3", "").strip()
+                ],
+                "Business": [
+                    form_data.get("business_skill_1", "").strip(),
+                    form_data.get("business_skill_2", "").strip()
+                ],
+                "Languages": [
+                    f"{form_data.get('language_1', '').strip()} ({form_data.get('language_1_level', '')})",
+                    f"{form_data.get('language_2', '').strip()} ({form_data.get('language_2_level', '')})"
+                ]
+            }
         }
-    }
-      self.employees.append(new_employee)
-      self._save_data()
+        
+        # Remove empty skills
+        new_employee["skills"]["Technical"] = [s for s in new_employee["skills"]["Technical"] if s]
+        new_employee["skills"]["Business"] = [s for s in new_employee["skills"]["Business"] if s]
+        new_employee["skills"]["Languages"] = [s for s in new_employee["skills"]["Languages"] if not s.startswith(" (") and s != "()"]
+        print(new_employee["skills"]["Technical"])
+        print(new_employee["skills"]["Business"])
+        print(new_employee["skills"]["Languages"])
+        
+        self.employees.append(new_employee)
+        self._save_data()
+        return True
 
     def search(self, filters):
         results = self.employees
         if 'department' in filters and filters['department']:
             results = [e for e in results if e['department'] == filters['department']]
         return results
-
 def _load_data(self):
     """Load data from file with error handling"""
     try:

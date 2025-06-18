@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Add Employee | Employee Skills Tracker{% endblock %}
+
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/employee_form.css') }}">
@@ -12,7 +13,7 @@
     
     {% include '_flash_messages.html' %}
     
-    <form method="POST" action="{{ url_for('add_employee') }}" id="employee-form">
+    <form method="POST" action="{{ url_for('add_employee') }}">
         <div class="form-section">
             <h2><i class="fas fa-id-card"></i> Basic Information</h2>
             <div class="form-group">
@@ -33,47 +34,53 @@
         
         <div class="form-section">
             <h2><i class="fas fa-cogs"></i> Technical Skills</h2>
-            <div class="skills-group">
-                <div class="skill-input">
-                    <input type="text" class="skill-text" placeholder="Skill name">
-                    <button type="button" class="add-skill" data-skill-type="technical">
-                        <i class="fas fa-plus"></i> Add
-                    </button>
-                </div>
-                <div class="skills-container" id="technical-skills-container"></div>
+            <div class="form-group">
+                <label>Skill 1</label>
+                <input type="text" name="technical_skill_1">
+            </div>
+            <div class="form-group">
+                <label>Skill 2</label>
+                <input type="text" name="technical_skill_2">
+            </div>
+            <div class="form-group">
+                <label>Skill 3</label>
+                <input type="text" name="technical_skill_3">
             </div>
         </div>
         
         <div class="form-section">
             <h2><i class="fas fa-briefcase"></i> Business Skills</h2>
-            <div class="skills-group">
-                <div class="skill-input">
-                    <input type="text" class="skill-text" placeholder="Skill name">
-                    <button type="button" class="add-skill" data-skill-type="business">
-                        <i class="fas fa-plus"></i> Add
-                    </button>
-                </div>
-                <div class="skills-container" id="business-skills-container"></div>
+            <div class="form-group">
+                <label>Skill 1</label>
+                <input type="text" name="business_skill_1">
+            </div>
+            <div class="form-group">
+                <label>Skill 2</label>
+                <input type="text" name="business_skill_2">
             </div>
         </div>
         
         <div class="form-section">
             <h2><i class="fas fa-language"></i> Languages</h2>
-            <div class="language-group">
-                <div class="language-input">
-                    <input type="text" class="language-name" placeholder="Language">
-                    <select class="language-level">
-                        <option value="">Proficiency</option>
-                        <option value="Basic">Basic</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Fluent">Fluent</option>
-                        <option value="Native">Native</option>
-                    </select>
-                    <button type="button" class="add-language">
-                        <i class="fas fa-plus"></i> Add
-                    </button>
-                </div>
-                <div class="languages-container" id="languages-container"></div>
+            <div class="form-group">
+                <label>Language 1</label>
+                <input type="text" name="language_1">
+                <select name="language_1_level">
+                    <option value="Basic">Basic</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Fluent">Fluent</option>
+                    <option value="Native">Native</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Language 2</label>
+                <input type="text" name="language_2">
+                <select name="language_2_level">
+                    <option value="Basic">Basic</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Fluent">Fluent</option>
+                    <option value="Native">Native</option>
+                </select>
             </div>
         </div>
         
@@ -87,6 +94,4 @@
         </div>
     </form>
 </div>
-
-<script src="{{ url_for('static', filename='js/employee_form.js') }}"></script>
 {% endblock %}
