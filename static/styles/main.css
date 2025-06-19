@@ -61,40 +61,31 @@ nav {
     gap: 2rem;
     order: 1; 
 }
-/* Add to your existing main.css */
-
-/* Fix footer to not overlap */
 footer {
     height: auto;
     padding: 20px 0;
     position: static; /* Or 'relative' depending on your needs */
     margin-top: 40px;
 }
-
-/* Ensure content area has proper spacing */
 .content {
     min-height: calc(100vh - 240px); /* Adjust based on your header/footer */
     padding-bottom: 60px;
 }
-/* Employee Cards */
 .employee-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
   }
-  
   .employee-card {
     border: 1px solid #ddd;
     padding: 15px;
     border-radius: 8px;
     background: white;
   }
-  
   .employee-card h3 {
     margin-top: 0;
     color: #2c3e50;
   }
-  
   .btn-view {
     display: inline-block;
     background: #a92727;
@@ -131,7 +122,6 @@ footer {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
   }
-  
   .department-card {
     border: 1px solid #e0e0e0;
     border-radius: 8px;
@@ -139,33 +129,27 @@ footer {
     background: white;
     transition: transform 0.2s;
   }
-  
   .department-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   }
-  
   .department-card h2 {
     margin-top: 0;
     color: #2c3e50;
   }
-  
   .department-card h2 a {
     text-decoration: none;
     color: inherit;
   }
-  
   .employee-count {
     color: #7f8c8d;
     font-size: 0.9em;
   }
-  
   .sample-employees {
     font-size: 0.85em;
     color: #555;
     margin-top: 8px;
   }
-
 footer {
     background: linear-gradient(135deg, #6f1e35 0%, #4a1424 100%);
     color: rgb(240, 239, 239);

@@ -3,6 +3,7 @@ from flask import render_template, request, redirect, url_for, flash
 from services.employee_service import EmployeeService
 from models.employee import EmployeeCollection
 employee_service = EmployeeService()
+from flask import send_from_directory
 
 def init_routes(app):
     @app.route('/')
@@ -82,3 +83,9 @@ def init_routes(app):
     def internal_error(error):
         app.logger.error(f"Server Error: {error}")
         return render_template('500.html'), 500
+
+    @app.route('/static/<path:filename>')
+    def custom_static(filename):
+       response = send_from_directory(app.static_folder, filename)
+       response.headers['Content-Type'] = 'text/css' if filename.endswith('.css') else None
+       return response

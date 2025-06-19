@@ -34,56 +34,41 @@
         
         <div class="form-section">
             <h2><i class="fas fa-cogs"></i> Technical Skills</h2>
-            <div class="form-group">
-                <label>Skill 1</label>
-                <input type="text" name="technical_skill_1">
+            <div id="technical-skills-container">
+                <div class="form-group">
+                    <input type="text" name="technical_skills[]">
+
+                </div>
             </div>
-            <div class="form-group">
-                <label>Skill 2</label>
-                <input type="text" name="technical_skill_2">
-            </div>
-            <div class="form-group">
-                <label>Skill 3</label>
-                <input type="text" name="technical_skill_3">
-            </div>
+            <button type="button" onclick="addSkillField('technical-skills-container', 'technical_skills[]')">Add Skill</button>
         </div>
-        
         <div class="form-section">
             <h2><i class="fas fa-briefcase"></i> Business Skills</h2>
-            <div class="form-group">
-                <label>Skill 1</label>
-                <input type="text" name="business_skill_1">
+            <div id="business-skills-container">
+                <div class="form-group">
+                    <input type="text" name="business_skills[]">
+
+                </div>
             </div>
-            <div class="form-group">
-                <label>Skill 2</label>
-                <input type="text" name="business_skill_2">
-            </div>
+            <button type="button" onclick="addSkillField('business-skills-container', 'business_skills[]')">Add Skill</button>
         </div>
-        
         <div class="form-section">
             <h2><i class="fas fa-language"></i> Languages</h2>
-            <div class="form-group">
-                <label>Language 1</label>
-                <input type="text" name="language_1">
-                <select name="language_1_level">
-                    <option value="Basic">Basic</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Fluent">Fluent</option>
-                    <option value="Native">Native</option>
+            <div id="languages-container">
+              <div class="form-group">
+                <input type="text" name="language[]" placeholder="Language">
+                <select name="language_level[]">
+                  <option value="Basic">Basic</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Fluent">Fluent</option>
+                  <option value="Native">Native</option>
                 </select>
+              </div>
             </div>
-            <div class="form-group">
-                <label>Language 2</label>
-                <input type="text" name="language_2">
-                <select name="language_2_level">
-                    <option value="Basic">Basic</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Fluent">Fluent</option>
-                    <option value="Native">Native</option>
-                </select>
-            </div>
-        </div>
-        
+            <button type="button" onclick="addLanguageField()">Add Language</button>
+          </div>
+          
+         
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Save Employee
@@ -94,4 +79,20 @@
         </div>
     </form>
 </div>
+<script>
+    function addLanguageField() {
+      const container = document.getElementById('languages-container');
+      const field = document.createElement('div');
+      field.classList.add('form-group');
+      field.innerHTML = `
+        <input type="text" name="language[]" placeholder="Language">
+        <select name="language_level[]">
+          <option value="Basic">Basic</option>
+          <option value="Intermediate">Intermediate</option>
+          <option value="Fluent">Fluent</option>
+          <option value="Native">Native</option>
+        </select>`;
+      container.appendChild(field);
+    }
+    </script>
 {% endblock %}

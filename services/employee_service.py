@@ -39,47 +39,42 @@ class EmployeeService:
                 return employee
         return None 
     def add_employee(self, form_data):
+        technical_skills = [s.strip() for s in form_data.getlist("technical_skills[]") if s.strip()]
+        business_skills = [s.strip() for s in form_data.getlist("business_skills[]") if s.strip()]
+        languages = []
+        language_names = form_data.getlist("language[]")
+        language_levels = form_data.getlist("language_level[]")
+
+        for name, level in zip(language_names, language_levels):
+          name = name.strip()
+          level = level.strip()
+          if name:
+            languages.append(f"{name} ({level})")
+
         new_employee = {
             "id": len(self.employees) + 1,
             "name": form_data["name"],
             "department": form_data["department"],
             "skills": {
-                "Technical": [
-                    form_data.get("technical_skill_1", "").strip(),
-                    form_data.get("technical_skill_2", "").strip(),
-                    form_data.get("technical_skill_3", "").strip()
-                ],
-                "Business": [
-                    form_data.get("business_skill_1", "").strip(),
-                    form_data.get("business_skill_2", "").strip()
-                ],
-                "Languages": [
-                    f"{form_data.get('language_1', '').strip()} ({form_data.get('language_1_level', '')})",
-                    f"{form_data.get('language_2', '').strip()} ({form_data.get('language_2_level', '')})"
-                ]
-            }
+            "Technical": technical_skills,
+            "Business": business_skills,
+            "Languages": languages
         }
-        
-        # Remove empty skills
-        new_employee["skills"]["Technical"] = [s for s in new_employee["skills"]["Technical"] if s]
-        new_employee["skills"]["Business"] = [s for s in new_employee["skills"]["Business"] if s]
-        new_employee["skills"]["Languages"] = [s for s in new_employee["skills"]["Languages"] if not s.startswith(" (") and s != "()"]
-        print(new_employee["skills"]["Technical"])
-        print(new_employee["skills"]["Business"])
-        print(new_employee["skills"]["Languages"])
-        
+        }
+        print("DEBUG TECH SKILLS:", new_employee["skills"]["Technical"])
+        print("DEBUG BUSINESS SKILLS:", new_employee["skills"]["Business"])
+        print("DEBUG LANGUAGES:", new_employee["skills"]["Languages"])
+
         self.employees.append(new_employee)
         self._save_data()
         return True
-
     def search(self, filters):
         results = self.employees
         if 'department' in filters and filters['department']:
             results = [e for e in results if e['department'] == filters['department']]
         return results
-def _load_data(self):
-    """Load data from file with error handling"""
-    try:
+    def _load_data(self):
+      try:
         if os.path.exists(self.data_file):
             with open(self.data_file, 'r') as file:
                 data = json.load(file)
@@ -88,7 +83,7 @@ def _load_data(self):
             print(f"DEBUG: Loaded {len(self.employees)} employees from file")
         else:
             print("DEBUG: No data file found, using defaults")
-    except json.JSONDecodeError:
+      except json.JSONDecodeError:
         print("ERROR: Corrupt data file, resetting")
         self.employees = []
         self.departments = [] 

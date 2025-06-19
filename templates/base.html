@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Employee Tracker{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/main.css') }}">
+    <link rel="stylesheet" 
+    href="{{ url_for('static', filename='styles/main.css') }}" 
+    type="text/css"> 
+    
+    </style>
     {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
