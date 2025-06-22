@@ -94,5 +94,12 @@
         </select>`;
       container.appendChild(field);
     }
+    function addSkillField(containerId, skillName) {
+      const container = document.getElementById(containerId);
+      const field = document.createElement('div');
+      field.classList.add('form-group');
+      field.innerHTML = `<input type="text" name="${skillName}[]">`;
+      container.appendChild(field);
+    }
     </script>
 {% endblock %}

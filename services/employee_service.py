@@ -1,43 +1,47 @@
+from database.json_importer import JsonImporter
 import json
 import os
 
 class EmployeeService:
     def __init__(self):
-        self.data_file = "employees_data.txt"  # File to store data
+        self.data_file = "data.json"
         self.employees = []
-        self.departments = ["HR", "IT", "Finance", "Research"]  # Default departments
-        self._load_data()  # Load data when the service starts
+        self.departments = ["HR", "IT", "Finance", "Research"]
+        self._load_data()
 
         if not self.departments:
             self.departments = ["HR", "IT", "Finance", "Research"]
             self._save_data()
 
     def _load_data(self):
-        """Load employees from the file if it exists."""
-        if os.path.exists(self.data_file):
-            with open(self.data_file, 'r') as file:
-                try:
+        try:
+            if os.path.exists(self.data_file):
+                with open(self.data_file, 'r') as file:
                     data = json.load(file)
                     self.employees = data.get("employees", [])
                     self.departments = data.get("departments", self.departments)
-                except json.JSONDecodeError:
-                    # File is corrupt; start fresh
-                    self.employees = []
-                    self.departments = ["HR", "IT", "Finance", "Research"]
+                print(f"DEBUG: Loaded {len(self.employees)} employees from {self.data_file}")
+            else:
+                print("DEBUG: No data file found, using defaults")
+        except json.JSONDecodeError:
+            print("ERROR: Corrupt data file, resetting")
+            self.employees = []
+            self.departments = self.departments
 
     def _save_data(self):
-        """Save employees and departments to the file."""
         with open(self.data_file, 'w') as file:
             json.dump({
                 "employees": self.employees,
                 "departments": self.departments
             }, file, indent=4)
+        print(f"DEBUG: Saved {len(self.employees)} employees to {self.data_file}")
 
     def get(self, employee_id):
         for employee in self.employees:
             if employee["id"] == employee_id:
                 return employee
-        return None 
+        return None
+
     def add_employee(self, form_data):
         technical_skills = [s.strip() for s in form_data.getlist("technical_skills[]") if s.strip()]
         business_skills = [s.strip() for s in form_data.getlist("business_skills[]") if s.strip()]
@@ -46,57 +50,57 @@ class EmployeeService:
         language_levels = form_data.getlist("language_level[]")
 
         for name, level in zip(language_names, language_levels):
-          name = name.strip()
-          level = level.strip()
-          if name:
-            languages.append(f"{name} ({level})")
+            name = name.strip()
+            level = level.strip()
+            if name:
+                languages.append(f"{name} ({level})")
 
         new_employee = {
             "id": len(self.employees) + 1,
             "name": form_data["name"],
             "department": form_data["department"],
             "skills": {
-            "Technical": technical_skills,
-            "Business": business_skills,
-            "Languages": languages
+                "Technical": technical_skills,
+                "Business": business_skills,
+                "Languages": languages
+            }
         }
-        }
-        print("DEBUG TECH SKILLS:", new_employee["skills"]["Technical"])
-        print("DEBUG BUSINESS SKILLS:", new_employee["skills"]["Business"])
-        print("DEBUG LANGUAGES:", new_employee["skills"]["Languages"])
 
         self.employees.append(new_employee)
         self._save_data()
+
+        # ✅ Re-import into the database after saving to data.json
+        try:
+            importer = JsonImporter()
+            importer.import_data()
+            print("DEBUG: Database successfully updated after employee added.")
+        except Exception as e:
+            print(f"ERROR: Failed to update database from JSON: {e}")
+
         return True
+
     def search(self, filters):
         results = self.employees
         if 'department' in filters and filters['department']:
             results = [e for e in results if e['department'] == filters['department']]
         return results
-    def _load_data(self):
-      try:
-        if os.path.exists(self.data_file):
-            with open(self.data_file, 'r') as file:
-                data = json.load(file)
-                self.employees = data.get("employees", [])
-                self.departments = data.get("departments", [])
-            print(f"DEBUG: Loaded {len(self.employees)} employees from file")
-        else:
-            print("DEBUG: No data file found, using defaults")
-      except json.JSONDecodeError:
-        print("ERROR: Corrupt data file, resetting")
-        self.employees = []
-        self.departments = [] 
+
+        from database.json_importer import JsonImporter
 
     def add_department(self, name):
-        """Add a new department if it doesn't exist."""
         if name not in self.departments:
-            self.departments.append(name)
-            self._save_data()
-            return True
-        return False  # Department already exists
+           self.departments.append(name)
+           self._save_data()
+
+        # Sync to database
+        try:
+            importer = JsonImporter()
+            importer.import_data()
+            print("DEBUG: Database updated after department added.")
+        except Exception as e:
+            print(f"ERROR: Failed to update database after department add: {e}")
+
+        return True
+
     def get_departments(self):
-        """Return all departments."""
         return self.departments
-        self.employees.append(new_employee)
-        self._save_data()  
