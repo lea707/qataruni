@@ -68,8 +68,6 @@ class EmployeeService:
 
         self.employees.append(new_employee)
         self._save_data()
-
-        # ✅ Re-import into the database after saving to data.json
         try:
             importer = JsonImporter()
             importer.import_data()

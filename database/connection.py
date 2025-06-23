@@ -35,5 +35,4 @@ class DatabaseConnection:
         finally:
             cls._connection_pool.putconn(conn)
 
-# Initialize on import
 DatabaseConnection.initialize()
