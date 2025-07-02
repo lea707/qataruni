@@ -1,33 +1,25 @@
-class Department:
-    departments = []  
-    
-    def __init__(self, name, description=None):
-        if any(dept.name == name for dept in self.departments):
-            raise ValueError(f"Department '{name}' already exists")
-        
-        self.name = name
-        self.description = description
-        self.departments.append(self)
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from database.connection import Base
+import uuid
+from models.employee import Employee
 
-    def __repr__(self):
-        return f'<Department {self.name}>'
+class Department(Base):
+    __tablename__ = 'departments'
 
-    @classmethod
-    def get_all(cls):
-        """Get all departments ordered by name"""
-        return sorted(cls.departments, key=lambda dept: dept.name)
+    department_id = Column(Integer, primary_key=True)
+    department_name = Column(String, nullable=False)
+    director_emp_id = Column(Integer, ForeignKey('employee.emp_id'), nullable=True)
+    director = relationship("Employee", foreign_keys=[director_emp_id])
 
-    @classmethod
-    def add(cls, name, description=None):
-        """Add a new department"""
-        return cls(name, description)
+    employees = relationship(
+        "Employee",
+        back_populates="department",
+        foreign_keys="Employee.department_id"
+    )
 
-    @classmethod
-    def get_by_name(cls, name):
-        """Get department by name"""
-        return next((dept for dept in cls.departments if dept.name == name), None)
-
-    @classmethod
-    def delete(cls, name):
-        """Delete a department by name"""
-        cls.departments = [dept for dept in cls.departments if dept.name != name]
+    parent_department_id = Column(Integer, ForeignKey('departments.department_id'), nullable=True)
+    parent_department = relationship('Department', remote_side=[department_id])
+    created_at = Column(DateTime, default=datetime.utcnow)
+    business_id = Column(String, unique=True, default=lambda: str(uuid.uuid4()))

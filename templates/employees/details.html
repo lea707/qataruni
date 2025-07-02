@@ -1,14 +1,65 @@
 {% extends "base.html" %}
+
+{% block title %}{{ employee.name }} | Employee Details{% endblock %}
+
 {% block content %}
-<h1>{{ employee.name }}</h1>
-<p>Department: {{ employee.department }}</p>
-<div class="skills">
-  <h3>Skills:</h3>
-  <ul>
-    {% for category, skills in employee.skills.items() %}
-      <li><strong>{{ category }}:</strong> {{ skills|join(', ') }}</li>
-    {% endfor %}
-  </ul>
+<div class="employee-details">
+    <div class="employee-header">
+        <h1>{{ employee.name }}</h1>
+        <div class="employee-meta">
+            <span class="badge">{{ employee.position_name }}</span>
+            <span class="department">{{ employee.department_name }}</span>
+        </div>
+    </div>
+
+    <div class="employee-info">
+        <div class="info-section">
+            <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
+            <div class="info-grid">
+                <div>
+                    <label>Email:</label>
+                    <span>{{ employee.email }}</span>
+                </div>
+                <div>
+                    <label>Phone:</label>
+                    <span>{{ employee.phone or 'Not provided' }}</span>
+                </div>
+                <div>
+                    <label>Hire Date:</label>
+                    <span>{{ employee.hire_date.strftime('%Y-%m-%d') }}</span>
+                </div>
+                <div>
+                    <label>Employee Level:</label>
+                    <span>{{ employee.level_name }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3><i class="fas fa-cogs"></i> Skills</h3>
+            <div class="skills-grid">
+                {% for skill in employee.skills %}
+                <div class="skill-card">
+                    <h4>{{ skill.skill_name }}</h4>
+                    <div class="skill-meta">
+                        <span class="category">{{ skill.category_name }}</span>
+                        <span class="level">Level: {{ skill.skill_level }}</span>
+                        {% if skill.certified %}
+                        <span class="certified">Certified</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <p>No skills recorded for this employee.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{{ url_for('list_employees') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
 </div>
-<a href="{{ url_for('list_employees') }}">← Back to list</a>
 {% endblock %}

@@ -1,10 +1,20 @@
 # app.py
 from flask import Flask
 from routes import init_routes
-
+from flask import g
 def create_app():
     app = Flask(__name__)
-    
+    @app.before_request
+    def load_fake_admin():
+        g.current_user = {
+        "username": "admin",
+        "permissions": [
+            "view_employee",
+            "edit_employee",
+            "delete_employee",
+            "add_employee"
+        ]
+    }
     # Security headers
     @app.after_request
     def add_security_headers(response):

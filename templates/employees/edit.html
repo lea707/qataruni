@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Employee | Employee Skills Tracker{% endblock %}
+
+{% block content %}
+<div class="edit-employee">
+    <h2>Edit Employee</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="busness_id">Business ID</label>
+            <input type="text" name="busness_id" id="busness_id" value="{{ employee.busness_id }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="english_name">English Name</label>
+            <input type="text" name="english_name" id="english_name" value="{{ employee.english_name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="arab_name">Arabic Name</label>
+            <input type="text" name="arab_name" id="arab_name" value="{{ employee.arab_name }}" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{{ url_for('list_employees') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

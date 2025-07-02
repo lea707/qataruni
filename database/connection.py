@@ -1,38 +1,27 @@
 import os
-import psycopg2
-from psycopg2 import pool
-from contextlib import contextmanager
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
+# Load environment variables from .env file
 load_dotenv()
 
-class DatabaseConnection:
-    _connection_pool = None
+# Read individual DB settings
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-    @classmethod
-    def initialize(cls):
-        cls._connection_pool = psycopg2.pool.ThreadedConnectionPool(
-            minconn=1,
-            maxconn=10,
-            host=os.getenv('DB_HOST'),
-            database=os.getenv('DB_NAME'),
-            user=os.getenv('DB_USER'),
-            password=os.getenv('DB_PASSWORD'),
-            port=os.getenv('DB_PORT', 5432)
-        )
+# Build the full PostgreSQL connection URL
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-    @classmethod
-    @contextmanager
-    def get_cursor(cls):
-        conn = cls._connection_pool.getconn()
-        try:
-            with conn.cursor() as cursor:
-                yield cursor
-            conn.commit()
-        except Exception as e:
-            conn.rollback()
-            raise e
-        finally:
-            cls._connection_pool.putconn(conn)
+# Set up SQLAlchemy engine and session
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-DatabaseConnection.initialize()
+# ✅ Add this line to define the declarative base
+Base = declarative_base()
+
+# This is what other modules will import
+db = SessionLocal()

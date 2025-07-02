@@ -10,65 +10,142 @@
 {% block content %}
 <div class="form-container">
     <h1><i class="fas fa-user-plus"></i> Add New Employee</h1>
-    
+
     {% include '_flash_messages.html' %}
-    
-    <form method="POST" action="{{ url_for('add_employee') }}">
+
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('add_employee') }}">
+        <!-- Basic Information -->
         <div class="form-section">
             <h2><i class="fas fa-id-card"></i> Basic Information</h2>
-            <div class="form-group">
-                <label for="name">Full Name</label>
-                <input type="text" id="name" name="name" required>
-            </div>
+
             
+            <div class="form-group"><label for="english_name">English Name*</label><input type="text" id="english_name" name="english_name" required></div>
+            <div class="form-group"><label for="arab_name">Arabic Name*</label><input type="text" id="arab_name" name="arab_name" required></div>
+            <div class="form-group"><label for="email">Email*</label><input type="email" id="email" name="email" required></div>
+            <div class="form-group"><label for="phone">Phone</label><input type="text" id="phone" name="phone"></div>
+            <div class="form-group"><label for="hire_date">Hire Date*</label><input type="date" id="hire_date" name="hire_date" required></div>
+
             <div class="form-group">
-                <label for="department">Department</label>
-                <select id="department" name="department" required>
-                    <option value="">Select a department</option>
-                    {% for dept in departments %}
-                    <option value="{{ dept }}">{{ dept }}</option>
+                <label for="position_id">Position*</label>
+                <select id="position_id" name="position_id" required>
+                    <option value="">Select a position</option>
+                    {% for position in positions %}
+                    <option value="{{ position.position_id }}">{{ position.position_name }}</option>
                     {% endfor %}
                 </select>
             </div>
-        </div>
-        
-        <div class="form-section">
-            <h2><i class="fas fa-cogs"></i> Technical Skills</h2>
-            <div id="technical-skills-container">
-                <div class="form-group">
-                    <input type="text" name="technical_skills[]">
 
-                </div>
-            </div>
-            <button type="button" onclick="addSkillField('technical-skills-container', 'technical_skills[]')">Add Skill</button>
-        </div>
-        <div class="form-section">
-            <h2><i class="fas fa-briefcase"></i> Business Skills</h2>
-            <div id="business-skills-container">
-                <div class="form-group">
-                    <input type="text" name="business_skills[]">
-
-                </div>
-            </div>
-            <button type="button" onclick="addSkillField('business-skills-container', 'business_skills[]')">Add Skill</button>
-        </div>
-        <div class="form-section">
-            <h2><i class="fas fa-language"></i> Languages</h2>
-            <div id="languages-container">
-              <div class="form-group">
-                <input type="text" name="language[]" placeholder="Language">
-                <select name="language_level[]">
-                  <option value="Basic">Basic</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Fluent">Fluent</option>
-                  <option value="Native">Native</option>
+            <div class="form-group">
+                <label for="department_id">Department*</label>
+                <select id="department_id" name="department_id" required>
+                    <option value="">Select a department</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.department_id }}">{{ dept.department_name }}</option>
+                    {% endfor %}
                 </select>
-              </div>
             </div>
-            <button type="button" onclick="addLanguageField()">Add Language</button>
-          </div>
-          
-         
+
+            <div class="form-group">
+                <label for="level_id">Level</label>
+                <select id="level_id" name="level_id">
+                    <option value="">Select a level</option>
+                    {% for level in levels %}
+                    <option value="{{ level.level_id }}">{{ level.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="supervisor_emp_id">Supervisor Employee ID</label>
+                <input type="text" id="supervisor_emp_id" name="supervisor_emp_id">
+            </div>
+        </div>
+
+        <!-- Skills & Certifications -->
+        <div class="form-section">
+            <h2><i class="fas fa-cogs"></i> Skills & Certifications</h2>
+            <div id="skills-container">
+                <div class="skill-row">
+                    <input type="text" name="skill_name[]" placeholder="Skill name" required>
+
+                    <select name="skill_category[]">
+                        <option value="">Select category</option>
+                        <option value="Technical">Technical</option>
+                        <option value="Language">Language</option>
+                        <option value="Business">Business</option>
+                        <option value="Soft Skills">Soft Skills</option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                    <select name="skill_level[]">
+                        <option value="1">Basic</option>
+                        <option value="2">Intermediate</option>
+                        <option value="3">Advanced</option>
+                        <option value="4">Expert</option>
+                    </select>
+
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="certified[]" onchange="toggleCertification(this)"> Certified
+                    </label>
+
+                    <div class="certification-details" style="display: none;">
+                        <select name="certificate_type_id[]">
+                            <option value="">Certificate type</option>
+                            {% for cert in certificate_types %}
+                            <option value="{{ cert.cert_type_id }}">{{ cert.type_name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <input type="text" name="issuing_organization[]" placeholder="Issuing organization">
+                        <input type="number" name="validity_period_months[]" placeholder="Validity (months)" min="0">
+
+                        <div class="document-group">
+                            <input type="file" name="document_file_0[]">
+                        </div>
+
+                        <button type="button" onclick="addDocumentField(this)" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-plus"></i> Add Document
+                        </button>
+                    </div>
+
+                    <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                    
+                </div>
+            </div>
+
+            <button type="button" onclick="addSkillField()" class="btn btn-secondary">
+                <i class="fas fa-plus"></i> Add Another Skill
+            </button>
+        </div>
+
+        <!-- General Documents -->
+        <div class="form-section">
+            <h2><i class="fas fa-folder-open"></i> General Documents</h2>
+            <div id="general-documents">
+                <div class="document-row">
+                    <select name="general_document_type_id[]">
+                        <option value="">Document type</option>
+                        {% for doc in document_types %}
+                        <option value="{{ doc.type_id }}">{{ doc.type_name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="file" name="general_document_file[]">
+
+                    <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+            </div>
+
+            <button type="button" onclick="addGeneralDocument()" class="btn btn-secondary">
+                <i class="fas fa-plus"></i> Add Document
+            </button>
+        </div>
+
+        <!-- Submit -->
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Save Employee
@@ -79,27 +156,97 @@
         </div>
     </form>
 </div>
+
 <script>
-    function addLanguageField() {
-      const container = document.getElementById('languages-container');
-      const field = document.createElement('div');
-      field.classList.add('form-group');
-      field.innerHTML = `
-        <input type="text" name="language[]" placeholder="Language">
-        <select name="language_level[]">
-          <option value="Basic">Basic</option>
-          <option value="Intermediate">Intermediate</option>
-          <option value="Fluent">Fluent</option>
-          <option value="Native">Native</option>
-        </select>`;
-      container.appendChild(field);
-    }
-    function addSkillField(containerId, skillName) {
-      const container = document.getElementById(containerId);
-      const field = document.createElement('div');
-      field.classList.add('form-group');
-      field.innerHTML = `<input type="text" name="${skillName}[]">`;
-      container.appendChild(field);
-    }
-    </script>
+let skillIndex = 1;
+
+function addSkillField() {
+    const container = document.getElementById('skills-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'skill-row';
+    newRow.innerHTML = `
+        <input type="text" name="skill_name[]" placeholder="Skill name" required>
+
+        <select name="skill_category[]">
+            <option value="">Select category</option>
+            <option value="Technical">Technical</option>
+            <option value="Language">Language</option>
+            <option value="Business">Business</option>
+            <option value="Soft Skills">Soft Skills</option>
+            <option value="Other">Other</option>
+        </select>
+
+        <select name="skill_level[]">
+            <option value="1">Basic</option>
+            <option value="2">Intermediate</option>
+            <option value="3">Advanced</option>
+            <option value="4">Expert</option>
+        </select>
+
+        <label class="checkbox-label">
+            <input type="checkbox" name="certified[]" onchange="toggleCertification(this)"> Certified
+        </label>
+
+        <div class="certification-details" style="display: none;">
+            <select name="certificate_type_id[]">
+                <option value="">Certificate type</option>
+                {% for cert in certificate_types %}
+                <option value="{{ cert.cert_type_id }}">{{ cert.type_name }}</option>
+                {% endfor %}
+            </select>
+
+            <input type="text" name="issuing_organization[]" placeholder="Issuing organization">
+            <input type="number" name="validity_period_months[]" placeholder="Validity (months)" min="0">
+
+            <div class="document-group">
+                <input type="file" name="document_file_${skillIndex}[]">
+            </div>
+
+            <button type="button" onclick="addDocumentField(this)" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-plus"></i> Add Document
+            </button>
+        </div>
+
+        <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
+            <i class="fas fa-trash"></i> Remove
+        </button>
+    `;
+    container.appendChild(newRow);
+    skillIndex++;
+}
+
+function toggleCertification(checkbox) {
+    const certSection = checkbox.closest('.skill-row').querySelector('.certification-details');
+    certSection.style.display = checkbox.checked ? 'block' : 'none';
+}
+
+function addDocumentField(button) {
+    const group = button.closest('.certification-details').querySelector('.document-group');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.name = group.querySelector('input').name;
+    group.appendChild(input);
+}
+
+function addGeneralDocument() {
+    const container = document.getElementById('general-documents');
+    const row = document.createElement('div');
+    row.className = 'document-row';
+    row.innerHTML = `
+        <select name="general_document_type_id[]">
+            <option value="">Document type</option>
+            {% for doc in document_types %}
+            <option value="{{ doc.type_id }}">{{ doc.type_name }}</option>
+            {% endfor %}
+        </select>
+
+        <input type="file" name="general_document_file[]">
+
+        <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
+            <i class="fas fa-trash"></i> Remove
+        </button>
+    `;
+    container.appendChild(row);
+}
+</script>
 {% endblock %}

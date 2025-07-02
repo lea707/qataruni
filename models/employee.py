@@ -1,93 +1,42 @@
-# models/employee.py
-class Employee:
-    def __init__(self, id, name, department, skills=None):
-        """
-        Initialize an Employee with basic information and skills
-        Args:
-            id: Unique employee identifier
-            name: Full name of employee
-            department: Department name
-            skills: Dictionary of skills (defaults to empty skill categories)
-        """
-        self.id = id
-        self.name = name
-        self.department = department
-        self.skills = skills if skills is not None else {
-            "Technical": [],
-            "Business": [],
-            "Languages": {}
-        }
+from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey, Text, DateTime
+from sqlalchemy.orm import relationship
+from database.connection import Base
 
-    def to_dict(self):
-        """Convert Employee object to dictionary for serialization"""
-        return {
-            "id": self.id,
-            "name": self.name,
-            "department": self.department,
-            "skills": self.skills
-        }
+class Employee(Base):
+    __tablename__ = 'employee'
 
-    def get_technical_skills(self):
-        """Get list of technical skills"""
-        return self.skills.get("Technical", [])
+    emp_id = Column(Integer, primary_key=True)
+    email = Column(Text)
+    phone = Column(String)
+    position_id = Column(Integer, ForeignKey('positions.position_id'))
+    hire_date = Column(Date)
+    supervisor_emp_id = Column(Integer, ForeignKey('employee.emp_id'))
+    is_active = Column(Boolean)
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
+    busness_id = Column(String, unique=True, nullable=False)
+    arab_name = Column(String)
+    english_name = Column(String)
+    department_id = Column(Integer, ForeignKey('departments.department_id'))
+    department = relationship(
+        "Department",
+        back_populates="employees",
+        foreign_keys=[department_id]
+    )
 
-    def get_business_skills(self):
-        """Get list of business skills"""
-        return self.skills.get("Business", [])
+    position = relationship("Position", back_populates="employees")
+    level_id = Column(Integer, ForeignKey('employee_levels.level_id'))
+    level = relationship("EmployeeLevel", back_populates="employees")
+    documents = relationship("EmployeeDocument", back_populates="employee")
 
-    def get_languages(self):
-        """Get dictionary of languages and proficiency levels"""
-        return self.skills.get("Languages", {})
+    @property
+    def department_name(self):
+        return self.department.name if self.department else "—"
 
-    def add_technical_skill(self, skill):
-        """Add a technical skill if not already present"""
-        if skill and skill not in self.skills["Technical"]:
-            self.skills["Technical"].append(skill)
+    @property
+    def position_name(self):
+        return self.position.name if self.position else "—"
 
-    def add_business_skill(self, skill):
-        """Add a business skill if not already present"""
-        if skill and skill not in self.skills["Business"]:
-            self.skills["Business"].append(skill)
-
-    def add_language(self, language, proficiency):
-        """Add or update a language with proficiency level"""
-        if language and proficiency:
-            self.skills["Languages"][language] = proficiency
-
-class EmployeeCollection:
-    def __init__(self, employees=None):
-        self.employees = employees or []
-    
-    def add(self, employee):
-        self.employees.append(employee)
-    
-    def get(self, employee_id):
-        return next((e for e in self.employees if e.id == employee_id), None)
-    
-    def get_all(self):
-        return self.employees.copy()
-    
-    def search(self, **filters):
-        results = self.employees
-        
-        if 'id' in filters and filters['id']:
-            results = [e for e in results if e.id == int(filters['id'])]
-        if 'name' in filters and filters['name']:
-            name_lower = filters['name'].lower()
-            results = [e for e in results if name_lower in e.name.lower()]
-        if 'department' in filters and filters['department']:
-            results = [e for e in results if e.department == filters['department']]
-        if 'technical_skill' in filters and filters['technical_skill']:
-            tech_lower = filters['technical_skill'].lower()
-            results = [e for e in results if any(tech_lower in s.lower() for s in e.skills['Technical'])]
-        if 'business_skill' in filters and filters['business_skill']:
-            bus_lower = filters['business_skill'].lower()
-            results = [e for e in results if any(bus_lower in s.lower() for s in e.skills['Business'])]
-        if 'languages_skill' in filters and filters['languages_skill']:
-            lang_lower = filters['languages_skill'].lower()
-            results = [e for e in results if any(lang_lower in l.lower() for l in e.skills['Languages'].keys())]
-            
-        return results
-    
-    def get_departments(self):
-        return sorted({e.department for e in self.employees}) 
+    @property
+    def level_name(self):
+        return self.level.name if self.level else "—"
