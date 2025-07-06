@@ -47,10 +47,10 @@
 
             <div class="form-group">
                 <label for="level_id">Level</label>
-                <select id="level_id" name="level_id">
+                <select id="level_id" name="level_id" class="form-control" required>
                     <option value="">Select a level</option>
                     {% for level in levels %}
-                    <option value="{{ level.level_id }}">{{ level.name }}</option>
+                    <option value="{{ level.level_id }}">{{ level.level_name }}</option>
                     {% endfor %}
                 </select>
             </div>

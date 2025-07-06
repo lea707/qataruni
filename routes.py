@@ -1,19 +1,28 @@
-# routes.py
-from flask import render_template, request, redirect, url_for, flash
+from flask import current_app, render_template, request, redirect, url_for, flash
+from models.document_type import DocumentType
 from services.employee_service import EmployeeService
 from services.department_service import DepartmentService
 from flask import send_from_directory
 from models.employee import Employee
 from database.connection import db
 from services.employee_document_service import EmployeeDocumentService
-employee_service = EmployeeService()
-department_service = DepartmentService()
-employee_document_service = EmployeeDocumentService()
 from services.level_service import LevelService
-level_service = LevelService()
+from services.position_service import PositionService
+from services.skill_service import SkillService
 from models.position import Position
 from models.department import Department
 from models.level import EmployeeLevel
+from models.skill import Skill
+from datetime import datetime
+
+# Initialize services
+employee_service = EmployeeService()
+department_service = DepartmentService()
+employee_document_service = EmployeeDocumentService()
+level_service = LevelService()
+position_service = PositionService()
+skill_service = SkillService()
+
 def init_routes(app):
     # Static files
     @app.route('/static/<path:filename>')
@@ -37,55 +46,6 @@ def init_routes(app):
     def list_employees():
         employees = employee_service.get_all_employees()
         return render_template('employees/list.html', employees=employees)
-    @app.route('/employees/edit/<int:employee_id>', methods=['GET', 'POST'])
-    @app.route('/employees/delete/<int:employee_id>', methods=['POST'])
-    def delete_employee(employee_id):
-     employee = db.get(Employee, employee_id)
-     if not employee:
-        return "Employee not found", 404
-
-     db.delete(employee)
-     db.commit()
-     return redirect(url_for('list_employees'))
-    def edit_employee(employee_id):
-        employee = db.session.get(Employee, employee_id)
-        if not employee:
-            return "Employee not found", 404
-
-        if request.method == 'POST':
-            employee.busness_id = request.form['busness_id']
-            employee.english_name = request.form['english_name']
-            employee.arab_name = request.form['arab_name']
-            db.session.commit()
-            return redirect(url_for('list_employees'))
-        return render_template('employees/edit.html', employee=employee)
-    @app.route('/employees/add', methods=['GET', 'POST'])
-    def add_employee():
-        if request.method == 'POST':
-            success = employee_service.add_employee_with_documents(request.form, request.files)
-            if success:
-                flash('Employee added successfully!', 'success')
-                return redirect(url_for('list_employees'))
-            else:
-                flash('Failed to add employee.', 'error')
-
-        # ✅ Load dynamic dropdown data
-        positions = db.query(Position).order_by(Position.position_name).all()
-        departments = db.query(Department).order_by(Department.department_name).all()
-        levels = db.query(EmployeeLevel).order_by(EmployeeLevel.level_name).all()
-        certificate_types = employee_document_service.get_all_certificate_types()
-        document_types = employee_document_service.get_all_document_types()
-
-        return render_template(
-            'employees/add.html',
-            positions=positions,
-            departments=departments,
-            levels=levels,
-            certificate_types=certificate_types,
-            document_types=document_types
-        )
-
-
 
     @app.route('/employees/<int:employee_id>')
     def employee_detail(employee_id):
@@ -94,7 +54,119 @@ def init_routes(app):
             return render_template('404.html', employee_id=employee_id), 404
         return render_template('employees/details.html', employee=employee)
 
-    # Department routes
+    @app.route('/employees/add', methods=['GET', 'POST'])
+    def add_employee():
+        if request.method == 'POST':
+            try:
+                form_data = request.form
+                print("📥 Route received form data:", form_data)
+
+                # Create employee
+                employee_id = employee_service.create_employee(form_data)
+                
+                # Handle document uploads
+                if 'document_file[]' in request.files:
+                    employee_document_service.save_employee_documents(
+                        employee_id=employee_id,
+                        form_data=form_data,
+                        files=request.files
+                    )
+                
+                flash('Employee added successfully!', 'success')
+                return redirect(url_for('list_employees'))
+            except Exception as e:
+                flash(f'Failed to add employee: {str(e)}', 'error')
+
+        # Load all dropdown options
+        positions = position_service.get_all_positions()
+        departments = department_service.get_all_departments()
+        levels = level_service.get_all_levels()
+        document_types = employee_document_service.get_all_document_types()
+        certificate_types = employee_document_service.get_all_certificate_types()
+        skills = skill_service.get_all_skills()
+
+        return render_template(
+            'employees/add.html',
+            positions=positions,
+            departments=departments,
+            levels=levels,
+            document_types=document_types,
+            certificate_types=certificate_types,
+            skills=skills
+        )
+
+    @app.route('/employees/edit/<int:employee_id>', methods=['GET', 'POST'])
+    @app.route('/employees/edit/<int:employee_id>', methods=['GET', 'POST'])
+    def edit_employee(employee_id):
+        # Initialize all services with the same db session
+        from database.connection import db
+        
+        employee_service = EmployeeService(db)
+        position_service = PositionService(db)
+        department_service = DepartmentService(db)
+        level_service = LevelService(db)
+        skill_service = SkillService(db)
+        employee_document_service = EmployeeDocumentService(db)
+
+        # Get employee with all relationships
+        employee = employee_service.get_employee(employee_id)
+        if not employee:
+            flash('Employee not found', 'error')
+            return redirect(url_for('list_employees'))
+
+        if request.method == 'POST':
+            try:
+                form_data = request.form
+                
+                # First update the employee
+                if employee_service.update_employee(employee_id, form_data, request.files):
+                    flash('Employee updated successfully!', 'success')
+                else:
+                    flash('Failed to update employee', 'error')
+                
+                return redirect(url_for('list_employees'))
+                
+            except ValueError as ve:
+                flash(f'Validation error: {str(ve)}', 'error')
+            except Exception as e:
+                db.rollback()  # Ensure rollback on error
+                flash(f'Error updating employee: {str(e)}', 'error')
+                current_app.logger.error(f"Error updating employee {employee_id}: {str(e)}")
+            return redirect(request.url)  # Stay on form to show errors
+
+        # GET request - load form with current data
+        positions = position_service.get_all_positions()
+        departments = department_service.get_all_departments()
+        levels = level_service.get_all_levels()
+        document_types = employee_document_service.get_all_document_types()
+        certificate_types = employee_document_service.get_all_certificate_types()
+        skills = skill_service.get_all_skills()
+        employee_skill_ids = [s.skill_id for s in employee.skills]
+
+        return render_template(
+            'employees/edit.html',
+            employee=employee,
+            positions=positions,
+            departments=departments,
+            levels=levels,
+            document_types=document_types,
+            certificate_types=certificate_types,
+            skills=skills,
+            employee_skill_ids=employee_skill_ids
+        )
+    @app.route('/employees/delete/<int:employee_id>', methods=['POST'])
+    def delete_employee(employee_id):
+        try:
+            if employee_service.delete_employee(employee_id):
+                flash('Employee deleted successfully!', 'success')
+            else:
+                flash('Employee not found', 'error')
+        except Exception as e:
+            flash(f'Error deleting employee: {str(e)}', 'error')
+        
+        return redirect(url_for('list_employees'))
+
+    # Department routes (maintain original functionality)
     @app.route('/departments')
     def list_departments():
         departments = department_service.get_all_departments()
@@ -107,26 +179,17 @@ def init_routes(app):
             try:
                 department_id = department_service.create_department(name)
                 flash(f"Department '{name}' created successfully!", "success")
-                return redirect(url_for('view_department', department_id=department_id))
+                return redirect(url_for('list_departments'))
             except ValueError as e:
                 flash(str(e), "error")
-
-        return render_template('departments/add.html')  # ✅ now always returns a response
+        return render_template('departments/add.html')
 
     @app.route('/departments/<int:department_id>')
-    def view_department(department_id):
+    def department_detail(department_id):
         department = department_service.get_department(department_id)
         if not department:
-         return render_template('404.html'), 404
-        return render_template('departments/view.html', department=department)
-
-    # Search functionality
-    @app.route('/search')
-    def search():
-        filters = {k: v for k, v in request.args.items() if v}
-        return render_template('search.html',
-                            employees=employee_service.search_employees(filters),
-                            departments=employee_service.get_departments())
+            return render_template('404.html'), 404
+        return render_template('departments/detail.html', department=department)
 
     # Error handlers
     @app.errorhandler(404)

@@ -11,13 +11,18 @@ class Department(Base):
     department_id = Column(Integer, primary_key=True)
     department_name = Column(String, nullable=False)
     director_emp_id = Column(Integer, ForeignKey('employee.emp_id'), nullable=True)
-    director = relationship("Employee", foreign_keys=[director_emp_id])
+    director = relationship(
+        "Employee",
+        back_populates="directed_department",
+        foreign_keys=[director_emp_id]
+    )
 
     employees = relationship(
         "Employee",
         back_populates="department",
         foreign_keys="Employee.department_id"
     )
+
 
     parent_department_id = Column(Integer, ForeignKey('departments.department_id'), nullable=True)
     parent_department = relationship('Department', remote_side=[department_id])

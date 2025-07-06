@@ -59,48 +59,75 @@
     background-color: #f1f1f1;
 }
 
-.employee-table .actions {
+/* Action Buttons Styling */
+.actions-header {
+    width: max-content; /* Wider column for text buttons */
+}
+
+.actions-cell {
+    padding: 0.75rem !important;
+}
+
+.actions-container {
     display: flex;
     gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
-.employee-table .btn {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.85rem;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    text-decoration: none;
+.actions-container .btn {
+    padding: 0.4rem 0.8rem;
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    min-width: 80px;
+    height: auto;
+    justify-content: center;
 }
 
+.actions-container .btn i {
+    margin-right: 0.3rem;
+}
+
+/* Button Colors */
 .btn-view {
-    background-color: #17a2b8;
+    background-color: #a30000;
     color: white;
 }
 
 .btn-edit {
-    background-color: #ffc107;
-    color: black;
+    background-color: #a30000;
+    color: rgb(255, 255, 255);
 }
 
 .btn-delete {
-    background-color: #dc3545;
+    background-color: #a30000;
     color: white;
 }
 
+/* Hover States */
 .btn-view:hover {
-    background-color: #138496;
+    background-color: #fe4646;
+    color: black;
 }
 
 .btn-edit:hover {
-    background-color: #e0a800;
+    background-color: #fe4646;
+    color: black;
 }
 
 .btn-delete:hover {
-    background-color: #c82333;
+    background-color: #fe4646;
+    color: black;
+}
+
+/* Form Styling */
+.actions-container form {
+    margin: 0;
+    display: flex;
 }
 
 .no-results {
@@ -108,7 +135,8 @@
     color: #888;
     padding: 2rem;
 }
-/* Base button style */
+
+/* Base Button Style */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -120,16 +148,10 @@
     border-radius: 4px;
     text-decoration: none;
     cursor: pointer;
-    background-color: #8B0000;
-    color: white;
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.btn:hover {
-    background-color: #a30000;
-    color: black;
-}
-/* Add Employee button */
+/* Add Employee Button */
 .directory-header .btn-primary {
     background-color: #8B0000;
     color: white;
@@ -141,4 +163,17 @@
 
 .directory-header .btn-primary:hover {
     background-color: #a30000;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .actions-header {
+        width: 180px;
+    }
+    
+    .actions-container .btn {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+        min-width: 70px;
+    }
 }

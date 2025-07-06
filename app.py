@@ -2,6 +2,10 @@
 from flask import Flask
 from routes import init_routes
 from flask import g
+
+def test_create_employee_success():
+    print("Running test_create_employee_success")
+
 def create_app():
     app = Flask(__name__)
     @app.before_request

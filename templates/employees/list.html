@@ -6,7 +6,7 @@
 {% endblock %}
 {% block content %}
 <div class="employee-directory">
-    <div class="directory-header d-flex justify-content-between align-items-center mb-3">
+    <div class="directory-header">
         <h1>Employee Directory</h1>
         {% if g.current_user and 'add_employee' in g.current_user.permissions %}
         <a href="{{ url_for('add_employee') }}" class="btn btn-primary">
@@ -15,16 +15,16 @@
         {% endif %}
     </div>
 
-    <div class="employee-table table-responsive">
-        <table class="table table-striped table-bordered">
-            <thead class="thead-dark">
+    <div class="employee-table">
+        <table>
+            <thead>
                 <tr>
                     <th>Business ID</th>
                     <th>English Name</th>
                     <th>Arabic Name</th>
                     <th>Position</th>
                     <th>Department</th>
-                    <th>Actions</th>
+                    <th class="actions-header">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -33,25 +33,27 @@
                     <td>{{ employee.busness_id or '—' }}</td>
                     <td>{{ employee.english_name or '—' }}</td>
                     <td>{{ employee.arab_name or '—' }}</td>
-                    <td>{{ employee.position_name or '—' }}</td>
-                    <td>{{ employee.department_name or '—' }}</td>
-                    <td class="actions">
-                        <a href="{{ url_for('employee_detail', employee_id=employee.emp_id) }}" class="btn btn-view">
-                            <i class="fas fa-eye"></i> View
-                        </a>
-                        <a href="/employees/edit/{{ employee.emp_id }}" class="btn btn-edit">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                        <form action="{{ url_for('delete_employee', employee_id=employee.emp_id) }}" method="POST" style="display:inline;">
-                            <button type="submit" class="btn btn-delete" onclick="return confirm('Are you sure?')">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </form>
+                    <td>{{ employee.position.position_name if employee.position else '—' }}</td>
+                    <td>{{ employee.department.department_name if employee.department else '—' }}</td>
+                    <td class="actions-cell">
+                        <div class="actions-container">
+                            <a href="{{ url_for('employee_detail', employee_id=employee.emp_id) }}" class="btn btn-view">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            <a href="/employees/edit/{{ employee.emp_id }}" class="btn btn-edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <form action="{{ url_for('delete_employee', employee_id=employee.emp_id) }}" method="POST">
+                                <button type="submit" class="btn btn-delete" onclick="return confirm('Are you sure?')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" class="text-center text-muted">
+                    <td colspan="6" class="no-results">
                         No employees found.
                         {% if g.current_user and 'add_employee' in g.current_user.permissions %}
                         <a href="{{ url_for('add_employee') }}">Add your first employee</a>.
