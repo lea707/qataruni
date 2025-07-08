@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from io import BytesIO
 from werkzeug.datastructures import FileStorage
 from unittest.mock import patch, MagicMock
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 # Test data builders
 def build_employee_data():
@@ -58,7 +58,7 @@ class TestEmployeeSaving:
             
             # Verify skills were saved
             employee = Employee.query.options(
-                joinedload(Employee.skills)
+                joinedload(Employee.skills) # type: ignore
             ).get(employee_id)
             
             assert len(employee.skills) == 2

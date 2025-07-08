@@ -68,20 +68,20 @@
                 <div class="skill-row">
                     <input type="text" name="skill_name[]" placeholder="Skill name" required>
 
-                    <select name="skill_category[]">
-                        <option value="">Select category</option>
-                        <option value="Technical">Technical</option>
-                        <option value="Language">Language</option>
-                        <option value="Business">Business</option>
-                        <option value="Soft Skills">Soft Skills</option>
-                        <option value="Other">Other</option>
+                    <select name="skill_category[]" placeholder="category">
+                        <option >select category</option>
+                        {% for cat in skill_categories %}
+                        <option value="{{ cat.category_id }}">{{ cat.category_name }}</option>
+                      {% endfor %}
                     </select>
 
                     <select name="skill_level[]">
-                        <option value="1">Basic</option>
-                        <option value="2">Intermediate</option>
-                        <option value="3">Advanced</option>
-                        <option value="4">Expert</option>
+                            <option value="">Select level</option>
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                            <option value="Expert">Expert</option>
+                            <option value="Not Applicable">Not Applicable</option>
                     </select>
 
                     <label class="checkbox-label">
@@ -128,7 +128,7 @@
                     <select name="general_document_type_id[]">
                         <option value="">Document type</option>
                         {% for doc in document_types %}
-                        <option value="{{ doc.type_id }}">{{ doc.type_name }}</option>
+                        <option value="{{ doc.type_id }}">{{ doc.doc_type_name }}</option>
                         {% endfor %}
                     </select>
 

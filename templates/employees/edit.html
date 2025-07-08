@@ -101,189 +101,187 @@
         </div>
 
         <div class="form-section">
-            <h2><i class="fas fa-cogs"></i> Skills & Certifications</h2>
-            <div id="skills-container">
-                <div class="skill-row">
-                    <input type="text" name="skill_name[]"  value="{{ employee.skills }}" required>
-
-                    <select name="skill_category[]">
-                        <option value="">Select category</option>
-                        <option value="Technical">Technical</option>
-                        <option value="Language">Language</option>
-                        <option value="Business">Business</option>
-                        <option value="Soft Skills">Soft Skills</option>
-                        <option value="Other">Other</option>
+            <h4>Skills</h4>
+            <div id="skills-section">
+              {% for skill in employee_skills %}
+                <div class="skill-entry mb-4 p-3 border rounded">
+                  <input type="text" name="skill_name[]" value="{{ skill.name }}" class="form-control mb-2" placeholder="Skill name" />
+          
+                  <select name="skill_category[]" class="form-select mb-2">
+                    <option value="">Select category</option>
+                    {% for category in skill_categories %}
+                      <option value="{{ category.category_id }}"
+                        {% if category.category_name == skill.category %}selected{% endif %}>
+                        {{ category.category_name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+          
+                  <select name="skill_level[]" class="form-select mb-2">
+                    <option value="">Select level</option>
+                    {% for level in ['Beginner', 'Intermediate', 'Advanced'] %}
+                      <option value="{{ level }}"
+                        {% if level == skill.level %}selected{% endif %}>
+                        {{ level }}
+                      </option>
+                    {% endfor %}
+                  </select>
+          
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="skill_certified[]" value="{{ loop.index0 }}"
+                      {% if skill.certified %}checked{% endif %} onchange="toggleCertification(this)">
+                    <label class="form-check-label">Certified</label>
+                  </div>
+          
+                  <div class="certification-details" style="display: '{{ 'block' if skill.certified else 'none' }}';">
+                    <select name="certificate_type_id[]" class="form-select mb-2">
+                      <option value="">Certificate type</option>
+                      {% for cert in certificate_types %}
+                        <option value="{{ cert.cert_type_id }}">{{ cert.type_name }}</option>
+                      {% endfor %}
                     </select>
-
-                    <select name="skill_level[]">
-                        <option value="1">Basic</option>
-                        <option value="2">Intermediate</option>
-                        <option value="3">Advanced</option>
-                        <option value="4">Expert</option>
-                    </select>
-
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="certified[]" onchange="toggleCertification(this)"> Certified
-                    </label>
-
-                    <div class="certification-details" style="display: none;">
-                        <select name="certificate_type_id[]">
-                            <option value="">Certificate type</option>
-                            {% for cert in certificate_types %}
-                            <option value="{{ cert.cert_type_id }}">{{ cert.type_name }}</option>
-                            {% endfor %}
-                        </select>
-
-                        <input type="text" name="issuing_organization[]" placeholder="Issuing organization">
-                        <input type="number" name="validity_period_months[]" placeholder="Validity (months)" min="0">
-
-                        <div class="document-group">
-                            <input type="file" name="document_file_0[]">
-                        </div>
-
-                        <button type="button" onclick="addDocumentField(this)" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-plus"></i> Add Document
-                        </button>
+          
+                    <input type="text" name="issuing_organization[]" class="form-control mb-2" placeholder="Issuing organization">
+                    <input type="number" name="validity_period_months[]" class="form-control mb-2" placeholder="Validity (months)" min="0">
+          
+                    <div class="document-group mb-2">
+                      <input type="file" name="document_file_{{ loop.index0 }}[]" class="form-control">
                     </div>
-
-                    <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
-                        <i class="fas fa-trash"></i> Remove
+          
+                    <button type="button" onclick="addDocumentField(this)" class="btn btn-sm btn-outline-secondary">
+                      <i class="fas fa-plus"></i> Add Document
                     </button>
-                    
+                  </div>
                 </div>
+              {% endfor %}
             </div>
-
+          
             <button type="button" onclick="addSkillField()" class="btn btn-secondary">
-                <i class="fas fa-plus"></i> Add Another Skill
+              <i class="fas fa-plus"></i> Add Another Skill
             </button>
-        </div>
-
-        <!-- General Documents -->
-        <div class="form-section">
-            <h2><i class="fas fa-folder-open"></i> General Documents</h2>
+          </div>
+          
+          <!-- General Documents -->
+          <div class="form-section mt-5">
+            <h4><i class="fas fa-folder-open"></i> General Documents</h4>
             <div id="general-documents">
-                <div class="document-row">
-                    <select name="general_document_type_id[]">
-                        <option value="">Document type</option>
-                        {% for doc in document_types %}
-                        <option value="{{ doc.type_id }}">{{ doc.type_name }}</option>
-                        {% endfor %}
-                    </select>
-
-                    <input type="file" name="general_document_file[]">
-
-                    <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
-                        <i class="fas fa-trash"></i> Remove
-                    </button>
-                </div>
+              <div class="document-row mb-3">
+                <select name="general_document_type_id[]" class="form-select mb-2">
+                  <option value="">Document type</option>
+                  {% for doc in document_types %}
+                    <option value="{{ doc.type_id }}">{{ doc.doc_type_name }}</option>
+                  {% endfor %}
+                </select>
+          
+                <input type="file" name="general_document_file[]" class="form-control mb-2">
+          
+                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
+                  <i class="fas fa-trash"></i> Remove
+                </button>
+              </div>
             </div>
-
+          
             <button type="button" onclick="addGeneralDocument()" class="btn btn-secondary">
-                <i class="fas fa-plus"></i> Add Document
+              <i class="fas fa-plus"></i> Add Document
             </button>
-        </div>
-
-        <div class="form-actions">
+          </div>
+          <div class="form-actions">
             <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Save Changes
+                <i class="fas fa-save"></i> Save Employee
             </button>
             <a href="{{ url_for('list_employees') }}" class="btn btn-secondary">
                 <i class="fas fa-times"></i> Cancel
             </a>
         </div>
-    </form>
-</div>
-
-<script>
-let skillIndex = 1;
-
-function addSkillField() {
-    const container = document.getElementById('skills-container');
-    const newRow = document.createElement('div');
-    newRow.className = 'skill-row';
-    newRow.innerHTML = `
-        <input type="text" name="skill_name[]" placeholder="Skill name" required>
-
-        <select name="skill_category[]">
-            <option value="">Select category</option>
-            <option value="Technical">Technical</option>
-            <option value="Language">Language</option>
-            <option value="Business">Business</option>
-            <option value="Soft Skills">Soft Skills</option>
-            <option value="Other">Other</option>
-        </select>
-
-        <select name="skill_level[]">
-            <option value="1">Basic</option>
-            <option value="2">Intermediate</option>
-            <option value="3">Advanced</option>
-            <option value="4">Expert</option>
-        </select>
-
-        <label class="checkbox-label">
-            <input type="checkbox" name="certified[]" onchange="toggleCertification(this)"> Certified
-        </label>
-
-        <div class="certification-details" style="display: none;">
-            <select name="certificate_type_id[]">
-                <option value="">Certificate type</option>
-                {% for cert in certificate_types %}
-                <option value="{{ cert.cert_type_id }}">{{ cert.type_name }}</option>
-                {% endfor %}
-            </select>
-
-            <input type="text" name="issuing_organization[]" placeholder="Issuing organization">
-            <input type="number" name="validity_period_months[]" placeholder="Validity (months)" min="0">
-
-            <div class="document-group">
-                <input type="file" name="document_file_${skillIndex}[]">
-            </div>
-
-            <button type="button" onclick="addDocumentField(this)" class="btn btn-sm btn-outline-secondary">
-                <i class="fas fa-plus"></i> Add Document
-            </button>
-        </div>
-
-        <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
-            <i class="fas fa-trash"></i> Remove
-        </button>
-    `;
-    container.appendChild(newRow);
-    skillIndex++;
-}
-
-function toggleCertification(checkbox) {
-    const certSection = checkbox.closest('.skill-row').querySelector('.certification-details');
-    certSection.style.display = checkbox.checked ? 'block' : 'none';
-}
-
-function addDocumentField(button) {
-    const group = button.closest('.certification-details').querySelector('.document-group');
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.name = group.querySelector('input').name;
-    group.appendChild(input);
-}
-
-function addGeneralDocument() {
-    const container = document.getElementById('general-documents');
-    const row = document.createElement('div');
-    row.className = 'document-row';
-    row.innerHTML = `
-        <select name="general_document_type_id[]">
-            <option value="">Document type</option>
-            {% for doc in document_types %}
-            <option value="{{ doc.type_id }}">{{ doc.type_name }}</option>
-            {% endfor %}
-        </select>
-
-        <input type="file" name="general_document_file[]">
-
-        <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
-            <i class="fas fa-trash"></i> Remove
-        </button>
-    `;
-    container.appendChild(row);
-}
-</script>
-{% endblock %}
+          <script>
+            let skillIndex = parseInt("{{ (employee_skills|length if employee_skills is defined else 0)|int }}", 10);
+            function addSkillField() {
+              const container = document.getElementById('skills-section');
+              const newRow = document.createElement('div');
+              newRow.className = 'skill-entry mb-4 p-3 border rounded';
+              newRow.innerHTML = `
+                <input type="text" name="skill_name[]" class="form-control mb-2" placeholder="Skill name" />
+            
+                <select name="skill_category[]" class="form-select mb-2">
+                  <option value="">Select category</option>
+                  {% for category in skill_categories %}
+                    <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                  {% endfor %}
+                </select>
+            
+                <select name="skill_level[]" class="form-select mb-2">
+                  <option value="">Select level</option>
+                  {% for level in ['Beginner', 'Intermediate', 'Advanced'] %}
+                    <option value="{{ level }}">{{ level }}</option>
+                  {% endfor %}
+                </select>
+            
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="skill_certified[]" value="${skillIndex}" onchange="toggleCertification(this)">
+                  <label class="form-check-label">Certified</label>
+                </div>
+            
+                <div class="certification-details" style="display: none;">
+                  <select name="certificate_type_id[]" class="form-select mb-2">
+                    <option value="">Certificate type</option>
+                    {% for cert in certificate_types %}
+                      <option value="{{ cert.cert_type_id }}">{{ cert.type_name }}</option>
+                    {% endfor %}
+                  </select>
+            
+                  <input type="text" name="issuing_organization[]" class="form-control mb-2" placeholder="Issuing organization">
+                  <input type="number" name="validity_period_months[]" class="form-control mb-2" placeholder="Validity (months)" min="0">
+            
+                  <div class="document-group mb-2">
+                    <input type="file" name="document_file_${skillIndex}[]">
+                  </div>
+            
+                  <button type="button" onclick="addDocumentField(this)" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-plus"></i> Add Document
+                  </button>
+                </div>
+            
+                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm mt-2">
+                  <i class="fas fa-trash"></i> Remove
+                </button>
+              `;
+              container.appendChild(newRow);
+              skillIndex++;
+            }
+            
+            function toggleCertification(checkbox) {
+              const certSection = checkbox.closest('.skill-entry').querySelector('.certification-details');
+              certSection.style.display = checkbox.checked ? 'block' : 'none';
+            }
+            
+            function addDocumentField(button) {
+              const group = button.closest('.certification-details').querySelector('.document-group');
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.name = group.querySelector('input').name;
+              input.className = 'form-control mt-2';
+              group.appendChild(input);
+            }
+            
+            function addGeneralDocument() {
+              const container = document.getElementById('general-documents');
+              const row = document.createElement('div');
+              row.className = 'document-row mb-3';
+              row.innerHTML = `
+                <select name="general_document_type_id[]" class="form-select mb-2">
+                  <option value="">Document type</option>
+                  {% for doc in document_types %}
+                    <option value="{{ doc.type_id }}">{{ doc.type_name }}</option>
+                  {% endfor %}
+                </select>
+            
+                <input type="file" name="general_document_file[]" class="form-control mb-2">
+            
+                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
+                  <i class="fas fa-trash"></i> Remove
+                </button>
+              `;
+              container.appendChild(row);
+            }
+            </script>
+            {% endblock %}

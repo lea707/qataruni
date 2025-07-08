@@ -36,24 +36,42 @@
         </div>
 
         <div class="info-section">
-            <h3><i class="fas fa-cogs"></i> Skills</h3>
-            <div class="skills-grid">
-                {% for skill in employee.skills %}
-                <div class="skill-card">
-                    <h4>{{ skill.skill_name }}</h4>
-                    <div class="skill-meta">
-                        <span class="category">{{ skill.category_name }}</span>
-                        <span class="level">Level: {{ skill.skill_level }}</span>
-                        {% if skill.certified %}
-                        <span class="certified">Certified</span>
-                        {% endif %}
-                    </div>
-                </div>
-                {% else %}
-                <p>No skills recorded for this employee.</p>
-                {% endfor %}
-            </div>
+          <h3><i class="fas fa-cogs"></i> Skills</h3>
+          <div class="skills-grid">
+            {% for skill_name, category_name, skill_level, certified in skills %}
+              <div class="skill-card">
+                <ul>
+                  <li><strong>{{ skill_name }}</strong>
+                    <ul style="padding-left: 1rem;">
+                      <li><b>Type:</b> {{ category_name or 'Uncategorized' }}</li>
+                      <li><b>Level:</b> {{ skill_level or '—' }}</li>
+                      {% if certified %}
+                        <li><b>Status:</b> <span class="certified">Certified</span></li>
+                      {% endif %}
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+            {% else %}
+              <p>No skills recorded for this employee.</p>
+            {% endfor %}
+          </div>
         </div>
+        {% if show_documents %}
+  <h3><i class="fas fa-file-alt"></i> Documents</h3>
+  {% if employee.documents %}
+    <ul>
+      {% for doc in employee.documents %}
+        <li>
+          {{ doc.document_type }} — 
+          <a href="{{ url_for('download_document', doc_id=doc.id) }}">Download</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No documents uploaded.</p>
+  {% endif %}
+{% endif %}
     </div>
 
     <div class="actions">

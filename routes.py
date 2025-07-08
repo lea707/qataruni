@@ -1,4 +1,6 @@
+import uuid
 from flask import current_app, render_template, request, redirect, url_for, flash
+from database.repositories.skill_category_repository import SkillCategoryRepository
 from models.document_type import DocumentType
 from services.employee_service import EmployeeService
 from services.department_service import DepartmentService
@@ -14,7 +16,11 @@ from models.department import Department
 from models.level import EmployeeLevel
 from models.skill import Skill
 from datetime import datetime
+from models.employee import Employee
+from models.associations import employee_skills
+from flask import session
 
+   
 # Initialize services
 employee_service = EmployeeService()
 department_service = DepartmentService()
@@ -48,67 +54,67 @@ def init_routes(app):
         return render_template('employees/list.html', employees=employees)
 
     @app.route('/employees/<int:employee_id>')
+
+
     def employee_detail(employee_id):
         employee = employee_service.get_employee(employee_id)
-        if not employee:
-            return render_template('404.html', employee_id=employee_id), 404
-        return render_template('employees/details.html', employee=employee)
+        skills = employee_service.get_employee_skills_with_metadata(employee_id)
+
+        user_role = session.get('user_role')  # or however you're storing it
+
+        show_documents = user_role in ['Admin', 'HR']
+
+        return render_template(
+            "employees/details.html",
+            employee=employee,
+            skills=skills,
+            show_documents=show_documents
+        )
 
     @app.route('/employees/add', methods=['GET', 'POST'])
     def add_employee():
         if request.method == 'POST':
-            try:
-                form_data = request.form
-                print("📥 Route received form data:", form_data)
+            print("🔁 POST request received at /employees/add")
+            print("📄 Form data:", request.form)
+            print("📎 Files received:", request.files)
 
-                # Create employee
-                employee_id = employee_service.create_employee(form_data)
-                
-                # Handle document uploads
-                if 'document_file[]' in request.files:
-                    employee_document_service.save_employee_documents(
-                        employee_id=employee_id,
-                        form_data=form_data,
-                        files=request.files
-                    )
-                
-                flash('Employee added successfully!', 'success')
+            try:
+                employee_service.create_employee(request.form, request.files)
+                print("✅ Employee creation completed")
+                flash("Employee added successfully!", "success")
                 return redirect(url_for('list_employees'))
             except Exception as e:
-                flash(f'Failed to add employee: {str(e)}', 'error')
+                print("❌ Error during employee creation:", str(e))
+                flash(f"Error adding employee: {str(e)}", "danger")
+                return redirect(url_for('add_employee'))
 
-        # Load all dropdown options
-        positions = position_service.get_all_positions()
-        departments = department_service.get_all_departments()
-        levels = level_service.get_all_levels()
-        document_types = employee_document_service.get_all_document_types()
-        certificate_types = employee_document_service.get_all_certificate_types()
-        skills = skill_service.get_all_skills()
-
+        # GET request — load form options
+        print("📥 GET request to load Add Employee form")
         return render_template(
             'employees/add.html',
-            positions=positions,
-            departments=departments,
-            levels=levels,
-            document_types=document_types,
-            certificate_types=certificate_types,
-            skills=skills
+            positions=position_service.get_all_positions(),
+            departments=department_service.get_all_departments(),
+            levels=level_service.get_all_levels(),
+            document_types=employee_document_service.get_all_document_types(),
+            certificate_types=employee_document_service.get_all_certificate_types(),
+            skills=skill_service.get_all_skills(),
+            skill_categories=skill_service.get_all_skill_categories(),
+            employee_skills=level_service.get_all_levels()
         )
 
     @app.route('/employees/edit/<int:employee_id>', methods=['GET', 'POST'])
-    @app.route('/employees/edit/<int:employee_id>', methods=['GET', 'POST'])
+  
     def edit_employee(employee_id):
-        # Initialize all services with the same db session
-        from database.connection import db
         
-        employee_service = EmployeeService(db)
-        position_service = PositionService(db)
-        department_service = DepartmentService(db)
-        level_service = LevelService(db)
-        skill_service = SkillService(db)
-        employee_document_service = EmployeeDocumentService(db)
+        db_session = db() 
+        employee_service = EmployeeService(db_session)
+        position_service = PositionService()
+        department_service = DepartmentService()
+        level_service = LevelService()
+        skill_service = SkillService()
+        employee_document_service = EmployeeDocumentService()
+        category_repository = SkillCategoryRepository()
 
-        # Get employee with all relationships
         employee = employee_service.get_employee(employee_id)
         if not employee:
             flash('Employee not found', 'error')
@@ -117,22 +123,18 @@ def init_routes(app):
         if request.method == 'POST':
             try:
                 form_data = request.form
-                
-                # First update the employee
                 if employee_service.update_employee(employee_id, form_data, request.files):
                     flash('Employee updated successfully!', 'success')
                 else:
                     flash('Failed to update employee', 'error')
-                
                 return redirect(url_for('list_employees'))
-                
             except ValueError as ve:
                 flash(f'Validation error: {str(ve)}', 'error')
             except Exception as e:
-                db.rollback()  # Ensure rollback on error
+                db_session.rollback()
                 flash(f'Error updating employee: {str(e)}', 'error')
                 current_app.logger.error(f"Error updating employee {employee_id}: {str(e)}")
-            return redirect(request.url)  # Stay on form to show errors
+            return redirect(request.url)
 
         # GET request - load form with current data
         positions = position_service.get_all_positions()
@@ -141,8 +143,19 @@ def init_routes(app):
         document_types = employee_document_service.get_all_document_types()
         certificate_types = employee_document_service.get_all_certificate_types()
         skills = skill_service.get_all_skills()
-        employee_skill_ids = [s.skill_id for s in employee.skills]
+        skill_categories = category_repository.get_all_categories()
 
+        # Get employee's skill metadata
+        raw_skill_data = employee_service.get_employee_skills_with_metadata(employee_id)
+        employee_skills = [
+            {
+                "name": row[0],
+                "category": row[1],
+                "level": row[2]
+            }
+            for row in raw_skill_data
+        ]
+        print("Document types:", document_types)
         return render_template(
             'employees/edit.html',
             employee=employee,
@@ -152,8 +165,10 @@ def init_routes(app):
             document_types=document_types,
             certificate_types=certificate_types,
             skills=skills,
-            employee_skill_ids=employee_skill_ids
+            skill_categories=skill_categories,
+            employee_skills=employee_skills
         )
+
     @app.route('/employees/delete/<int:employee_id>', methods=['POST'])
     def delete_employee(employee_id):
         try:

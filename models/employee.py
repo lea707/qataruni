@@ -1,8 +1,7 @@
 from sqlalchemy import Column, Integer, String, Date, Boolean, ForeignKey, Text, DateTime
 from sqlalchemy.orm import relationship
 from database.connection import Base
-from .associations import employee_skills  
-
+from .associations import employee_skills
 
 class Employee(Base):
     __tablename__ = 'employee'
@@ -21,27 +20,29 @@ class Employee(Base):
     english_name = Column(String)
     department_id = Column(Integer, ForeignKey('departments.department_id'))
     level_id = Column(Integer, ForeignKey('employee_levels.level_id'))
+
+    # Relationships
     level = relationship("EmployeeLevel", back_populates="employees")
     skills = relationship(
-    "Skill",
-    secondary=employee_skills,
-    back_populates="employees"
-)
-
+        "Skill",
+        secondary=employee_skills,
+        back_populates="employees"
+    )
     department = relationship(
-    "Department",
-    back_populates="employees",
-    foreign_keys=[department_id]
-)
+        "Department",
+        back_populates="employees",
+        foreign_keys=[department_id]
+    )
     directed_department = relationship(
-    "Department",
-    back_populates="director",
-    uselist=False,
-    foreign_keys="[Department.director_emp_id]"
-)
+        "Department",
+        back_populates="director",
+        uselist=False,
+        foreign_keys="[Department.director_emp_id]"
+    )
     position = relationship("Position", back_populates="employees")
     documents = relationship("EmployeeDocument", back_populates="employee")
-
+    certificates = relationship("EmployeeCertificate", back_populates="employee")
+    # Convenience properties
     @property
     def department_name(self):
         return self.department.name if self.department else "—"
@@ -52,6 +53,8 @@ class Employee(Base):
 
     @property
     def level_name(self):
-        return self.level.name if self.level else "—"
+        return self.level.level_name if self.level else "—"
+
+    @property
     def __repr__(self):
-     return f"<Employee(id={self.emp_id}, name='{self.english_name}')>"
+        return f"<Employee(id={self.emp_id}, name='{self.english_name}')>"

@@ -2,7 +2,6 @@
 from database.repositories.department_repository import DepartmentRepository
 from models.department import Department
 from typing import List, Optional
-
 class DepartmentService:
     def __init__(self):
         self.repository = DepartmentRepository()
