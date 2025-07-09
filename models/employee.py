@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from database.connection import Base
 from .associations import employee_skills
 
+
 class Employee(Base):
     __tablename__ = 'employee'
 
@@ -41,7 +42,7 @@ class Employee(Base):
     )
     position = relationship("Position", back_populates="employees")
     documents = relationship("EmployeeDocument", back_populates="employee")
-    certificates = relationship("EmployeeCertificate", back_populates="employee")
+    
     # Convenience properties
     @property
     def department_name(self):

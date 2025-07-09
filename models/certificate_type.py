@@ -7,5 +7,5 @@ class CertificateType(Base):
 
     cert_type_id = Column(Integer, primary_key=True)
     type_name = Column(String, nullable=False)
+
     documents = relationship("EmployeeDocument", back_populates="certificate_type")
-    certificates = relationship("EmployeeCertificate", back_populates="certificate_type")

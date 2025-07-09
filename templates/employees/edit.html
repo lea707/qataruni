@@ -13,7 +13,7 @@
 
     {% include '_flash_messages.html' %}
 
-    <form method="POST" enctype="multipart/form-data" action="{{ url_for('edit_employee', employee_id=employee.emp_id) }}">
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('edit_employee', employee_id=employee.emp_id) }}" id="employee-form">
         <!-- Basic Information -->
         <div class="form-section">
             <h2><i class="fas fa-id-card"></i> Basic Information</h2>
@@ -40,7 +40,7 @@
             <!-- Department Dropdown -->
             <div class="form-group">
                 <label for="department_id">Department*</label>
-                <select id="department_id" name="department_id" value="employee.department" required>
+                <select id="department_id" name="department_id" required>
                     {% if departments %}
                         {% for department in departments %}
                         <option value="{{ department.department_id }}"
@@ -93,7 +93,10 @@
             <!-- Status Toggle -->
             <div class="form-group">
                 <label class="checkbox-container">
-                    <input type="checkbox" name="is_active" {% if employee.is_active %}checked{% endif %}>
+                    <input type="hidden" name="is_active" value="false">
+                    <input type="checkbox" name="is_active" value="true" 
+                           {% if employee.is_active %}checked{% endif %}
+                           onchange="this.previousElementSibling.value=this.checked ? 'true' : 'false'">
                     <span class="checkmark"></span>
                     Active Employee
                 </label>

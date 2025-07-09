@@ -1,3 +1,4 @@
+import uuid
 from flask import current_app, session
 from database.repositories.employee_repository import EmployeeRepository
 from database.repositories.position_repository import PositionRepository
@@ -9,6 +10,7 @@ from models.employee import Employee
 from models.skill import Skill
 from sqlalchemy import text
 from models.associations import employee_skills
+from services.employee_document_service import EmployeeDocumentService
 
 class EmployeeService:
     def __init__(self, db_session=None):
@@ -16,6 +18,7 @@ class EmployeeService:
         self.repository = EmployeeRepository()
 
     def _prepare_employee_data(self, form_data, session):
+        is_active = 'is_active' in form_data
         try:
             return {
                 'english_name': form_data.get('english_name'),
@@ -28,7 +31,7 @@ class EmployeeService:
                 'hire_date': datetime.strptime(form_data.get('hire_date'), '%Y-%m-%d').date(),
                 'supervisor_emp_id': int(form_data['supervisor_emp_id']) if form_data.get('supervisor_emp_id') else None,
                 'busness_id': self.repository._generate_business_id(session),
-                'is_active': True,
+                'is_active': is_active ,
                 'created_at': datetime.utcnow(),
                 'updated_at': datetime.utcnow()
             }
@@ -37,19 +40,39 @@ class EmployeeService:
             raise
 
     def create_employee(self, form_data, files=None):
-        from models.associations import employee_skills
-
         if callable(self.db):
-          session = self.db()  # It's a factory, create a session
+            session = self.db()  
         else:
-            session = self.db  # It's already a session
+            session = self.db
+            
         try:
-            employee_data = self._prepare_employee_data(form_data, session)
-            employee = Employee(**employee_data)
+            # Handle is_active checkbox (True if checked, False if unchecked)
+            is_active = 'is_active' in form_data
+            
+            # Generate formatted business ID
+            business_id = self._generate_business_id()
+            
+            # Create employee with all required fields
+            employee = Employee(
+                english_name=form_data.get('english_name'),
+                arab_name=form_data.get('arab_name'),
+                email=form_data.get('email'),
+                phone=form_data.get('phone'),
+                hire_date=datetime.strptime(form_data['hire_date'], '%Y-%m-%d').date(),
+                position_id=int(form_data['position_id']),
+                department_id=int(form_data['department_id']),
+                level_id=int(form_data['level_id']) if form_data.get('level_id') else None,
+                supervisor_emp_id=int(form_data['supervisor_emp_id']) if form_data.get('supervisor_emp_id') else None,
+                is_active=is_active,
+                busness_id=business_id,  # Include the generated business ID
+                created_at=datetime.now(),
+                updated_at=datetime.now()
+            )
+            
             session.add(employee)
-            session.flush()  # Get employee.emp_id
-
-            # Process skills
+            session.flush()
+            
+            # Handle skills
             skill_names = form_data.getlist('skill_name[]')
             skill_categories = form_data.getlist('skill_category[]')
             skill_levels = form_data.getlist('skill_level[]')
@@ -59,7 +82,6 @@ class EmployeeService:
                 if not name:
                     continue
 
-                # Check if skill exists
                 skill = session.query(Skill).filter_by(skill_name=name).first()
                 if not skill:
                     skill = Skill(
@@ -69,13 +91,13 @@ class EmployeeService:
                     session.add(skill)
                     session.flush()
 
-                # Insert into association table with metadata
                 session.execute(employee_skills.insert().values(
                     employee_id=employee.emp_id,
                     skill_id=skill.skill_id,
                     skill_level=level if level and level != "select level" else None
                 ))
 
+            # Handle documents
             from services.employee_document_service import EmployeeDocumentService
             doc_service = EmployeeDocumentService(session)
             doc_service.save_employee_documents(
@@ -93,7 +115,6 @@ class EmployeeService:
             raise RuntimeError(f"Failed to create employee: {str(e)}")
         finally:
             session.close()
-  
     def _prepare_skills_data(self, form_data):
         """Handle both MultiDict and regular dict for skill data"""
         skills = []
@@ -136,63 +157,35 @@ class EmployeeService:
         """Delete a employee by ID"""
         return self.repository.delete_employee(employee_id)
 
-    def update_employee(self, employee_id: int, form_data: dict, files=None) -> bool:
+    def update_employee(self, employee_id, form_data, files=None):
+        session = self.db() if callable(self.db) else self.db
         try:
-            # Get existing employee
-            employee = self.db.query(Employee).get(employee_id)
+            employee = session.query(Employee).get(employee_id)
             if not employee:
-                raise ValueError("Employee not found")
+                return False
 
-            # Update basic employee info
-            employee.english_name = form_data.get('english_name', employee.english_name)
-            employee.arab_name = form_data.get('arab_name', employee.arab_name)
-            employee.email = form_data.get('email', employee.email)
-            employee.phone = form_data.get('phone', employee.phone)
-            
-            if form_data.get('hire_date'):
-                employee.hire_date = datetime.strptime(
-                    form_data['hire_date'], '%Y-%m-%d'
-                ).date()
+            # Update basic fields
+            employee.english_name = form_data.get('english_name')
+            employee.arab_name = form_data.get('arab_name')
+            employee.email = form_data.get('email')
+            employee.phone = form_data.get('phone')
+            employee.hire_date = datetime.strptime(form_data['hire_date'], '%Y-%m-%d').date()
+            employee.position_id = int(form_data['position_id'])
+            employee.department_id = int(form_data['department_id'])
+            employee.level_id = int(form_data.get('level_id', 0)) or None
+            employee.supervisor_emp_id = int(form_data.get('supervisor_emp_id', 0)) or None
+            employee.is_active = form_data.get('is_active', False)
+            employee.updated_at = datetime.now()
 
-            employee.position_id = int(form_data.get('position_id', employee.position_id))
-            employee.department_id = int(form_data.get('department_id', employee.department_id))
-            employee.level_id = int(form_data.get('level_id', employee.level_id))
-            employee.supervisor_emp_id = (
-                int(form_data['supervisor_emp_id']) 
-                if form_data.get('supervisor_emp_id') 
-                else None
-            )
-            employee.is_active = form_data.get('is_active', str(employee.is_active)).lower() == 'true'
-            employee.updated_at = datetime.utcnow()
-
-            # Process skills if provided
-            if 'skill_name[]' in form_data:
-                self._process_employee_skills(form_data, employee_id)
-
-            # Commit changes to employee first
-            self.db.commit()
-
-            # Process documents if files were uploaded
-            if files and 'document_files[]' in files:
-                from services.employee_document_service import EmployeeDocumentService
-                doc_service = EmployeeDocumentService(self.db)
-                doc_service.save_employee_documents(
-                    employee_id=employee_id,
-                    form_data=form_data,
-                    files=files
-                )
-
+            session.commit()
             return True
 
-        except ValueError as ve:
-            self.db.rollback()
-            current_app.logger.error(f"Validation error updating employee: {ve}")
-            raise ve
         except Exception as e:
-            self.db.rollback()
-            current_app.logger.error(f"Error updating employee {employee_id}: {e}")
-            raise RuntimeError(f"Failed to update employee: {e}")
-
+            session.rollback()
+            raise
+        finally:
+            if callable(self.db):
+                session.close()
     def _process_employee_skills(self, form_data, employee_id: int) -> None:
         certified_indices = form_data.getlist('skill_certified[]')
         self.db.execute(
@@ -246,6 +239,35 @@ class EmployeeService:
             )
 
             return result.fetchall()
+        finally:
+            session.close()
+    def _generate_business_id(self):
+        """Generate sequential business ID in BIZYYYY-NNNN format"""
+        session = self.db() if callable(self.db) else self.db
+        try:
+            # Get the current year
+            current_year = datetime.now().year
+            
+            # Get the highest existing business ID for this year
+            max_id = session.query(Employee.busness_id)\
+                          .filter(Employee.busness_id.like(f'BIZ{current_year}-%'))\
+                          .order_by(Employee.busness_id.desc())\
+                          .first()
+            
+            if max_id and max_id[0]:
+                # Extract the numeric part and increment
+                last_num = int(max_id[0].split('-')[1])
+                new_num = last_num + 1
+            else:
+                # First ID of the year
+                new_num = 1
+                
+            # Format as BIZYYYY-000X
+            return f'BIZ{current_year}-{str(new_num).zfill(4)}'
+        except Exception as e:
+            current_app.logger.error(f"Error generating business ID: {e}")
+            # Fallback to UUID if sequential generation fails
+            return f'BIZ{current_year}-{str(uuid.uuid4().int)[:4]}'
         finally:
             session.close()
 

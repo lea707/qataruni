@@ -1,26 +1,45 @@
 from datetime import datetime
+import os
+
+from flask import current_app
 from models.employee_document import EmployeeDocument
 from database.connection import db  # db is SessionLocal
+from werkzeug.utils import secure_filename
 
 class EmployeeDocumentRepository:
-    def save_certificate(self, employee_id, cert_type_id, issuing_organization, validity_period, upload_date, file_path=None):
-        session = db()
-        try:
-            document = EmployeeDocument(
+    def _save_certificates(self, employee_id, form_data, files):
+        certificate_files = [
+            file for key, file in files.items(multi=True)
+            if key.startswith('document_file_')
+        ]
+        certificate_type_ids = form_data.getlist('certificate_type_id[]')
+        issuing_orgs = form_data.getlist('issuing_organization[]')
+        validity_months = form_data.getlist('validity_period_months[]')
+
+        for file, cert_type_id, org, months in zip(
+            certificate_files,
+            certificate_type_ids,
+            issuing_orgs,
+            validity_months
+        ):
+            # 🛡️ Defensive check for empty file
+            if not file or not file.filename.strip():
+                print("⚠️ Skipping empty certificate file input")
+                continue
+            print(f"📎 Certificate file received: {file.filename} | Content-Type: {file.content_type}")
+
+            filename = secure_filename(file.filename)
+            upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            file.save(upload_path)
+
+            self.document_repo.save_certificate(
                 employee_id=employee_id,
-                certificate_type_id=cert_type_id,
-                skill_name=None,
-                document_type_id=None,
-                file_path=file_path,
-                uploaded_at=upload_date,
-                issuing_organization=issuing_organization,
-                validity_period_months=validity_period
+                cert_type_id=int(cert_type_id),
+                issuing_organization=org,
+                validity_period=int(months) if months else None,
+                upload_date=datetime.utcnow(),
+                file_path=upload_path
             )
-            session.add(document)
-            session.commit()
-            return document
-        finally:
-            session.close()
 
     def save_document(self, employee_id, skill_name, cert_type_id, doc_type_id, file_path):
         session = db()

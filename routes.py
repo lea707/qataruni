@@ -104,70 +104,55 @@ def init_routes(app):
 
     @app.route('/employees/edit/<int:employee_id>', methods=['GET', 'POST'])
   
+    @app.route('/employees/edit/<int:employee_id>', methods=['GET', 'POST'])
+    @app.route('/employees/edit/<int:employee_id>', methods=['GET', 'POST'])
     def edit_employee(employee_id):
-        
-        db_session = db() 
+        db_session = db()
         employee_service = EmployeeService(db_session)
-        position_service = PositionService()
-        department_service = DepartmentService()
-        level_service = LevelService()
-        skill_service = SkillService()
-        employee_document_service = EmployeeDocumentService()
-        category_repository = SkillCategoryRepository()
-
-        employee = employee_service.get_employee(employee_id)
-        if not employee:
-            flash('Employee not found', 'error')
-            return redirect(url_for('list_employees'))
-
-        if request.method == 'POST':
-            try:
-                form_data = request.form
-                if employee_service.update_employee(employee_id, form_data, request.files):
-                    flash('Employee updated successfully!', 'success')
-                else:
-                    flash('Failed to update employee', 'error')
+        
+        try:
+            employee = employee_service.get_employee(employee_id)
+            if not employee:
+                flash('Employee not found', 'error')
                 return redirect(url_for('list_employees'))
-            except ValueError as ve:
-                flash(f'Validation error: {str(ve)}', 'error')
-            except Exception as e:
-                db_session.rollback()
-                flash(f'Error updating employee: {str(e)}', 'error')
-                current_app.logger.error(f"Error updating employee {employee_id}: {str(e)}")
-            return redirect(request.url)
 
-        # GET request - load form with current data
-        positions = position_service.get_all_positions()
-        departments = department_service.get_all_departments()
-        levels = level_service.get_all_levels()
-        document_types = employee_document_service.get_all_document_types()
-        certificate_types = employee_document_service.get_all_certificate_types()
-        skills = skill_service.get_all_skills()
-        skill_categories = category_repository.get_all_categories()
+            if request.method == 'POST':
+                try:
+                    form_data = request.form.to_dict()
+                    form_data['is_active'] = 'is_active' in request.form
+                    
+                    if employee_service.update_employee(employee_id, form_data, request.files):
+                        flash('Employee updated successfully!', 'success')
+                    else:
+                        flash('Failed to update employee', 'error')
+                    return redirect(url_for('list_employees'))
+                except Exception as e:
+                    db_session.rollback()
+                    flash(f'Error updating employee: {str(e)}', 'error')
+                    current_app.logger.error(f"Error updating employee {employee_id}: {str(e)}")
 
-        # Get employee's skill metadata
-        raw_skill_data = employee_service.get_employee_skills_with_metadata(employee_id)
-        employee_skills = [
-            {
-                "name": row[0],
-                "category": row[1],
-                "level": row[2]
-            }
-            for row in raw_skill_data
-        ]
-        print("Document types:", document_types)
-        return render_template(
-            'employees/edit.html',
-            employee=employee,
-            positions=positions,
-            departments=departments,
-            levels=levels,
-            document_types=document_types,
-            certificate_types=certificate_types,
-            skills=skills,
-            skill_categories=skill_categories,
-            employee_skills=employee_skills
-        )
+            # GET request - load form with current data
+            position_service = PositionService()
+            department_service = DepartmentService()
+            level_service = LevelService()
+            skill_service = SkillService()
+            employee_document_service = EmployeeDocumentService()
+
+            return render_template(
+                'employees/edit.html',
+                employee=employee,
+                positions=position_service.get_all_positions(),
+                departments=department_service.get_all_departments(),
+                levels=level_service.get_all_levels(),
+                document_types=employee_document_service.get_all_document_types(),
+                certificate_types=employee_document_service.get_all_certificate_types(),
+                skills=skill_service.get_all_skills(),
+                skill_categories=skill_service.get_all_skill_categories(),
+                employee_skills=employee_service.get_employee_skills_with_metadata(employee_id)
+            )
+
+        finally:
+            db_session.close()
 
     @app.route('/employees/delete/<int:employee_id>', methods=['POST'])
     def delete_employee(employee_id):
