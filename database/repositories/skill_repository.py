@@ -31,3 +31,13 @@ class SkillRepository:
             .order_by(employee_skills.c.skill_level)
         )
         return [row[0] for row in result]
+    
+    def search_skills(self, query):
+        """Search skills by name (case-insensitive partial match)"""
+        session = db()
+        try:
+            return session.query(Skill).filter(
+                Skill.skill_name.ilike(f'%{query}%')
+            ).order_by(Skill.skill_name).limit(10).all()
+        finally:
+            session.close()

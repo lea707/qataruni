@@ -37,6 +37,25 @@
                 </div>
             </div>
 
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">Email*</label>
+                    <input type="email" id="email" name="email" 
+                           value="{{ employee.email }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" name="phone" 
+                           value="{{ employee.phone or '' }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="hire_date">Hire Date*</label>
+                <input type="date" id="hire_date" name="hire_date" 
+                       value="{{ employee.hire_date.strftime('%Y-%m-%d') }}" required>
+            </div>
+
             <!-- Department Dropdown -->
             <div class="form-group">
                 <label for="department_id">Department*</label>
@@ -103,92 +122,194 @@
             </div>
         </div>
 
+        <!-- Skills Section -->
         <div class="form-section">
-            <h4>Skills</h4>
+            <h4><i class="fas fa-cogs"></i> Skills</h4>
             <div id="skills-section">
-              {% for skill in employee_skills %}
-                <div class="skill-entry mb-4 p-3 border rounded">
-                  <input type="text" name="skill_name[]" value="{{ skill.name }}" class="form-control mb-2" placeholder="Skill name" />
-          
-                  <select name="skill_category[]" class="form-select mb-2">
-                    <option value="">Select category</option>
-                    {% for category in skill_categories %}
-                      <option value="{{ category.category_id }}"
-                        {% if category.category_name == skill.category %}selected{% endif %}>
-                        {{ category.category_name }}
-                      </option>
+                {% if employee_skills %}
+                    {% for skill in employee_skills %}
+                        {% set is_certified = skill[3] in [1, '1', True, 'true', 'True'] %}
+                        <div class="skill-entry mb-4 p-3 border rounded">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>Skill:</strong> {{ skill[0] }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Category:</strong> {{ skill[1] or 'Unknown' }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Level:</strong> {{ skill[2] or 'Unknown' }}
+                                </div>
+                                <div class="col-md-2">
+                                    <strong>Certified:</strong> {{ 'Yes' if is_certified else 'No' }}
+                                </div>
+                            </div>
+                            <input type="hidden" name="skill_name[]" value="{{ skill[0] }}">
+                            <input type="hidden" name="skill_category[]" value="{{ skill[1] or '' }}">
+                            <input type="hidden" name="skill_level[]" value="{{ skill[2] or '' }}">
+                            <input type="checkbox" name="certified[]" value="{{ skill[0] }}" {% if is_certified %}checked{% endif %} onchange="toggleCertification(this)">
+
+                            {% if is_certified %}
+                                {% set cert = (employee_documents | selectattr('skill_name', 'equalto', skill[0]) | list | first) %}
+                                <div class="certification-details mt-2" style="display: block;">
+                                    <select name="certificate_type_id[]" class="form-select mb-2" onchange="fillDefaults(this)">
+                                        <option value="">Certificate type</option>
+                                        {% for cert_type in certificate_types %}
+                                            <option value="{{ cert_type.cert_type_id }}"
+                                                data-default-org="{{ cert_type.default_issuing_org or '' }}"
+                                                data-default-validity="{{ cert_type.default_validity_months or '' }}"
+                                                {% if cert and cert.cert_type_id|string == cert_type.cert_type_id|string %}selected{% endif %}>
+                                                {{ cert_type.type_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="text" name="issuing_organization[]" class="form-control mb-2" placeholder="Issuing organization" value="{{ cert.issuing_organization if cert and cert.issuing_organization else '' }}">
+                                    <input type="number" name="validity_period_months[]" class="form-control mb-2" placeholder="Validity (months)" min="0" value="{{ cert.validity_period_months if cert and cert.validity_period_months else '' }}">
+                                    <input type="file" name="certificate_file[]" class="form-control mb-2">
+                                    <div class="document-actions mt-2">
+                                        {% if cert %}
+                                            <a href="{{ url_for('download_document', doc_id=cert.document_id) }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-download"></i> Download Certificate
+                                            </a>
+                                            <form method="POST" action="{{ url_for('delete_document', doc_id=cert.document_id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this certificate?')">
+                                                    <i class="fas fa-trash"></i> Delete Certificate
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="certification-details mt-2" style="display: none;">
+                                    <select name="certificate_type_id[]" class="form-select mb-2" onchange="fillDefaults(this)">
+                                        <option value="">Certificate type</option>
+                                        {% for cert_type in certificate_types %}
+                                            <option value="{{ cert_type.cert_type_id }}"
+                                                data-default-org="{{ cert_type.default_issuing_org or '' }}"
+                                                data-default-validity="{{ cert_type.default_validity_months or '' }}">
+                                                {{ cert_type.type_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="text" name="issuing_organization[]" class="form-control mb-2" placeholder="Issuing organization">
+                                    <input type="number" name="validity_period_months[]" class="form-control mb-2" placeholder="Validity (months)" min="0">
+                                    <input type="file" name="certificate_file[]" class="form-control mb-2">
+                                </div>
+                            {% endif %}
+                            <button type="button" onclick="removeSkillRow(this)" class="btn btn-danger btn-sm mt-2">
+                                <i class="fas fa-trash"></i> Remove Skill
+                            </button>
+                        </div>
                     {% endfor %}
-                  </select>
-          
-                  <select name="skill_level[]" class="form-select mb-2">
-                    <option value="">Select level</option>
-                    {% for level in ['Beginner', 'Intermediate', 'Advanced'] %}
-                      <option value="{{ level }}"
-                        {% if level == skill.level %}selected{% endif %}>
-                        {{ level }}
-                      </option>
-                    {% endfor %}
-                  </select>
-          
-                  <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" name="skill_certified[]" value="{{ loop.index0 }}"
-                      {% if skill.certified %}checked{% endif %} onchange="toggleCertification(this)">
-                    <label class="form-check-label">Certified</label>
-                  </div>
-          
-                  <div class="certification-details" style="display: '{{ 'block' if skill.certified else 'none' }}';">
-                    <select name="certificate_type_id[]" class="form-select mb-2">
-                      <option value="">Certificate type</option>
-                      {% for cert in certificate_types %}
-                        <option value="{{ cert.cert_type_id }}">{{ cert.type_name }}</option>
-                      {% endfor %}
-                    </select>
-          
-                    <input type="text" name="issuing_organization[]" class="form-control mb-2" placeholder="Issuing organization">
-                    <input type="number" name="validity_period_months[]" class="form-control mb-2" placeholder="Validity (months)" min="0">
-          
-                    <div class="document-group mb-2">
-                      <input type="file" name="document_file_{{ loop.index0 }}[]" class="form-control">
+                {% else %}
+                    <!-- Show one empty skill field by default if no skills exist -->
+                    <div class="skill-entry mb-4 p-3 border rounded">
+                        <input type="text" name="skill_name[]" class="form-control mb-2" placeholder="Skill name" required oninput="updateCertifiedValue(this)">
+                        <select name="skill_category[]" class="form-select mb-2">
+                            <option value="">Select category</option>
+                            {% for category in skill_categories %}
+                                <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="skill_level[]" class="form-select mb-2">
+                            <option value="">Select level</option>
+                            {% for level in ['Beginner', 'Intermediate', 'Advanced'] %}
+                                <option value="{{ level }}">{{ level }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="certified[]" value="" onchange="toggleCertification(this)">
+                            <label class="form-check-label">Certified</label>
+                        </div>
+                        <div class="certification-details" style="display: none;">
+                            <select name="certificate_type_id[]" class="form-select mb-2" onchange="fillDefaults(this)">
+                                <option value="">Certificate type</option>
+                                {% for cert in certificate_types %}
+                                    <option value="{{ cert.cert_type_id }}"
+                                        data-default-org="{{ cert.default_issuing_org or '' }}"
+                                        data-default-validity="{{ cert.default_validity_months or '' }}">
+                                        {{ cert.type_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <input type="text" name="issuing_organization[]" class="form-control mb-2" placeholder="Issuing organization">
+                            <input type="number" name="validity_period_months[]" class="form-control mb-2" placeholder="Validity (months)" min="0">
+                            <input type="file" name="certificate_file[]" class="form-control mb-2">
+                        </div>
+                        <button type="button" onclick="removeSkillRow(this)" class="btn btn-danger btn-sm mt-2">
+                            <i class="fas fa-trash"></i> Remove Skill
+                        </button>
                     </div>
-          
-                    <button type="button" onclick="addDocumentField(this)" class="btn btn-sm btn-outline-secondary">
-                      <i class="fas fa-plus"></i> Add Document
-                    </button>
-                  </div>
-                </div>
-              {% endfor %}
+                {% endif %}
             </div>
-          
             <button type="button" onclick="addSkillField()" class="btn btn-secondary">
-              <i class="fas fa-plus"></i> Add Another Skill
+                <i class="fas fa-plus"></i> Add Another Skill
             </button>
-          </div>
-          
-          <!-- General Documents -->
-          <div class="form-section mt-5">
-            <h4><i class="fas fa-folder-open"></i> General Documents</h4>
-            <div id="general-documents">
-              <div class="document-row mb-3">
-                <select name="general_document_type_id[]" class="form-select mb-2">
-                  <option value="">Document type</option>
-                  {% for doc in document_types %}
-                    <option value="{{ doc.type_id }}">{{ doc.doc_type_name }}</option>
-                  {% endfor %}
-                </select>
-          
-                <input type="file" name="general_document_file[]" class="form-control mb-2">
-          
-                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
-                  <i class="fas fa-trash"></i> Remove
-                </button>
-              </div>
+        </div>
+
+        <!-- Existing Documents Section -->
+        {% if employee_documents %}
+        <div class="form-section mt-5">
+            <h4><i class="fas fa-file-alt"></i> Existing Documents</h4>
+            <div class="documents-grid">
+                {% for doc in employee_documents %}
+                    {% if not doc.cert_type_id %}
+                        <div class="document-card">
+                            <div class="document-info">
+                                <strong>{{ doc.document_name or 'Unnamed Document' }}</strong>
+                                <p>Uploaded: {{ doc.upload_date.strftime('%Y-%m-%d') if doc.upload_date else 'Unknown' }}</p>
+                                <p>Document Type: {{ doc.document_type.doc_type_name if doc.document_type else 'Unknown' }}</p>
+                                <span class="badge badge-secondary">Document</span>
+                            </div>
+                            <div class="document-actions">
+                                <a href="{{ url_for('download_document', doc_id=doc.document_id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                <form method="POST" action="{{ url_for('delete_document', doc_id=doc.document_id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this document?')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
             </div>
-          
+        </div>
+        {% endif %}
+        
+        <!-- Add New Documents -->
+        <div class="form-section mt-5">
+            <h4><i class="fas fa-folder-open"></i> Add New Documents</h4>
+            <div id="general-documents">
+                <div class="document-row mb-3 p-3 border rounded">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Document Type*</label>
+                            <select name="general_document_type_id[]" class="form-select mb-2" required>
+                                <option value="">Document type</option>
+                                {% for doc in document_types %}
+                                    <option value="{{ doc.type_id }}">{{ doc.doc_type_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Document File*</label>
+                            <input type="file" name="general_document_file[]" class="form-control mb-2" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
+                        </div>
+                    </div>
+                    <button type="button" onclick="removeDocumentRow(this)" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i> Remove Document
+                    </button>
+                </div>
+            </div>
+        
             <button type="button" onclick="addGeneralDocument()" class="btn btn-secondary">
-              <i class="fas fa-plus"></i> Add Document
+                <i class="fas fa-plus"></i> Add Document
             </button>
-          </div>
-          <div class="form-actions">
+        </div>
+
+        <div class="form-actions">
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Save Employee
             </button>
@@ -196,95 +317,138 @@
                 <i class="fas fa-times"></i> Cancel
             </a>
         </div>
-          <script>
-            let skillIndex = parseInt("{{ (employee_skills|length if employee_skills is defined else 0)|int }}", 10);
-            function addSkillField() {
-              const container = document.getElementById('skills-section');
-              const newRow = document.createElement('div');
-              newRow.className = 'skill-entry mb-4 p-3 border rounded';
-              newRow.innerHTML = `
-                <input type="text" name="skill_name[]" class="form-control mb-2" placeholder="Skill name" />
-            
-                <select name="skill_category[]" class="form-select mb-2">
-                  <option value="">Select category</option>
-                  {% for category in skill_categories %}
+    </form>
+</div>
+
+<script>
+    let skillIndex = parseInt("{{ (employee_skills|length if employee_skills is defined else 0)|int }}", 10);
+    let documentIndex = 0;
+    
+    function addSkillField() {
+        const container = document.getElementById('skills-section');
+        const newRow = document.createElement('div');
+        newRow.className = 'skill-entry mb-4 p-3 border rounded';
+        newRow.innerHTML = `
+            <input type="text" name="skill_name[]" class="form-control mb-2" placeholder="Skill name" required oninput="updateCertifiedValue(this)">
+        
+            <select name="skill_category[]" class="form-select mb-2">
+                <option value="">Select category</option>
+                {% for category in skill_categories %}
                     <option value="{{ category.category_id }}">{{ category.category_name }}</option>
-                  {% endfor %}
-                </select>
-            
-                <select name="skill_level[]" class="form-select mb-2">
-                  <option value="">Select level</option>
-                  {% for level in ['Beginner', 'Intermediate', 'Advanced'] %}
+                {% endfor %}
+            </select>
+        
+            <select name="skill_level[]" class="form-select mb-2">
+                <option value="">Select level</option>
+                {% for level in ['Beginner', 'Intermediate', 'Advanced'] %}
                     <option value="{{ level }}">{{ level }}</option>
-                  {% endfor %}
-                </select>
-            
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" name="skill_certified[]" value="${skillIndex}" onchange="toggleCertification(this)">
-                  <label class="form-check-label">Certified</label>
-                </div>
-            
-                <div class="certification-details" style="display: none;">
-                  <select name="certificate_type_id[]" class="form-select mb-2">
+                {% endfor %}
+            </select>
+        
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="certified[]" value="" onchange="toggleCertification(this)">
+                <label class="form-check-label">Certified</label>
+            </div>
+        
+            <div class="certification-details" style="display: none;">
+                <select name="certificate_type_id[]" class="form-select mb-2" onchange="fillDefaults(this)">
                     <option value="">Certificate type</option>
                     {% for cert in certificate_types %}
-                      <option value="{{ cert.cert_type_id }}">{{ cert.type_name }}</option>
+                        <option value="{{ cert.cert_type_id }}"
+                            data-default-org="{{ cert.default_issuing_org or '' }}"
+                            data-default-validity="{{ cert.default_validity_months or '' }}">
+                            {{ cert.type_name }}
+                        </option>
                     {% endfor %}
-                  </select>
-            
-                  <input type="text" name="issuing_organization[]" class="form-control mb-2" placeholder="Issuing organization">
-                  <input type="number" name="validity_period_months[]" class="form-control mb-2" placeholder="Validity (months)" min="0">
-            
-                  <div class="document-group mb-2">
-                    <input type="file" name="document_file_${skillIndex}[]">
-                  </div>
-            
-                  <button type="button" onclick="addDocumentField(this)" class="btn btn-sm btn-outline-secondary">
-                    <i class="fas fa-plus"></i> Add Document
-                  </button>
-                </div>
-            
-                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm mt-2">
-                  <i class="fas fa-trash"></i> Remove
-                </button>
-              `;
-              container.appendChild(newRow);
-              skillIndex++;
-            }
-            
-            function toggleCertification(checkbox) {
-              const certSection = checkbox.closest('.skill-entry').querySelector('.certification-details');
-              certSection.style.display = checkbox.checked ? 'block' : 'none';
-            }
-            
-            function addDocumentField(button) {
-              const group = button.closest('.certification-details').querySelector('.document-group');
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.name = group.querySelector('input').name;
-              input.className = 'form-control mt-2';
-              group.appendChild(input);
-            }
-            
-            function addGeneralDocument() {
-              const container = document.getElementById('general-documents');
-              const row = document.createElement('div');
-              row.className = 'document-row mb-3';
-              row.innerHTML = `
-                <select name="general_document_type_id[]" class="form-select mb-2">
-                  <option value="">Document type</option>
-                  {% for doc in document_types %}
-                    <option value="{{ doc.type_id }}">{{ doc.type_name }}</option>
-                  {% endfor %}
                 </select>
-            
-                <input type="file" name="general_document_file[]" class="form-control mb-2">
-            
-                <button type="button" onclick="this.parentNode.remove()" class="btn btn-danger btn-sm">
-                  <i class="fas fa-trash"></i> Remove
-                </button>
-              `;
-              container.appendChild(row);
-            }
-            </script>
-            {% endblock %}
+        
+                <input type="text" name="issuing_organization[]" class="form-control mb-2" placeholder="Issuing organization">
+                <input type="number" name="validity_period_months[]" class="form-control mb-2" placeholder="Validity (months)" min="0">
+                <input type="file" name="certificate_file[]" class="form-control mb-2">
+            </div>
+        
+            <button type="button" onclick="removeSkillRow(this)" class="btn btn-danger btn-sm mt-2">
+                <i class="fas fa-trash"></i> Remove Skill
+            </button>
+        `;
+        container.appendChild(newRow);
+        skillIndex++;
+    }
+    
+    function removeSkillRow(button) {
+        const skillEntry = button.closest('.skill-entry');
+        if (skillEntry) {
+            skillEntry.remove();
+        }
+    }
+    
+    function toggleCertification(checkbox) {
+        const certSection = checkbox.closest('.skill-entry').querySelector('.certification-details');
+        certSection.style.display = checkbox.checked ? 'block' : 'none';
+    }
+
+    function updateCertifiedValue(skillInput) {
+        // Find the certified checkbox in the same skill-entry
+        const skillEntry = skillInput.closest('.skill-entry');
+        if (!skillEntry) return;
+        const certifiedCheckbox = skillEntry.querySelector('input[type="checkbox"][name="certified[]"]');
+        if (certifiedCheckbox) {
+            certifiedCheckbox.value = skillInput.value;
+        }
+    }
+
+    function fillDefaults(selectElement) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const orgInput = selectElement.closest('.certification-details').querySelector('input[name="issuing_organization[]"]');
+        const validityInput = selectElement.closest('.certification-details').querySelector('input[name="validity_period_months[]"]');
+
+        if (orgInput && selectedOption.hasAttribute('data-default-org')) {
+            orgInput.value = selectedOption.getAttribute('data-default-org');
+        }
+        if (validityInput && selectedOption.hasAttribute('data-default-validity')) {
+            validityInput.value = selectedOption.getAttribute('data-default-validity');
+        }
+    }
+    
+    function addGeneralDocument() {
+        const container = document.getElementById('general-documents');
+        const row = document.createElement('div');
+        row.className = 'document-row mb-3 p-3 border rounded';
+        row.innerHTML = `
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Document Type*</label>
+                    <select name="general_document_type_id[]" class="form-select mb-2" required>
+                        <option value="">Document type</option>
+                        {% for doc in document_types %}
+                            <option value="{{ doc.type_id }}">{{ doc.doc_type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Document File*</label>
+                    <input type="file" name="general_document_file[]" class="form-control mb-2" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
+                </div>
+            </div>
+            <button type="button" onclick="removeDocumentRow(this)" class="btn btn-danger btn-sm">
+                <i class="fas fa-trash"></i> Remove Document
+            </button>
+        `;
+        container.appendChild(row);
+        documentIndex++;
+    }
+    
+    function removeDocumentRow(button) {
+        const documentEntry = button.closest('.document-row');
+        if (documentEntry) {
+            documentEntry.remove();
+        }
+    }
+    
+    function addCertificateToSkill(documentId, certificateType) {
+        // This function can be used to link existing certificates to skills
+        // You can implement a modal or dropdown to select which skill to link to
+        alert(`Certificate ${certificateType} (ID: ${documentId}) can be linked to a skill. This feature can be implemented with a modal dialog.`);
+    }
+</script>
+{% endblock %}

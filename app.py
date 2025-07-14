@@ -8,9 +8,7 @@ def test_create_employee_success():
 def create_app():
     app = Flask(__name__)
 
-    # ✅ Upload folder config
-    app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    # Document folders are created dynamically per employee
 
     # ✅ Fake admin for testing
     @app.before_request

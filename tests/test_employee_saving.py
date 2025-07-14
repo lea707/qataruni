@@ -4,6 +4,14 @@ from io import BytesIO
 from werkzeug.datastructures import FileStorage
 from unittest.mock import patch, MagicMock
 from sqlalchemy.orm import Session
+from app import app
+import io
+from datetime import date
+from services.employee_service import EmployeeService
+from models.employee import Employee
+from models.employee_document import EmployeeDocument
+from database.connection import db
+from sqlalchemy import text
 
 # Test data builders
 def build_employee_data():
@@ -221,3 +229,95 @@ class TestEmployeeSaving:
                     # Verify skills were processed correctly
                     args, _ = mock_skills.call_args
                     assert args[1] == '1,2,3'  # Should handle string input
+
+def test_edit_employee_skill_certification():
+    with app.app_context():
+        service = EmployeeService()
+        session = db()
+
+        # Clean up
+        session.query(EmployeeDocument).delete()
+        session.query(Employee).delete()
+        session.commit()
+
+        # Create employee with a certified skill
+        form_data = {
+            'arab_name': 'Test',
+            'english_name': 'Test',
+            'email': 'test@example.com',
+            'hire_date': '2024-01-01',
+            'position_id': 1,
+            'department_id': 1,
+            'level_id': 1,
+            'skill_name[]': 'Python',
+            'skill_category[]': '1',
+            'skill_level[]': 'Advanced',
+            'certified[]': '0',
+            'certificate_type_id[]': '1',
+            'issuing_organization[]': 'Test Org',
+            'validity_period_months[]': '12',
+        }
+        files = {
+            'certificate_file[]': (io.BytesIO(b"fake cert content"), 'cert.pdf')
+        }
+        emp_id = service.create_employee(form_data, files)
+        employee = session.query(Employee).get(emp_id)
+        assert employee is not None
+        # Check certificate exists
+        cert = session.query(EmployeeDocument).filter_by(employee_id=emp_id, skill_name='Python').first()
+        assert cert is not None
+        assert cert.certificate_type is not None
+        assert cert.issuing_organization == 'Test Org'
+        assert cert.validity_period == 12
+
+        # Edit: remove certification
+        edit_form_data = {
+            'arab_name': 'Test',
+            'english_name': 'Test',
+            'email': 'test@example.com',
+            'hire_date': '2024-01-01',
+            'position_id': 1,
+            'department_id': 1,
+            'level_id': 1,
+            'skill_name[]': 'Python',
+            'skill_category[]': '1',
+            'skill_level[]': 'Advanced',
+            # 'certified[]' omitted to un-certify
+            'certificate_type_id[]': '',
+            'issuing_organization[]': '',
+            'validity_period_months[]': '',
+        }
+        service.update_employee(emp_id, edit_form_data, {})
+        # Certificate should be gone
+        cert = session.query(EmployeeDocument).filter_by(employee_id=emp_id, skill_name='Python').first()
+        assert cert is None
+
+        # Edit: re-certify with new info
+        edit_form_data['certified[]'] = '0'
+        edit_form_data['certificate_type_id[]'] = '1'
+        edit_form_data['issuing_organization[]'] = 'New Org'
+        edit_form_data['validity_period_months[]'] = '24'
+        files = {
+            'certificate_file[]': (io.BytesIO(b"new cert content"), 'cert2.pdf')
+        }
+        service.update_employee(emp_id, edit_form_data, files)
+        cert = session.query(EmployeeDocument).filter_by(employee_id=emp_id, skill_name='Python').first()
+        assert cert is not None
+        assert cert.issuing_organization == 'New Org'
+        assert cert.validity_period == 24
+        session.close()
+
+def test_print_employee_skills_and_documents():
+    from app import app
+    from database.connection import db
+    with app.app_context():
+        session = db()
+        # Print all employee_skills
+        print("--- employee_skills table ---")
+        for row in session.execute(text("SELECT * FROM employee_skills")).fetchall():
+            print(row)
+        # Print all employee_documents
+        print("--- employee_documents table ---")
+        for row in session.execute(text("SELECT * FROM employee_documents")).fetchall():
+            print(row)
+        session.close()

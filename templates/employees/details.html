@@ -1,14 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}{{ employee.name }} | Employee Details{% endblock %}
+{% block title %}{{ employee.english_name }} | Employee Details{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/employee_details.css') }}">
+{% endblock %}
 
 {% block content %}
 <div class="employee-details">
     <div class="employee-header">
-        <h1>{{ employee.name }}</h1>
+        <h1>{{ employee.english_name }}</h1>
         <div class="employee-meta">
             <span class="badge">{{ employee.position_name }}</span>
             <span class="department">{{ employee.department_name }}</span>
+            <span class="business-id">ID: {{ employee.busness_id }}</span>
         </div>
     </div>
 
@@ -58,20 +64,34 @@
           </div>
         </div>
         {% if show_documents %}
-  <h3><i class="fas fa-file-alt"></i> Documents</h3>
-  {% if employee.documents %}
-    <ul>
-      {% for doc in employee.documents %}
-        <li>
-          {{ doc.document_type }} — 
-          <a href="{{ url_for('download_document', doc_id=doc.id) }}">Download</a>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>No documents uploaded.</p>
-  {% endif %}
-{% endif %}
+        <div class="info-section">
+          <h3><i class="fas fa-file-alt"></i> Documents</h3>
+          {% if employee.documents %}
+            <div class="documents-grid">
+              {% for doc in employee.documents %}
+                <div class="document-card">
+                  <div class="document-info">
+                    <strong>{{ doc.document_name or 'Unnamed Document' }}</strong>
+                    <p>Uploaded: {{ doc.upload_date.strftime('%Y-%m-%d') if doc.upload_date else 'Unknown' }}</p>
+                    {% if doc.cert_type_id %}
+                      <span class="badge badge-primary">Certificate</span>
+                    {% else %}
+                      <span class="badge badge-secondary">Document</span>
+                    {% endif %}
+                  </div>
+                  <div class="document-actions">
+                    <a href="{{ url_for('download_document', doc_id=doc.document_id) }}" class="btn btn-sm btn-primary">
+                      <i class="fas fa-download"></i> Download
+                    </a>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p>No documents uploaded.</p>
+          {% endif %}
+        </div>
+        {% endif %}
     </div>
 
     <div class="actions">

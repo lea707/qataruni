@@ -20,3 +20,7 @@ class SkillService:
             session.close()
     def get_all_skills(self):
      return self.repository.get_all_skills()
+    
+    def search_skills(self, query):
+        """Search skills by name (case-insensitive partial match)"""
+        return self.repository.search_skills(query)

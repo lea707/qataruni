@@ -126,7 +126,24 @@
     cursor: pointer;
     font-weight: bold;
 }
+.invalid-feedback {
+    display: none;
+    color: #dc3545;
+}
 
+.is-invalid ~ .invalid-feedback {
+    display: block;
+}
+
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.skill-search {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+}
 /* Language input */
 .language-group {
     margin-top: 1rem;
@@ -216,5 +233,96 @@
 
 .btn-secondary:hover {
     background: #7f8c8d;
+}
+
+/* Document Cards for Edit Form */
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.document-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.document-info {
+    flex: 1;
+}
+
+.document-info strong {
+    display: block;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.document-info p {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.document-actions {
+    margin-left: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.badge-primary {
+    background: #007bff;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+.badge-secondary {
+    background: #6c757d;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    color: white;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Responsive design for document cards */
+@media (max-width: 768px) {
+    .documents-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .document-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .document-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-start;
+    }
 }
 
