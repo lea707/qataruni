@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{{ department.department_name }} Department | Employee Skills Tracker{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/department_employee_list.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/department_detail.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="department-detail-container">
+    <h1>{{ department.department_name }} Department</h1>
+    <div class="department-info-card">
+        <span class="info-label">Department Name:</span>
+        <span class="info-value">{{ department.department_name }}</span><br>
+        {% if department.director %}
+        <span class="info-label">Director:</span>
+        <span class="info-value">{{ department.director.english_name }}</span><br>
+        {% endif %}
+        {% if department.parent_department %}
+        <span class="info-label">Parent Department:</span>
+        <span class="info-value">{{ department.parent_department.department_name }}</span><br>
+        {% endif %}
+    </div>
+    <ul class="employee-list department-employee-list">
+      {% if department.employees %}
+        {% for employee in department.employees %}
+          <li>
+            <h3>{{ employee.english_name }}</h3>
+            <p>Skills: {{ employee.skills | map(attribute='skill_name') | join(', ') }}</p>
+          </li>
+        {% endfor %}
+      {% else %}
+        <p>No employees found in this department.</p>
+      {% endif %}
+    </ul>
+    <a href="{{ url_for('list_departments') }}" class="back-link">&larr; Back to Departments</a>
+</div>
+{% endblock %} 

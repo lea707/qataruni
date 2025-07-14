@@ -1,0 +1,73 @@
+/* Department List Page Styles */
+.department-list-page {
+    max-width: 1100px;
+    margin: 48px auto 0 auto;
+    padding: 0 16px;
+}
+.department-list-page h1 {
+    color: #2c3e50;
+    font-size: 2.1rem;
+    font-weight: 900;
+    margin-bottom: 28px;
+    letter-spacing: 0.01em;
+    text-align: center;
+}
+.department-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 32px;
+    margin: 0;
+}
+.department-card {
+    background: #fff;
+    border-left: 6px solid #38b2ac;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(56, 178, 172, 0.10);
+    padding: 32px 24px 24px 24px;
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+}
+.department-card:hover {
+    box-shadow: 0 8px 32px rgba(56, 178, 172, 0.18);
+    transform: translateY(-4px) scale(1.02);
+}
+.department-card h2 {
+    color: #222;
+    font-weight: 800;
+    font-size: 1.35rem;
+    margin-bottom: 12px;
+    letter-spacing: 0.01em;
+}
+.employee-count {
+    display: inline-flex;
+    align-items: center;
+    background: #e6fffa;
+    color: #319795;
+    font-weight: 700;
+    border-radius: 16px;
+    padding: 4px 14px 4px 10px;
+    font-size: 0.98em;
+    margin-bottom: 8px;
+    margin-right: 8px;
+}
+.employee-count::before {
+    content: '\f0c0'; /* FontAwesome users icon */
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    margin-right: 7px;
+}
+.sample-employees {
+    color: #555;
+    font-size: 0.97em;
+    margin-top: 8px;
+}
+.department-actions {
+    margin-top: 18px;
+    display: flex;
+    gap: 10px;
+}
+.boutton-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+} 

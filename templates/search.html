@@ -9,63 +9,55 @@
 {% block title %}Search Employees | Employee Skills Tracker{% endblock %}
 
 {% block content %}
-<div class="search-page">
-    <div class="search-sidebar">
-        <h1><i class="fas fa-search"></i> Employee Search</h1>
-        
-        <form method="GET" action="/search" class="search-form">
-            <div class="form-group">
-                <label for="search_id"><i class="fas fa-id-card"></i> Employee ID:</label>
-                <input type="number" id="search_id" name="id" value="{{ request.args.get('id', '') }}" class="form-input">
+<div class="search-page" style="display: flex; flex-direction: row; gap: 24px;">
+    <!-- Left Filters -->
+    <div class="search-sidebar" style="flex: 0 0 300px;">
+        <div class="form-group">
+            <label for="search_business_id"><i class="fas fa-id-card"></i> Business ID:</label>
+            <div class="autocomplete-wrapper" style="position: relative;">
+                <input type="text" id="search_business_id" name="business_id" value="{{ request.args.get('business_id', '') }}" class="form-input autocomplete-input" placeholder="Type business ID..." autocomplete="off" data-autocomplete-list='{{ all_employees | tojson }}' data-autocomplete-field="busness_id">
             </div>
-
-            <div class="form-group">
-                <label for="search_name"><i class="fas fa-user"></i> Name:</label>
-                <input type="text" id="search_name" name="name" value="{{ request.args.get('name', '') }}" placeholder="Enter name..." class="form-input">
+        </div>
+        <div class="form-group">
+            <label for="search_name"><i class="fas fa-user"></i> Name:</label>
+            <div class="autocomplete-wrapper" style="position: relative;">
+                <input type="text" id="search_name" name="name" value="{{ request.args.get('name', '') }}" class="form-input autocomplete-input" placeholder="Type name..." autocomplete="off" data-autocomplete-list='{{ all_employees | tojson }}' data-autocomplete-field="full_name">
             </div>
-
-            <div class="form-group">
-                <label for="search_department"><i class="fas fa-building"></i> Department:</label>
-                <select id="search_department" name="department" class="form-input">
-                    <option value="">All Departments</option>
-                    {% for dept in departments %}
-                    <option value="{{ dept }}" {% if request.args.get('department') == dept %}selected{% endif %}>{{ dept }}</option>
-                    {% endfor %}
-                </select>
+        </div>
+        <div class="form-group">
+            <label for="search_department"><i class="fas fa-building"></i> Department:</label>
+            <select id="search_department" name="department" class="form-input">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                <option value="{{ dept }}" {% if request.args.get('department') == dept %}selected{% endif %}>{{ dept }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="search_skill"><i class="fas fa-cogs"></i> Skill:</label>
+            <div class="autocomplete-wrapper" style="position: relative;">
+                <input type="text" id="search_skill" name="skill_name" class="form-input autocomplete-input" value="{{ request.args.get('skill_name', '') }}" placeholder="Type skill..." autocomplete="off" data-autocomplete-list='{{ existing_skills | tojson }}' data-autocomplete-field="skill_name">
             </div>
-            <div class="form-group">
-                <label for="search_technical_skill"><i class="fas fa-cogs"></i> Technical Skills:</label>
-                <input type="text" id="search_technical_skill" name="technical_skill" value="{{ request.args.get('technical_skill', '') }}" placeholder="Enter technical skill..." class="form-input">
-            </div>
-            <div class="form-group">
-                <label for="search_business_skill"><i class="fas fa-briefcase"></i> Business Skills:</label>
-                <input type="text" id="search_business_skill" name="business_skill" value="{{ request.args.get('business_skill', '') }}" placeholder="Enter business skill..." class="form-input">
-            </div>
-            <div class="form-group">
-                <label for="search_languages_skill"><i class="fas fa-language"></i> Languages:</label>
-                <input type="text" id="search_languages_skill" name="languages_skill" value="{{ request.args.get('languages_skill', '') }}" placeholder="Enter language..." class="form-input">
-            </div>
-            <!-- Remove the extra empty form-group div -->
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-search"></i> Search
-                </button>
-                <a href="{{ url_for('search') }}" class="btn btn-secondary">
-                    <i class="fas fa-undo"></i> Clear
-                </a>
-            </div>
-        </form>
+        </div>
+        <div class="form-group">
+            <label for="search_skill_category">Skill Category:</label>
+            <select id="search_skill_category" name="skill_category" class="form-input">
+                <option value="">All Categories</option>
+                {% for cat in skill_categories %}
+                <option value="{{ cat.category_id }}" {% if request.args.get('skill_category') == cat.category_id|string %}selected{% endif %}>{{ cat.category_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
-
-    <div class="search-results">
+    <!-- Center Results -->
+    <div class="search-results" style="flex: 1; min-width: 0;">
         {% if employees %}
             <h2><i class="fas fa-users"></i> Search Results</h2>
             <div class="table-container">
                 <table class="results-table">
                     <thead>
                         <tr>
-                            <th><i class="fas fa-id-card"></i> ID</th>
+                            <th><i class="fas fa-id-card"></i> Business ID</th>
                             <th><i class="fas fa-user"></i> Name</th>
                             <th><i class="fas fa-building"></i> Department</th>
                             <th><i class="fas fa-cogs"></i> Technical Skills</th>
@@ -75,7 +67,7 @@
                     <tbody>
                         {% for employee in employees %}
                         <tr>
-                            <td>{{ employee.id }}</td>
+                            <td>{{ employee.business_id }}</td>
                             <td>{{ employee.name }}</td>
                             <td>{{ employee.department }}</td>
                             <td>{{ employee.skills.Technical|join(', ') }}</td>
@@ -95,30 +87,162 @@
                 <p>No employees found matching your criteria</p>
             </div>
         {% endif %}
+        {% if total_pages > 1 %}
+        <div class="pagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 24px;">
+            {% if page > 1 %}
+            <a class="btn btn-secondary" href="{{ url_for('search') }}?{{ query_string }}&page={{ page-1 }}">&laquo; Prev</a>
+            {% endif %}
+            {% for p in range(1, total_pages+1) %}
+                {% if p == page %}
+                    <span class="btn btn-primary" style="pointer-events: none;">{{ p }}</span>
+                {% else %}
+                    <a class="btn btn-secondary" href="{{ url_for('search') }}?{{ query_string }}&page={{ p }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page < total_pages %}
+            <a class="btn btn-secondary" href="{{ url_for('search') }}?{{ query_string }}&page={{ page+1 }}">Next &raquo;</a>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
+    <!-- Right Filters -->
+    <form method="GET" action="/search" class="search-sidebar search-form" style="display: flex; flex-direction: column; height: 100%;">
+        <div id="sidebar-filters" style="flex: 0 0 auto;">
+            <div class="form-group">
+                <label for="search_skill_level">Skill Level:</label>
+                <select id="search_skill_level" name="skill_level" class="form-input">
+                    <option value="">All Levels</option>
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                    <option value="Expert">Expert</option>
+                    <option value="Not Applicable">Not Applicable</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="search_certificate_type">Certificate Type:</label>
+                <select id="search_certificate_type" name="certificate_type" class="form-input">
+                    <option value="">All Certificate Types</option>
+                    {% for cert in certificate_types %}
+                    <option value="{{ cert.cert_type_id }}" {% if request.args.get('certificate_type') == cert.cert_type_id|string %}selected{% endif %}>{{ cert.type_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="search_document_type">Document Type:</label>
+                <select id="search_document_type" name="document_type" class="form-input">
+                    <option value="">All Document Types</option>
+                    {% for doc in document_types %}
+                    <option value="{{ doc.type_id }}" {% if request.args.get('document_type') == doc.type_id|string %}selected{% endif %}>{{ doc.doc_type_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="search_supervisor">Supervisor:</label>
+                <div class="autocomplete-wrapper" style="position: relative;">
+                    <input type="text" id="search_supervisor" name="supervisor_name" class="form-input autocomplete-input" value="{{ request.args.get('supervisor_name', '') }}" placeholder="Type supervisor..." autocomplete="off" data-autocomplete-list='{{ all_employees | tojson }}' data-autocomplete-field="full_name">
+                    <input type="hidden" id="search_supervisor_emp_id" name="supervisor_emp_id" value="{{ request.args.get('supervisor_emp_id', '') }}">
+                </div>
+            </div>
+        </div>
+        <div style="flex: 1 1 auto;"></div>
+        <div class="form-actions sidebar-bottom" style="flex-direction: column; gap: 12px; margin-bottom: 0;">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <i class="fas fa-search"></i> Search
+            </button>
+            <a href="{{ url_for('search') }}" class="btn btn-secondary" style="width: 100%;">
+                <i class="fas fa-undo"></i> Clear
+            </a>
+        </div>
+    </form>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const deptSelect = document.getElementById('search_department');
-        
-        deptSelect.addEventListener('focus', function() {
-            // Calculate height based on content
-            const visibleOptions = Math.min(this.options.length, 5);
-            const optionHeight = 38; // px per option (adjust as needed)
-            this.size = visibleOptions;
-            this.style.height = `${visibleOptions * optionHeight}px`;
+// Helper to get full name for employee
+function getFullName(emp) {
+    if (emp.english_name && emp.busness_id) {
+        return emp.english_name + ' (' + emp.busness_id + ')';
+    }
+    if (emp.english_name && emp.arab_name) {
+        return emp.english_name + ' (' + emp.arab_name + ')';
+    }
+    return emp.english_name || emp.arab_name || emp.busness_id || '';
+}
+
+function setupAutocomplete(input) {
+    const list = JSON.parse(input.getAttribute('data-autocomplete-list'));
+    const field = input.getAttribute('data-autocomplete-field');
+    let dropdown;
+    input.addEventListener('input', function() {
+        closeDropdown();
+        const value = this.value.trim().toLowerCase();
+        if (!value) return;
+        dropdown = document.createElement('div');
+        dropdown.className = 'autocomplete-dropdown';
+        let matches = [];
+        if (field === 'full_name') {
+            matches = list.filter(emp => getFullName(emp).toLowerCase().includes(value)).slice(0, 8);
+        } else {
+            matches = list.filter(item => (item[field] || '').toLowerCase().includes(value)).slice(0, 8);
+        }
+        matches.forEach(item => {
+            const option = document.createElement('div');
+            option.className = 'autocomplete-option';
+            option.textContent = field === 'full_name' ? getFullName(item) : item[field];
+            option.addEventListener('mousedown', function(e) {
+                input.value = this.textContent;
+                closeDropdown();
+            });
+            dropdown.appendChild(option);
         });
-        
-        deptSelect.addEventListener('blur', function() {
-            this.size = 1;
-            this.style.height = ''; // Reset to default
-        });
-        
-        deptSelect.addEventListener('change', function() {
-            this.size = 1;
-            this.style.height = '';
-            this.blur();
-        });
+        if (matches.length > 0) {
+            input.parentNode.appendChild(dropdown);
+        }
     });
-    </script>
+    input.addEventListener('blur', function() {
+        setTimeout(closeDropdown, 100);
+    });
+    function closeDropdown() {
+        if (dropdown && dropdown.parentNode) {
+            dropdown.parentNode.removeChild(dropdown);
+            dropdown = null;
+        }
+    }
+}
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.autocomplete-input').forEach(setupAutocomplete);
+    // Skill search
+    document.querySelectorAll('.skill-search').forEach(initSkillSearch);
+    // Supervisor search
+    document.querySelectorAll('.supervisor-search').forEach(initSupervisorSearch);
+    // Department dropdown UX
+    const deptSelect = document.getElementById('search_department');
+    deptSelect.addEventListener('focus', function() {
+        const visibleOptions = Math.min(this.options.length, 5);
+        const optionHeight = 38;
+        this.size = visibleOptions;
+        this.style.height = `${visibleOptions * optionHeight}px`;
+    });
+    deptSelect.addEventListener('blur', function() {
+        this.size = 1;
+        this.style.height = '';
+    });
+    deptSelect.addEventListener('change', function() {
+        this.size = 1;
+        this.style.height = '';
+        this.blur();
+    });
+    // Add existing skills data to JavaScript
+    window.existingSkills = {{ existing_skills|tojson|safe }};
+});
+</script>
+<style>
+/* Make dropdown text black in all sidebars */
+.search-sidebar select, .search-sidebar option, .search-sidebar input, .search-sidebar .form-input {
+    color: #222 !important;
+    background: #fff !important;
+}
+.search-sidebar .form-input::placeholder {
+    color: #888 !important;
+}
+</style>
 {% endblock %}

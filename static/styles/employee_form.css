@@ -1,11 +1,12 @@
 /* Form container */
 .form-container {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: #ffffff;
+    background: #fcfcfa;
+    border: 1px solid #e0e0e0;
     border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 24px 18px;
+    max-width: 900px;
+    margin: 28px auto;
+    box-shadow: 0 2px 12px rgba(60, 60, 120, 0.06);
 }
 
 /* Form header */
@@ -23,15 +24,21 @@
 
 /* Form sections */
 .form-section {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #ecf0f1;
+    background: #f7f7f4;
+    border-radius: 8px;
+    border: 1px solid #ececec;
+    margin-bottom: 18px;
+    padding: 18px 14px 10px 14px;
 }
 
-.form-section h2 {
-    color: #3498db;
-    margin-bottom: 1rem;
-    font-size: 1.3rem;
+.form-section h2, .form-section h4 {
+    color: #2c3e50;
+    border-bottom: 1.5px solid #e0e0e0;
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+    font-weight: 700;
+    font-size: 1.15rem;
+    background: none;
 }
 
 .form-section h2 i {
@@ -43,30 +50,29 @@
     margin-bottom: 1.5rem;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
+.form-group label, .checkbox-label, .form-check-label {
     color: #34495e;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: block;
 }
 
-.form-group input[type="text"],
-.form-group input[type="number"],
-.form-group select {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
+input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="number"], select, textarea {
+    border: 1px solid #bfc9d1;
     border-radius: 6px;
-    font-size: 1rem;
-    transition: border-color 0.3s;
+    background: #f7fafd;
+    color: #222;
+    font-size: 15px;
+    padding: 9px 11px;
+    margin-bottom: 0;
+    box-shadow: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
-
-.form-group input[type="text"]:focus,
-.form-group input[type="number"]:focus,
-.form-group select:focus {
+input:focus, select:focus, textarea:focus {
     border-color: #3498db;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    background: #fff;
+    box-shadow: 0 0 0 2px #eaf6ff;
 }
 
 /* Skills input */
@@ -126,24 +132,7 @@
     cursor: pointer;
     font-weight: bold;
 }
-.invalid-feedback {
-    display: none;
-    color: #dc3545;
-}
 
-.is-invalid ~ .invalid-feedback {
-    display: block;
-}
-
-.is-invalid {
-    border-color: #dc3545;
-}
-
-.skill-search {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
-}
 /* Language input */
 .language-group {
     margin-top: 1rem;
@@ -203,126 +192,45 @@
 /* Form actions */
 .form-actions {
     display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 2rem;
+    gap: 14px;
+    margin-top: 24px;
 }
 
-.btn {
-    padding: 0.75rem 1.5rem;
+.btn, .btn-primary, .btn-danger, .btn-secondary {
+    background: #3498db;
+    color: #fff;
     border: none;
     border-radius: 6px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s;
+    font-weight: 600;
+    padding: 10px 20px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.08);
 }
-
-.btn-primary {
-    background: #3498db;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #2980b9;
-}
-
 .btn-secondary {
-    background: #95a5a6;
-    color: white;
+    background: #fff;
+    color: #3498db;
+    border: 1.5px solid #3498db;
 }
-
-.btn-secondary:hover {
-    background: #7f8c8d;
-}
-
-/* Document Cards for Edit Form */
-.documents-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.document-card {
-    background: white;
-    padding: 1rem;
-    border-radius: 6px;
-    border: 1px solid #dee2e6;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.document-info {
-    flex: 1;
-}
-
-.document-info strong {
-    display: block;
-    color: #2c3e50;
-    margin-bottom: 0.25rem;
-}
-
-.document-info p {
-    color: #6c757d;
-    font-size: 0.9rem;
-    margin: 0;
-}
-
-.document-actions {
-    margin-left: 1rem;
-    display: flex;
-    gap: 0.5rem;
-}
-
-.badge-primary {
-    background: #007bff;
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-}
-
-.badge-secondary {
-    background: #6c757d;
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-}
-
 .btn-danger {
-    background: #dc3545;
-    color: white;
+    background: #e74c3c;
+    color: #fff;
+}
+.btn:hover, .btn-primary:hover, .btn-danger:hover {
+    background: #217dbb;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(52, 152, 219, 0.12);
+}
+.btn-secondary:hover {
+    background: #eaf6ff;
+    color: #3498db;
 }
 
-.btn-danger:hover {
-    background: #c82333;
-    color: white;
+.invalid-feedback {
+    color: #e74c3c;
 }
 
-.btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-}
-
-/* Responsive design for document cards */
-@media (max-width: 768px) {
-    .documents-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .document-card {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-    
-    .document-actions {
-        margin-left: 0;
-        width: 100%;
-        justify-content: flex-start;
-    }
+.skill-suggestion.active, .supervisor-suggestion.active {
+    background: #eaf6ff;
+    color: #217dbb;
 }
 

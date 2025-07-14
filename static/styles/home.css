@@ -1,0 +1,86 @@
+/* Home Page Styles */
+.home-hero {
+    background: linear-gradient(120deg, #ffffff 0%, #ebc8c8 100%);
+    padding: 80px 0 60px 0;
+    text-align: center;
+}
+.home-hero h1 {
+    color: #2c3e50;
+    font-size: 2.7rem;
+    font-weight: 900;
+    margin-bottom: 18px;
+    letter-spacing: 0.01em;
+}
+.home-hero p {
+    color: #444;
+    font-size: 1.18rem;
+    margin-bottom: 28px;
+    line-height: 1.7;
+}
+.home-hero .cta-btn {
+    background: #992424;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 14px 36px;
+    box-shadow: 0 2px 8px rgba(56, 178, 172, 0.10);
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    display: inline-block;
+}
+.home-hero .cta-btn:hover {
+    background: #612828;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(56, 178, 172, 0.18);
+}
+.home-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+    margin: 48px 0 0 0;
+}
+.home-feature-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(60, 60, 120, 0.06);
+    padding: 32px 24px 24px 24px;
+    min-width: 220px;
+    max-width: 320px;
+    flex: 1 1 220px;
+    text-align: center;
+}
+.home-feature-card h3 {
+    color: #129ba3;
+    font-size: 1.18rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+.home-feature-card p {
+    color: #555;
+    font-size: 1.01rem;
+    margin-bottom: 0;
+}
+.home-feature-icon {
+    font-size: 2.2rem;
+    color: #38b2ac;
+    margin-bottom: 12px;
+    display: block;
+}
+.search-sidebar, .search-form {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    padding: 0 !important;
+}
+#sidebar-filters {
+    flex: 0 0 auto;
+}
+.form-actions {
+    flex: 0 0 auto;
+    margin-bottom: 0 !important;
+} 

@@ -24,6 +24,7 @@
                     <th>Arabic Name</th>
                     <th>Position</th>
                     <th>Department</th>
+                    <th>Status</th>
                     <th class="actions-header">Actions</th>
                 </tr>
             </thead>
@@ -35,6 +36,7 @@
                     <td>{{ employee.arab_name or '—' }}</td>
                     <td>{{ employee.position.position_name if employee.position else '—' }}</td>
                     <td>{{ employee.department.department_name if employee.department else '—' }}</td>
+                    <td>{% if employee.is_active %}<span class="status-active">Active</span>{% else %}<span class="status-inactive">Inactive</span>{% endif %}</td>
                     <td class="actions-cell">
                         <div class="actions-container">
                             <a href="{{ url_for('employee_detail', employee_id=employee.emp_id) }}" class="btn btn-view">

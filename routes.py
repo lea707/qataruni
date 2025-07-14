@@ -27,6 +27,7 @@ from flask import request, redirect, url_for, flash
 from services.file_handler import handle_file_uploads
 from services.employee_service import EmployeeService
 from pathlib import Path
+from urllib.parse import urlencode
 
 employee_service = EmployeeService()
 employee_service = EmployeeService()
@@ -272,7 +273,8 @@ def init_routes(app):
     @app.route('/departments')
     def list_departments():
         departments = department_service.get_all_departments()
-        return render_template('departments/list.html', departments=departments)
+        all_employees = employee_service.get_all_employees()
+        return render_template('departments/list.html', departments=departments, all_employees=all_employees)
 
     @app.route('/departments/add', methods=['GET', 'POST'])
     def add_department():
@@ -292,6 +294,101 @@ def init_routes(app):
         if not department:
             return render_template('404.html'), 404
         return render_template('departments/detail.html', department=department)
+
+    @app.route('/departments/edit/<int:department_id>', methods=['GET', 'POST'])
+    def edit_department(department_id):
+        department = department_service.get_department(department_id)
+        if not department:
+            flash('Department not found', 'error')
+            return redirect(url_for('list_departments'))
+        if request.method == 'POST':
+            name = request.form.get('name')
+            director_emp_id = request.form.get('director_emp_id')
+            parent_department_id = request.form.get('parent_department_id')
+            try:
+                department_service.update_department(
+                    department_id,
+                    name=name,
+                    director_emp_id=director_emp_id or None,
+                    parent_department_id=parent_department_id or None
+                )
+                flash('Department updated successfully!', 'success')
+                return redirect(url_for('list_departments'))
+            except Exception as e:
+                flash(f'Error updating department: {str(e)}', 'error')
+        # For GET or failed POST
+        all_employees = employee_service.get_all_employees()
+        all_departments = department_service.get_all_departments()
+        return render_template('departments/edit.html', department=department, employees=all_employees, departments=all_departments)
+
+    @app.route('/departments/delete/<int:department_id>', methods=['POST'])
+    def delete_department(department_id):
+        try:
+            if department_service.delete_department(department_id):
+                flash('Department deleted successfully!', 'success')
+            else:
+                flash('Department not found', 'error')
+        except Exception as e:
+            flash(f'Error deleting department: {str(e)}', 'error')
+        return redirect(url_for('list_departments'))
+
+    @app.route('/search', methods=['GET'])
+    def search():
+        # Extract search parameters from query string
+        search_business_id = request.args.get('business_id', '').strip()
+        search_name = request.args.get('name', '').strip()
+        search_department = request.args.get('department', '').strip()
+        search_skill_name = request.args.get('skill_name', '').strip()
+        search_skill_category = request.args.get('skill_category', '').strip()
+        search_skill_level = request.args.get('skill_level', '').strip()
+        search_certificate_type = request.args.get('certificate_type', '').strip()
+        search_document_type = request.args.get('document_type', '').strip()
+        search_supervisor_emp_id = request.args.get('supervisor_emp_id', '').strip()
+
+        # Get all departments for the dropdown
+        departments = [dept.department_name for dept in department_service.get_all_departments()]
+        existing_skills = [{'skill_id': skill.skill_id, 'skill_name': skill.skill_name} for skill in skill_service.get_all_skills()]
+        skill_categories = skill_service.get_all_skill_categories()
+        certificate_types = employee_document_service.get_all_certificate_types()
+        document_types = employee_document_service.get_all_document_types()
+
+        # Get all employees for datalists
+        all_employees = employee_service.get_all_employees()
+        # Show all employees if no filters are selected
+        employees = employee_service.search_employees(
+            business_id=search_business_id,
+            name=search_name,
+            department=search_department,
+            skill_name=search_skill_name,
+            skill_category=search_skill_category,
+            skill_level=search_skill_level,
+            certificate_type=search_certificate_type,
+            document_type=search_document_type,
+            supervisor_emp_id=search_supervisor_emp_id
+        )
+        # Pagination
+        page = int(request.args.get('page', 1))
+        page_size = 10
+        total_employees = len(employees)
+        total_pages = (total_employees + page_size - 1) // page_size
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated_employees = employees[start:end]
+        args_for_pagination = request.args.to_dict()
+        if 'page' in args_for_pagination:
+            args_for_pagination.pop('page')
+        query_string = urlencode(args_for_pagination)
+        # Convert all_employees to a list of dicts for JSON serialization
+        all_employees_dicts = [
+            {
+                'busness_id': emp.busness_id,
+                'english_name': emp.english_name,
+                'arab_name': emp.arab_name,
+                'full_name': f"{emp.english_name} ({emp.busness_id})" if emp.english_name and emp.busness_id else emp.english_name or emp.arab_name or emp.busness_id
+            }
+            for emp in all_employees
+        ]
+        return render_template('search.html', employees=paginated_employees, all_employees=all_employees_dicts, departments=departments, existing_skills=existing_skills, skill_categories=skill_categories, certificate_types=certificate_types, document_types=document_types, page=page, total_pages=total_pages, total_employees=total_employees, query_string=query_string)
 
     # Error handlers
     @app.errorhandler(404)

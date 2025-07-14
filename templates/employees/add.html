@@ -87,56 +87,57 @@
         <div class="form-section">
             <h2><i class="fas fa-id-card"></i> Basic Information</h2>
 
-            <div class="form-group"><label for="english_name">English Name*</label><input type="text" id="english_name" name="english_name" required></div>
-            <div class="form-group"><label for="arab_name">Arabic Name*</label><input type="text" id="arab_name" name="arab_name" required></div>
-            <div class="form-group"><label for="email">Email*</label><input type="email" id="email" name="email" required></div>
-            <div class="form-group"><label for="phone">Phone</label><input type="text" id="phone" name="phone"></div>
-            <div class="form-group"><label for="hire_date">Hire Date*</label><input type="date" id="hire_date" name="hire_date" required></div>
-
-            <div class="form-group">
-                <label for="position_id">Position*</label>
-                <select id="position_id" name="position_id" required>
-                    <option value="">Select a position</option>
-                    {% for position in positions %}
-                    <option value="{{ position.position_id }}">{{ position.position_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="department_id">Department*</label>
-                <select id="department_id" name="department_id" required>
-                    <option value="">Select a department</option>
-                    {% for dept in departments %}
-                    <option value="{{ dept.department_id }}">{{ dept.department_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="level_id">Level</label>
-                <select id="level_id" name="level_id" class="form-control" required>
-                    <option value="">Select a level</option>
-                    {% for level in employee_levels %}
-                    <option value="{{ level.level_id }}">{{ level.level_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group supervisor-search-container">
-                <label for="supervisor_search">Supervisor</label>
-                <input type="text" id="supervisor_search" class="supervisor-search" placeholder="Start typing to search supervisors">
-                <input type="hidden" id="supervisor_emp_id" name="supervisor_emp_id">
-                <div class="supervisor-suggestions"></div>
-            </div>
-
-            <div class="form-group">
-                <label for="business_id">Business ID*</label>
-                <input type="text" id="business_id" name="business_id" required 
-                       pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{5,}$"
-                       oninput="validateBusinessId()">
-                <small class="form-text text-muted">Must be at least 5 characters with both letters and numbers</small>
-                <div id="businessIdFeedback" class="invalid-feedback"></div>
+            <div class="form-row" style="display: flex; gap: 24px; flex-wrap: wrap;">
+                <div class="form-col" style="flex: 1; min-width: 220px;">
+                    <div class="form-group"><label for="english_name">English Name*</label><input type="text" id="english_name" name="english_name" required></div>
+                    <div class="form-group"><label for="arab_name">Arabic Name*</label><input type="text" id="arab_name" name="arab_name" required></div>
+                    <div class="form-group"><label for="email">Email*</label><input type="email" id="email" name="email" required></div>
+                    <div class="form-group"><label for="phone">Phone</label><input type="text" id="phone" name="phone"></div>
+                    <div class="form-group"><label for="hire_date">Hire Date*</label><input type="date" id="hire_date" name="hire_date" required></div>
+                </div>
+                <div class="form-col" style="flex: 1; min-width: 220px;">
+                    <div class="form-group">
+                        <label for="position_id">Position*</label>
+                        <select id="position_id" name="position_id" required>
+                            <option value="">Select a position</option>
+                            {% for position in positions %}
+                            <option value="{{ position.position_id }}">{{ position.position_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="department_id">Department*</label>
+                        <select id="department_id" name="department_id" required>
+                            <option value="">Select a department</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.department_id }}">{{ dept.department_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="level_id">Level</label>
+                        <select id="level_id" name="level_id" class="form-control" required>
+                            <option value="">Select a level</option>
+                            {% for level in employee_levels %}
+                            <option value="{{ level.level_id }}">{{ level.level_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group supervisor-search-container">
+                        <label for="supervisor_search">Supervisor</label>
+                        <input type="text" id="supervisor_search" class="supervisor-search" placeholder="Start typing to search supervisors">
+                        <input type="hidden" id="supervisor_emp_id" name="supervisor_emp_id">
+                        <div class="supervisor-suggestions"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="business_id">Business ID*</label>
+                        <input type="text" id="business_id" name="business_id" required 
+                               pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{5,}$"
+                               oninput="validateBusinessId()">
+                        <small class="form-text text-muted">Must be at least 5 characters with both letters and numbers</small>
+                        <div id="businessIdFeedback" class="invalid-feedback"></div>
+                    </div>
+                </div>
             </div>
         </div>
 

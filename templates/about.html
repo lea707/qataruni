@@ -1,40 +1,12 @@
 {% extends "base.html" %}
-
-{% block title %}About Us | Employee Skills Tracker{% endblock %}
-
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/about.css') }}">
+{% endblock %}
 {% block content %}
-<section>
-    <h2>Our Mission</h2>
-    <p>At Doha Institute for Graduate Studies, we empower our academic community through innovative skill-tracking solutions designed to support research excellence, foster faculty development, and align staff capabilities with our institution's scholarly mission. Our platform streamlines certification management and identifies skill gaps to enhance academic and administrative performance.</p>
-</section>
-
-<section>
-    <h2>Our Team</h2>
-    <p>Comprised of academic administrators, IT specialists, and human development professionals, our team combines deep higher education expertise with cutting-edge technology solutions. We're committed to delivering tools that support both faculty research objectives and institutional compliance requirements.</p>
-</section>
-
-<section>
-    <h2>Our Values</h2>
-    <p>We operate on three core principles:<br>
-    • <strong>Academic Integrity</strong>: Supporting rigorous research standards<br>
-    • <strong>Continuous Learning</strong>: Facilitating lifelong professional development<br>
-    • <strong>Operational Excellence</strong>: Streamlining administrative processes for researchers and staff</p>
-</section>
-
-<section>
-    <h2>Our History</h2>
-    <p>Developed in 2023 as part of Doha Institute's Digital Transformation Initiative, this system originated from faculty needs for better research competency tracking. Now serving all academic departments and administrative units, our platform has reduced credential verification time by 35% while improving grant compliance reporting.</p>
-</section>
-
-<section>
-    <h2>Contact Us</h2>
-    <p>We welcome your questions and feedback:</p>
-    <address>
-        <strong>Academic Development Office</strong><br>
-        Doha Institute for Graduate Studies<br>
-        Al Tarfa, Doha, Qatar<br>
-        Email: <a href="mailto:academic.support@dohainstitute.edu.qa">academic.support@dohainstitute.edu.qa</a><br>
-        Phone: <a href="tel:+97440356666">+974 4035-6666</a> (Sunday-Thursday 8:30AM-4:30PM)
-    </address>
-</section>
+<div class="about-container">
+    <h1>About This App</h1>
+    <p>This Employee Skills Tracker helps you manage employees, their skills, certifications, and documents in a modern, user-friendly interface.</p>
+    <p class="about-highlight">Built for the Doha Institute for Graduate Studies.</p>
+</div>
 {% endblock %}

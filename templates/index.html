@@ -1,14 +1,29 @@
 {% extends "base.html" %}
-
-{% block title %}Home | Employee Skills Tracker{% endblock %}
-
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/home.css') }}">
+{% endblock %}
 {% block content %}
-    <h1>Welcome to Doha Institute for Graduate Studies's Employee Skills Tracker</h1>
-    <p>
-        This system helps HR and managers track employee skills and certifications.
-    </p>
-    <ul>
-        <li><a href="{{ url_for('list_employees') }}">View Employee Directory</a></li>
-        <li><a href="{{ url_for('about') }}">About This System</a></li>
-    </ul>
+<div class="home-hero">
+    <h1>Welcome to the Employee Skills Tracker</h1>
+    <p>Track employee skills, certifications, and documents with ease.<br>Empower your organization with modern HR tools.</p>
+    <a href="{{ url_for('list_employees') }}" class="cta-btn">View Employees</a>
+</div>
+<div class="home-features">
+    <div class="home-feature-card">
+        <span class="home-feature-icon"><i class="fas fa-users"></i></span>
+        <h3>Employee Directory</h3>
+        <p>Browse, search, and manage all employees in one place.</p>
+    </div>
+    <div class="home-feature-card">
+        <span class="home-feature-icon"><i class="fas fa-cogs"></i></span>
+        <h3>Skills & Certifications</h3>
+        <p>Track technical and soft skills, certifications, and more.</p>
+    </div>
+    <div class="home-feature-card">
+        <span class="home-feature-icon"><i class="fas fa-building"></i></span>
+        <h3>Departments</h3>
+        <p>Organize employees by department and view department stats.</p>
+    </div>
+</div>
 {% endblock %}

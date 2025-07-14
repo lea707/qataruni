@@ -1,0 +1,78 @@
+/* Department Form Styles */
+.department-form-container {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 14px;
+    box-shadow: 0 4px 24px rgba(56, 178, 172, 0.10);
+    padding: 36px 28px 28px 28px;
+    max-width: 520px;
+    margin: 48px auto 0 auto;
+}
+.department-form-container h1 {
+    color: #319795;
+    font-size: 1.7rem;
+    font-weight: 800;
+    margin-bottom: 22px;
+    letter-spacing: 0.01em;
+    text-align: center;
+}
+.department-form-container .form-group {
+    margin-bottom: 18px;
+}
+.department-form-container label {
+    color: #285e61;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+}
+.department-form-container input[type="text"],
+.department-form-container select {
+    border: 1px solid #bfc9d1;
+    border-radius: 8px;
+    background: #f7fafc;
+    color: #222;
+    font-size: 15px;
+    padding: 10px 12px;
+    margin-bottom: 0;
+    box-shadow: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+}
+.department-form-container input:focus,
+.department-form-container select:focus {
+    border-color: #38b2ac;
+    outline: none;
+    background: #fff;
+    box-shadow: 0 0 0 2px #e6fffa;
+}
+.department-form-container .form-actions {
+    display: flex;
+    gap: 14px;
+    margin-top: 24px;
+    justify-content: flex-end;
+}
+.department-form-container .btn {
+    background: #38b2ac;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    padding: 10px 22px;
+    font-size: 1rem;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(56, 178, 172, 0.10);
+}
+.department-form-container .btn:hover {
+    background: #285e61;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(56, 178, 172, 0.18);
+}
+.department-form-container .btn-secondary {
+    background: #fff;
+    color: #319795;
+    border: 1.5px solid #38b2ac;
+}
+.department-form-container .btn-secondary:hover {
+    background: #e6fffa;
+    color: #285e61;
+} 

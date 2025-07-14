@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Department | Employee Skills Tracker{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/department_form.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="department-form-container">
+<h1>Edit Department</h1>
+<form method="POST">
+    <div class="form-group">
+        <label for="name">Department Name</label>
+        <input type="text" id="name" name="name" value="{{ department.department_name }}" required>
+    </div>
+    <div class="form-group">
+        <label for="director_emp_id">Director (Employee)</label>
+        <select id="director_emp_id" name="director_emp_id">
+            <option value="">-- Select Director --</option>
+            {% for emp in employees %}
+            <option value="{{ emp.emp_id }}" {% if department.director_emp_id == emp.emp_id %}selected{% endif %}>{{ emp.english_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="parent_department_id">Parent Department</label>
+        <select id="parent_department_id" name="parent_department_id">
+            <option value="">-- None --</option>
+            {% for dept in departments %}
+            {% if dept.department_id != department.department_id %}
+            <option value="{{ dept.department_id }}" {% if department.parent_department_id == dept.department_id %}selected{% endif %}>{{ dept.department_name }}</option>
+            {% endif %}
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{{ url_for('list_departments') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+</div>
+{% endblock %} 

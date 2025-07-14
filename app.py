@@ -1,16 +1,13 @@
 import os
-from flask import Flask, g
+from flask import Flask, g, request
 from routes import init_routes
+from urllib.parse import urlencode
 
 def test_create_employee_success():
     print("Running test_create_employee_success")
 
 def create_app():
     app = Flask(__name__)
-
-    # Document folders are created dynamically per employee
-
-    # ✅ Fake admin for testing
     @app.before_request
     def load_fake_admin():
         g.current_user = {

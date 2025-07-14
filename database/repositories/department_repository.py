@@ -1,6 +1,8 @@
 from database.connection import SessionLocal
 from models.department import Department
 from typing import List, Optional
+from sqlalchemy.orm import joinedload
+from models.employee import Employee
 
 class DepartmentRepository:
     def get_all_departments(self) -> List[Department]:
@@ -13,7 +15,11 @@ class DepartmentRepository:
     def get_department(self, department_id: int) -> Optional[Department]:
         session = SessionLocal()
         try:
-            return session.query(Department).filter_by(department_id=department_id).first()
+            return session.query(Department).options(
+                joinedload(Department.employees).joinedload(Employee.skills),
+                joinedload(Department.director),
+                joinedload(Department.parent_department)
+            ).filter_by(department_id=department_id).first()
         finally:
             session.close()
 

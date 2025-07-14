@@ -562,3 +562,51 @@ class EmployeeService:
             if callable(self.db):
                 session.close()
      
+    def search_employees(self, business_id=None, name=None, department=None, skill_name=None, skill_category=None, skill_level=None, certificate_type=None, document_type=None, supervisor_emp_id=None):
+        session = self.db() if callable(self.db) else self.db
+        try:
+            from sqlalchemy import or_, and_
+            query = session.query(Employee).options(
+                joinedload(Employee.department),
+                joinedload(Employee.skills),
+                joinedload(Employee.documents)
+            )
+            if business_id:
+                query = query.filter(Employee.busness_id.ilike(f"%{business_id}%"))
+            if name:
+                query = query.filter(or_(Employee.english_name.ilike(f"%{name}%"), Employee.arab_name.ilike(f"%{name}%")))
+            if department:
+                query = query.join(Employee.department).filter(Employee.department.has(name=department))
+            if supervisor_emp_id:
+                query = query.filter(Employee.supervisor_emp_id == supervisor_emp_id)
+            # Skill filters
+            if skill_name:
+                query = query.join(Employee.skills).filter(Skill.skill_name.ilike(f"%{skill_name}%"))
+            if skill_category:
+                query = query.join(Employee.skills).filter(Skill.category_id == skill_category)
+            if skill_level:
+                query = query.join(Employee.skills, aliased=True).filter(employee_skills.c.skill_level == skill_level)
+            # Certificate/document filters
+            if certificate_type:
+                query = query.join(Employee.documents).filter(Employee.documents.any(cert_type_id=certificate_type))
+            if document_type:
+                query = query.join(Employee.documents).filter(Employee.documents.any(doc_type_id=document_type))
+            # If no filters, show all employees
+            employees = query.distinct().all()
+            # Format for template
+            result = []
+            for emp in employees:
+                result.append({
+                    'id': emp.emp_id,
+                    'business_id': emp.busness_id,
+                    'name': f"{emp.english_name} ({emp.arab_name})",
+                    'department': emp.department.department_name if emp.department else '',
+                    'skills': {
+                        'Technical': [s.skill_name for s in emp.skills],
+                    }
+                })
+            return result
+        finally:
+            if callable(self.db):
+                session.close()
+     
