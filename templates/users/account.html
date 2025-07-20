@@ -59,46 +59,65 @@ function clearError(input) {
     const feedback = document.getElementById(input.id + 'Feedback');
     if (feedback) feedback.textContent = '';
 }
-document.getElementById('accountForm').addEventListener('submit', function(e) {
-    let valid = true;
-    // Name
+
+function validateName() {
     const name = document.getElementById('username');
     if (!name.value.trim()) {
         showError(name, 'This field is required.');
-        valid = false;
+        return false;
     } else if (name.value.length < 2 || name.value.length > 50) {
         showError(name, 'Name must be between 2 and 50 characters.');
-        valid = false;
+        return false;
     } else if (!/^[A-Za-z0-9 .,'-]+$/.test(name.value)) {
         showError(name, 'Name contains invalid characters.');
-        valid = false;
+        return false;
     } else {
         clearError(name);
+        return true;
     }
-    // Email
+}
+function validateEmail() {
     const email = document.getElementById('email');
     if (email.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value)) {
         showError(email, 'Invalid email format.');
-        valid = false;
+        return false;
     } else {
         clearError(email);
+        return true;
     }
-    // Phone
+}
+function validatePhone() {
     const phone = document.getElementById('phone_number');
     if (phone.value && !/^\d{8}$/.test(phone.value)) {
         showError(phone, 'Phone number must be exactly 8 digits.');
-        valid = false;
+        return false;
     } else {
         clearError(phone);
+        return true;
     }
-    // Business ID
+}
+function validateBusinessId() {
     const businessId = document.getElementById('business_user_id');
     if (businessId.value && !/^(?=.*[A-Za-z])(?=.*\d)(?=.*-)[A-Za-z\d-]{5,}$/.test(businessId.value)) {
         showError(businessId, 'Business ID must be at least 5 characters, contain letters, numbers, and a dash (-).');
-        valid = false;
+        return false;
     } else {
         clearError(businessId);
+        return true;
     }
+}
+
+document.getElementById('username').addEventListener('input', validateName);
+document.getElementById('email').addEventListener('input', validateEmail);
+document.getElementById('phone_number').addEventListener('input', validatePhone);
+document.getElementById('business_user_id').addEventListener('input', validateBusinessId);
+
+document.getElementById('accountForm').addEventListener('submit', function(e) {
+    let valid = true;
+    if (!validateName()) valid = false;
+    if (!validateEmail()) valid = false;
+    if (!validatePhone()) valid = false;
+    if (!validateBusinessId()) valid = false;
     if (!valid) e.preventDefault();
 });
 </script>
