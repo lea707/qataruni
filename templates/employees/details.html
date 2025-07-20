@@ -5,15 +5,24 @@
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/employee_details.css') }}">
+    <style>
+    .skills-table-wrapper { width: 100%; margin-top: 8px; }
+    .skills-table { width: 100%; border-collapse: collapse; font-size: 1em; background: #fff; box-shadow: 0 2px 8px rgba(60,60,120,0.06); border-radius: 8px; overflow: hidden; }
+    .skills-table th, .skills-table td { padding: 8px 12px; text-align: center; border-bottom: 1px solid #e0e0e0; }
+    .skills-table th { background: #f6f7fa; color: #217a3a; font-weight: 700; }
+    .skills-table tr:last-child td { border-bottom: none; }
+    .certified-dot { display: inline-block; width: 18px; height: 18px; border-radius: 50%; }
+    .certified-dot.green { background: #38d39f; border: 2px solid #38d39f; }
+    .certified-dot.red { background: #e57373; border: 2px solid #e57373; }
+    .skill-type-header td { border-top: 2px solid #e0e0e0; background: #f6f7fa !important; color: #217a3a; font-weight: 700; font-size: 1.05em; }
+    </style>
 {% endblock %}
 
 {% block content %}
 <div class="employee-details">
-    <div class="employee-header">
+    <div class="employee-header modern-header">
         <h1>{{ employee.english_name }}</h1>
         <div class="employee-meta">
-            <span class="badge">{{ employee.position_name }}</span>
-            <span class="department">{{ employee.department_name }}</span>
             <span class="business-id">ID: {{ employee.busness_id }}</span>
         </div>
     </div>
@@ -36,53 +45,86 @@
                 </div>
                 <div>
                     <label>Employee Level:</label>
-                    <span>{{ employee.level_name }}</span>
+                    <span class="level-badge">{{ employee.level_name }}</span>
+                </div>
+                <div>
+                    <label>Supervisor:</label>
+                    <span>
+                        {% if employee.supervisor %}
+                            <a href="{{ url_for('employee_detail', employee_id=employee.supervisor.emp_id) }}">
+                                {{ employee.supervisor.english_name }} ({{ employee.supervisor.busness_id }})
+                            </a>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
                 </div>
             </div>
         </div>
 
         <div class="info-section">
           <h3><i class="fas fa-cogs"></i> Skills</h3>
-          <div class="skills-grid">
-            {% for skill_name, category_name, skill_level, certified in skills %}
-              <div class="skill-card">
-                <ul>
-                  <li><strong>{{ skill_name }}</strong>
-                    <ul style="padding-left: 1rem;">
-                      <li><b>Type:</b> {{ category_name or 'Uncategorized' }}</li>
-                      <li><b>Level:</b> {{ skill_level or '—' }}</li>
-                      {% if certified %}
-                        <li><b>Status:</b> <span class="certified">Certified</span></li>
-                      {% endif %}
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            {% else %}
-              <p>No skills recorded for this employee.</p>
-            {% endfor %}
+          <div class="skills-table-wrapper">
+            <table class="skills-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Skill</th>
+                  <th>Level</th>
+                  <th>Certified</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% set grouped_skills = {} %}
+                {% for skill_name, category_name, skill_level, certified in skills %}
+                  {% set _ = grouped_skills.setdefault(category_name or 'Uncategorized', []).append({'name': skill_name, 'level': skill_level, 'certified': certified}) %}
+                {% endfor %}
+                {% if grouped_skills %}
+                  {% for type, skill_list in grouped_skills.items() %}
+                    {% for skill in skill_list %}
+                      <tr>
+                        {% if loop.first %}
+                          <td rowspan="{{ skill_list|length }}" style="font-weight:700; color:#217a3a; background:#f6f7fa; vertical-align:middle;">{{ type }}</td>
+                        {% endif %}
+                        <td>{{ skill.name }}</td>
+                        <td>{{ skill.level or '—' }}</td>
+                        <td>
+                          {% if skill.certified in [1, '1', True, 'True'] %}
+                            <span class="certified-dot green" title="Certified"></span>
+                          {% else %}
+                            <span class="certified-dot red" title="Not Certified"></span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  {% endfor %}
+                {% else %}
+                  <tr><td colspan="4" style="text-align:center; color:#888;">No skills recorded for this employee.</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
           </div>
         </div>
         {% if show_documents %}
         <div class="info-section">
           <h3><i class="fas fa-file-alt"></i> Documents</h3>
           {% if employee.documents %}
-            <div class="documents-grid">
+            <div class="modern-documents-list">
               {% for doc in employee.documents %}
-                <div class="document-card">
-                  <div class="document-info">
-                    <strong>{{ doc.document_name or 'Unnamed Document' }}</strong>
-                    <p>Uploaded: {{ doc.upload_date.strftime('%Y-%m-%d') if doc.upload_date else 'Unknown' }}</p>
-                    {% if doc.cert_type_id %}
-                      <span class="badge badge-primary">Certificate</span>
-                    {% else %}
-                      <span class="badge badge-secondary">Document</span>
-                    {% endif %}
-                  </div>
-                  <div class="document-actions">
-                    <a href="{{ url_for('download_document', doc_id=doc.document_id) }}" class="btn btn-sm btn-primary">
-                      <i class="fas fa-download"></i> Download
-                    </a>
+                <div class="modern-document-list-card">
+                  <div class="doc-list-main">
+                    <div class="doc-list-info">
+                      <strong>{{ doc.document_name or 'Unnamed Document' }}</strong>
+                      <span class="doc-list-type {% if doc.cert_type_id %}cert-type{% else %}doc-type{% endif %}">
+                        {% if doc.cert_type_id %}Certificate{% else %}Document{% endif %}
+                      </span>
+                      <span class="doc-list-date">Uploaded: {{ doc.upload_date.strftime('%Y-%m-%d') if doc.upload_date else 'Unknown' }}</span>
+                    </div>
+                    <div class="doc-list-actions">
+                      <a href="{{ url_for('download_document', doc_id=doc.document_id) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-download"></i> Download
+                      </a>
+                    </div>
                   </div>
                 </div>
               {% endfor %}

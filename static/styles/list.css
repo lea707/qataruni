@@ -177,3 +177,210 @@
         min-width: 70px;
     }
 }
+
+.employee-table.modern-table table {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    background: #fff;
+}
+
+.employee-table.modern-table th,
+.employee-table.modern-table td {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1.1rem 1.2rem;
+    font-size: 1rem;
+}
+
+.employee-table.modern-table thead {
+    background: #f6f7fa;
+    color: #222;
+    font-size: 1.05rem;
+}
+
+.employee-table.modern-table tbody tr {
+    transition: box-shadow 0.2s, background 0.2s;
+}
+.employee-table.modern-table tbody tr:hover {
+    background: #f9f9fc;
+    box-shadow: 0 2px 8px rgba(139,0,0,0.04);
+}
+
+.biz-id {
+    font-weight: 600;
+    color: #8B0000;
+    letter-spacing: 0.5px;
+}
+.emp-name {
+    font-weight: 600;
+    color: #222;
+}
+.emp-arabic, .emp-position, .emp-department {
+    color: #666;
+    font-size: 0.98rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.3em 0.8em;
+    border-radius: 12px;
+    font-size: 0.95em;
+    font-weight: 500;
+    background: #eee;
+}
+.status-badge.active {
+    background: #e6f7e6;
+    color: #1a7f1a;
+}
+.status-badge.inactive {
+    background: #fbeaea;
+    color: #a30000;
+}
+.status-badge i {
+    font-size: 0.7em;
+}
+
+.actions-container .btn {
+    background: #fff;
+    border: 1.2px solid #8B0000;
+    color: #8B0000;
+    font-size: 0.95em;
+    padding: 0.25em 0.7em;
+    border-radius: 8px;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s, border-color 0.15s;
+    min-width: 80px;
+    max-width: 80px;
+    min-height: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    gap: 0.4em;
+    font-weight: 500;
+    white-space: nowrap;
+    text-align: center;
+}
+.actions-container {
+    gap: 0.5em;
+}
+.employee-table.modern-table th,
+.employee-table.modern-table td {
+    text-align: center;
+    vertical-align: middle;
+}
+.employee-table.modern-table th {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+.actions-container .btn i {
+    margin-right: 0.35em;
+    font-size: 1em;
+}
+.actions-container .btn:hover {
+    background: #fbeaea;
+    color: #a30000;
+    border-color: #a30000;
+    box-shadow: 0 2px 8px rgba(139,0,0,0.08);
+}
+.actions-container .btn:active {
+    background: #f6f7fa;
+}
+
+.actions-container .btn[title] {
+    position: relative;
+}
+.actions-container .btn[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 50%;
+    top: 110%;
+    transform: translateX(-50%);
+    background: #222;
+    color: #fff;
+    font-size: 0.8em;
+    padding: 0.2em 0.7em;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 10;
+    opacity: 0.95;
+    pointer-events: none;
+}
+
+@media (max-width: 800px) {
+    .employee-table.modern-table th,
+    .employee-table.modern-table td {
+        padding: 0.7rem 0.5rem;
+        font-size: 0.95rem;
+    }
+    .directory-header h1 {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .employee-table.modern-table table,
+    .employee-table.modern-table thead,
+    .employee-table.modern-table tbody,
+    .employee-table.modern-table th,
+    .employee-table.modern-table td,
+    .employee-table.modern-table tr {
+        display: block;
+        width: 100%;
+    }
+    .employee-table.modern-table thead {
+        display: none;
+    }
+    .employee-table.modern-table tr {
+        margin-bottom: 1.2em;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(139,0,0,0.06);
+        padding: 0.7em 0.5em;
+    }
+    .employee-table.modern-table td {
+        border: none;
+        position: relative;
+        padding-left: 45%;
+        min-height: 2.2em;
+        font-size: 1em;
+    }
+    .employee-table.modern-table td:before {
+        position: absolute;
+        left: 1em;
+        top: 50%;
+        transform: translateY(-50%);
+        font-weight: bold;
+        color: #8B0000;
+        font-size: 0.98em;
+        white-space: nowrap;
+    }
+    .employee-table.modern-table td:nth-child(1):before { content: 'Business ID'; }
+    .employee-table.modern-table td:nth-child(2):before { content: 'English Name'; }
+    .employee-table.modern-table td:nth-child(3):before { content: 'Arabic Name'; }
+    .employee-table.modern-table td:nth-child(4):before { content: 'Position'; }
+    .employee-table.modern-table td:nth-child(5):before { content: 'Department'; }
+    .employee-table.modern-table td:nth-child(6):before { content: 'Status'; }
+    .employee-table.modern-table td:nth-child(7):before { content: 'Actions'; }
+    .actions-container {
+        justify-content: flex-start;
+    }
+}
+
+.actions-container .btn-view,
+.actions-container .btn-edit {
+    min-width: 48px;
+    max-width: 48px;
+    height: 24px;
+    font-size: 0.9em;
+    padding: 0.1em 0.3em;
+}
+.actions-container .btn-delete {
+    min-width: 80px;
+    max-width: 80px;
+    height: 32px;
+    font-size: 0.95em;
+    padding: 0.25em 0.7em;
+}

@@ -3,120 +3,225 @@
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/search.css') }}">
-   
+    <style>
+        .search-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+        .search-bar input[type="text"] { flex: 1; min-width: 200px; }
+        .advanced-toggle { cursor: pointer; color: #8a1538; font-weight: 600; margin-left: 8px; }
+        .advanced-filters { display: none; margin-top: 8px; background: #f7e6ed; padding: 12px 16px; border-radius: 8px; }
+        .advanced-filters.active { display: flex; gap: 16px; flex-wrap: wrap; }
+        .loading-spinner { display: none; justify-content: center; align-items: center; height: 80px; }
+        .loading-spinner.active { display: flex; }
+        .results-table th, .results-table td { padding: 8px 6px; font-size: 15px; }
+        .results-table th { background: #8a1538; color: #fff; }
+        .results-table tr:hover { background: #f7e6ed; }
+        .search-actions { display: flex; gap: 8px; }
+        .autocomplete-dropdown {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            z-index: 1000;
+            width: 100%;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .autocomplete-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            color: #222;
+        }
+        .autocomplete-option:hover, .autocomplete-option.active {
+            background: #f7e6ed;
+            color: #8a1538;
+        }
+        .search-bar { position: relative; }
+        .autocomplete-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .autocomplete-dropdown {
+            position: absolute;
+            left: 0;
+            top: 100%;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            z-index: 1002;
+            width: 100%;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .autocomplete-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            color: #222;
+        }
+        .autocomplete-option:hover, .autocomplete-option.active {
+            background: #f7e6ed;
+            color: #8a1538;
+        }
+        .search-bar { position: relative; }
+        .advanced-filters { position: relative; z-index: 1; }
+        .skills-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: flex-start;
+        }
+        .skill-tag {
+            display: inline-block;
+            background: #eafaf1;
+            color: #217a3a;
+            border-radius: 8px;
+            padding: 3px 10px;
+            font-size: 0.98em;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(60,60,120,0.06);
+            border: 1px solid #b6e2d3;
+        }
+        .mini-skill-matrix {
+            width: 100%;
+            margin: 0;
+        }
+        .mini-matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.97em;
+        }
+        .mini-matrix-table th, .mini-matrix-table td {
+            padding: 2px 7px;
+            border: none;
+            text-align: center;
+        }
+        .mini-matrix-table th {
+            background: #f6f7fa;
+            color: #217a3a;
+            font-weight: 700;
+            font-size: 0.98em;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .mini-matrix-table td {
+            background: #fff;
+            font-size: 0.97em;
+        }
+        .cert-badge {
+            display: inline-block;
+            background: #38d39f;
+            color: #fff;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.95em;
+            line-height: 18px;
+            text-align: center;
+            font-weight: bold;
+        }
+        /* Color-coded skill levels */
+        .mini-matrix-table tr.level-beginner td { background: #f9fbe7; color: #7c8500; }
+        .mini-matrix-table tr.level-intermediate td { background: #e3f2fd; color: #1565c0; }
+        .mini-matrix-table tr.level-advanced td { background: #e8f5e9; color: #1b5e20; }
+        .mini-matrix-table tr.level-expert td { background: #fff3e0; color: #e65100; }
+        .mini-matrix-table tr.skill-certified td { border-left: 4px solid #38d39f; }
+        .mini-matrix-table tr.level-not-applicable td { background: #f5f5f5; color: #888; }
+        .mini-matrix-table tr td { transition: background 0.2s, color 0.2s; }
+        .skills-tag-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            align-items: flex-start;
+        }
+        .skill-tag-grid {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 0.98em;
+            font-weight: 600;
+            background: #f6f7fa;
+            color: #444;
+            border: 1.5px solid #e0e0e0;
+            box-shadow: 0 1px 3px rgba(60,60,120,0.06);
+            position: relative;
+        }
+        .skill-tag-grid .tag-level {
+            font-size: 0.92em;
+            font-weight: 500;
+            margin-left: 6px;
+            opacity: 0.7;
+        }
+        .skill-tag-grid .tag-cert {
+            color: #fff;
+            background: #38d39f;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.95em;
+            line-height: 18px;
+            text-align: center;
+            font-weight: bold;
+            margin-left: 6px;
+            display: inline-block;
+        }
+        .skill-tag-grid.level-beginner { background: #f9fbe7; color: #7c8500; border-color: #e6ee9c; }
+        .skill-tag-grid.level-intermediate { background: #e3f2fd; color: #1565c0; border-color: #90caf9; }
+        .skill-tag-grid.level-advanced { background: #e8f5e9; color: #1b5e20; border-color: #a5d6a7; }
+        .skill-tag-grid.level-expert { background: #fff3e0; color: #e65100; border-color: #ffb74d; }
+        .skill-tag-grid.level-not-applicable { background: #f5f5f5; color: #888; border-color: #e0e0e0; }
+        .skill-tag-grid.skill-certified { box-shadow: 0 0 0 2px #38d39f44; border-color: #38d39f; }
+    </style>
 {% endblock %}
 
 {% block title %}Search Employees | Employee Skills Tracker{% endblock %}
 
 {% block content %}
-<div class="search-page" style="display: flex; flex-direction: row; gap: 24px;">
-    <!-- Left Filters -->
-    <div class="search-sidebar" style="flex: 0 0 300px;">
-        <div class="form-group">
-            <label for="search_business_id"><i class="fas fa-id-card"></i> Business ID:</label>
-            <div class="autocomplete-wrapper" style="position: relative;">
-                <input type="text" id="search_business_id" name="business_id" value="{{ request.args.get('business_id', '') }}" class="form-input autocomplete-input" placeholder="Type business ID..." autocomplete="off" data-autocomplete-list='{{ all_employees | tojson }}' data-autocomplete-field="busness_id">
+<div class="search-page">
+  <div class="search-container">
+    <form method="GET" action="/search" class="search-form" style="width: 100%;">
+        <div class="search-bar" style="position: relative; gap: 16px;">
+            <div class="autocomplete-wrapper" style="flex:1;">
+                <input type="text" name="employee_query" id="employee_search" class="form-input autocomplete-input" placeholder="Search by name or business ID..." value="{{ request.args.get('employee_query', '') }}" autocomplete="off" data-autocomplete-list='{{ all_employees|tojson }}'>
+                <div id="employeeAutocompleteDropdown" class="autocomplete-dropdown" style="display:none;"></div>
+            </div>
+            <div class="autocomplete-wrapper" style="flex:1;">
+                <input type="text" name="skill_query" id="skill_search" class="form-input autocomplete-input" placeholder="Search by skill name..." value="{{ request.args.get('skill_query', '') }}" autocomplete="off" data-autocomplete-skills='{{ existing_skills|tojson }}'>
+                <div id="skillAutocompleteDropdown" class="autocomplete-dropdown" style="display:none;"></div>
+            </div>
+            <div class="search-actions">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+                <a href="{{ url_for('search') }}" class="btn btn-secondary">Clear</a>
             </div>
         </div>
-        <div class="form-group">
-            <label for="search_name"><i class="fas fa-user"></i> Name:</label>
-            <div class="autocomplete-wrapper" style="position: relative;">
-                <input type="text" id="search_name" name="name" value="{{ request.args.get('name', '') }}" class="form-input autocomplete-input" placeholder="Type name..." autocomplete="off" data-autocomplete-list='{{ all_employees | tojson }}' data-autocomplete-field="full_name">
+        <div class="advanced-filters" id="advancedFilters">
+            <div class="form-group">
+                <label for="search_department">Department:</label>
+                <select id="search_department" name="department" class="form-input">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept }}" {% if request.args.get('department') == dept %}selected{% endif %}>{{ dept }}</option>
+                    {% endfor %}
+                </select>
             </div>
-        </div>
-        <div class="form-group">
-            <label for="search_department"><i class="fas fa-building"></i> Department:</label>
-            <select id="search_department" name="department" class="form-input">
-                <option value="">All Departments</option>
-                {% for dept in departments %}
-                <option value="{{ dept }}" {% if request.args.get('department') == dept %}selected{% endif %}>{{ dept }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="search_skill"><i class="fas fa-cogs"></i> Skill:</label>
-            <div class="autocomplete-wrapper" style="position: relative;">
-                <input type="text" id="search_skill" name="skill_name" class="form-input autocomplete-input" value="{{ request.args.get('skill_name', '') }}" placeholder="Type skill..." autocomplete="off" data-autocomplete-list='{{ existing_skills | tojson }}' data-autocomplete-field="skill_name">
+            <div class="form-group">
+                <label for="search_skill_category">Skill Category:</label>
+                <select id="search_skill_category" name="skill_category" class="form-input">
+                    <option value="">All Categories</option>
+                    {% for cat in skill_categories %}
+                    <option value="{{ cat.category_id }}" {% if request.args.get('skill_category') == cat.category_id|string %}selected{% endif %}>{{ cat.category_name }}</option>
+                    {% endfor %}
+                </select>
             </div>
-        </div>
-        <div class="form-group">
-            <label for="search_skill_category">Skill Category:</label>
-            <select id="search_skill_category" name="skill_category" class="form-input">
-                <option value="">All Categories</option>
-                {% for cat in skill_categories %}
-                <option value="{{ cat.category_id }}" {% if request.args.get('skill_category') == cat.category_id|string %}selected{% endif %}>{{ cat.category_name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
-    <!-- Center Results -->
-    <div class="search-results" style="flex: 1; min-width: 0;">
-        {% if employees %}
-            <h2><i class="fas fa-users"></i> Search Results</h2>
-            <div class="table-container">
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th><i class="fas fa-id-card"></i> Business ID</th>
-                            <th><i class="fas fa-user"></i> Name</th>
-                            <th><i class="fas fa-building"></i> Department</th>
-                            <th><i class="fas fa-cogs"></i> Technical Skills</th>
-                            <th><i class="fas fa-eye"></i> Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for employee in employees %}
-                        <tr>
-                            <td>{{ employee.business_id }}</td>
-                            <td>{{ employee.name }}</td>
-                            <td>{{ employee.department }}</td>
-                            <td>{{ employee.skills.Technical|join(', ') }}</td>
-                            <td>
-                                <a href="{{ url_for('employee_detail', employee_id=employee.id) }}" class="btn btn-view">
-                                    <i class="fas fa-user-circle"></i> View
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% elif request.args %}
-            <div class="no-results">
-                <i class="fas fa-exclamation-circle"></i>
-                <p>No employees found matching your criteria</p>
-            </div>
-        {% endif %}
-        {% if total_pages > 1 %}
-        <div class="pagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 24px;">
-            {% if page > 1 %}
-            <a class="btn btn-secondary" href="{{ url_for('search') }}?{{ query_string }}&page={{ page-1 }}">&laquo; Prev</a>
-            {% endif %}
-            {% for p in range(1, total_pages+1) %}
-                {% if p == page %}
-                    <span class="btn btn-primary" style="pointer-events: none;">{{ p }}</span>
-                {% else %}
-                    <a class="btn btn-secondary" href="{{ url_for('search') }}?{{ query_string }}&page={{ p }}">{{ p }}</a>
-                {% endif %}
-            {% endfor %}
-            {% if page < total_pages %}
-            <a class="btn btn-secondary" href="{{ url_for('search') }}?{{ query_string }}&page={{ page+1 }}">Next &raquo;</a>
-            {% endif %}
-        </div>
-        {% endif %}
-    </div>
-    <!-- Right Filters -->
-    <form method="GET" action="/search" class="search-sidebar search-form" style="display: flex; flex-direction: column; height: 100%;">
-        <div id="sidebar-filters" style="flex: 0 0 auto;">
             <div class="form-group">
                 <label for="search_skill_level">Skill Level:</label>
                 <select id="search_skill_level" name="skill_level" class="form-input">
                     <option value="">All Levels</option>
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                    <option value="Expert">Expert</option>
-                    <option value="Not Applicable">Not Applicable</option>
+                    <option value="Beginner" {% if request.args.get('skill_level') == 'Beginner' %}selected{% endif %}>Beginner</option>
+                    <option value="Intermediate" {% if request.args.get('skill_level') == 'Intermediate' %}selected{% endif %}>Intermediate</option>
+                    <option value="Advanced" {% if request.args.get('skill_level') == 'Advanced' %}selected{% endif %}>Advanced</option>
+                    <option value="Expert" {% if request.args.get('skill_level') == 'Expert' %}selected{% endif %}>Expert</option>
+                    <option value="Not Applicable" {% if request.args.get('skill_level') == 'Not Applicable' %}selected{% endif %}>Not Applicable</option>
                 </select>
             </div>
             <div class="form-group">
@@ -138,111 +243,197 @@
                 </select>
             </div>
             <div class="form-group">
+                <label for="search_position">Position:</label>
+                <select id="search_position" name="position_id" class="form-input">
+                    <option value="">All Positions</option>
+                    {% for pos in positions %}
+                    <option value="{{ pos.position_id }}" {% if request.args.get('position_id') == pos.position_id|string %}selected{% endif %}>{{ pos.position_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="search_supervisor">Supervisor:</label>
-                <div class="autocomplete-wrapper" style="position: relative;">
-                    <input type="text" id="search_supervisor" name="supervisor_name" class="form-input autocomplete-input" value="{{ request.args.get('supervisor_name', '') }}" placeholder="Type supervisor..." autocomplete="off" data-autocomplete-list='{{ all_employees | tojson }}' data-autocomplete-field="full_name">
+                <div class="autocomplete-wrapper">
+                    <input type="text" id="search_supervisor" name="supervisor_name" class="form-input" value="{{ request.args.get('supervisor_name', '') }}" placeholder="Type supervisor..." autocomplete="off" data-autocomplete-list='{{ all_employees|tojson }}'>
+                    <div id="supervisorAutocompleteDropdown" class="autocomplete-dropdown" style="display:none;"></div>
                     <input type="hidden" id="search_supervisor_emp_id" name="supervisor_emp_id" value="{{ request.args.get('supervisor_emp_id', '') }}">
                 </div>
             </div>
-        </div>
-        <div style="flex: 1 1 auto;"></div>
-        <div class="form-actions sidebar-bottom" style="flex-direction: column; gap: 12px; margin-bottom: 0;">
-            <button type="submit" class="btn btn-primary" style="width: 100%;">
-                <i class="fas fa-search"></i> Search
-            </button>
-            <a href="{{ url_for('search') }}" class="btn btn-secondary" style="width: 100%;">
-                <i class="fas fa-undo"></i> Clear
-            </a>
+            <div class="form-group">
+                <label>Hire Date Range:</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="date" name="hire_date_from" class="form-input" value="{{ request.args.get('hire_date_from', '') }}">
+                    <span style="font-weight: 600; color: #888;">to</span>
+                    <input type="date" name="hire_date_to" class="form-input" value="{{ request.args.get('hire_date_to', '') }}">
+                </div>
+            </div>
         </div>
     </form>
+    <div class="loading-spinner" id="loadingSpinner">
+        <i class="fas fa-spinner fa-spin fa-2x"></i>
+    </div>
+    <div class="search-results" style="margin-top: 12px;">
+        <form method="GET" action="/search" id="sortForm" style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+            {# Keep all current search params as hidden fields #}
+            {% for key, value in request.args.items() if key != 'sort_by' %}
+                <input type="hidden" name="{{ key }}" value="{{ value }}">
+            {% endfor %}
+            <label for="sort_by" style="font-weight: 500;">Sort by:</label>
+            <select name="sort_by" id="sort_by" class="form-input" onchange="document.getElementById('sortForm').submit()">
+                <option value="">Default</option>
+                <option value="name_asc" {% if request.args.get('sort_by') == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
+                <option value="name_desc" {% if request.args.get('sort_by') == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
+                <option value="id_asc" {% if request.args.get('sort_by') == 'id_asc' %}selected{% endif %}>Business ID (ascending)</option>
+                <option value="id_desc" {% if request.args.get('sort_by') == 'id_desc' %}selected{% endif %}>Business ID (descending)</option>
+                <option value="hiredate_desc" {% if request.args.get('sort_by') == 'hiredate_desc' %}selected{% endif %}>Hire Date (newest first)</option>
+                <option value="hiredate_asc" {% if request.args.get('sort_by') == 'hiredate_asc' %}selected{% endif %}>Hire Date (oldest first)</option>
+            </select>
+        </form>
+        {% if employees %}
+            <div class="table-container">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Business ID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Skills</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>{{ employee.business_id }}</td>
+                            <td>{{ employee.name }}</td>
+                            <td>{{ employee.department }}</td>
+                            <td>
+                                <div class="skills-tag-grid">
+                                  {% for skill in employee.skills.Technical %}
+                                    <span class="skill-tag-grid level-{{ skill.level|lower|replace(' ', '-') if skill.level is defined else 'none' }}{% if skill.certified is defined and skill.certified %} skill-certified{% endif %}">
+                                      {{ skill.name if skill.name is defined else skill }}
+                                      {% if skill.level is defined %}<span class="tag-level">{{ skill.level }}</span>{% endif %}
+                                      {% if skill.certified is defined and skill.certified %}<span class="tag-cert" title="Certified">✔</span>{% endif %}
+                                    </span>
+                                  {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('employee_detail', employee_id=employee.id) }}" class="btn btn-view">
+                                    <i class="fas fa-user-circle"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% elif request.args %}
+            <div class="no-results">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>No employees found matching your criteria</p>
+            </div>
+        {% endif %}
+        {% if total_pages > 1 %}
+            <div class="pagination" style="margin-top: 16px; display: flex; gap: 8px;">
+                {% for p in range(1, total_pages+1) %}
+                    <a href="?{{ query_string }}&page={{ p }}" class="btn btn-secondary {% if p == page %}active{% endif %}">{{ p }}</a>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+  </div>
 </div>
 <script>
-// Helper to get full name for employee
-function getFullName(emp) {
-    if (emp.english_name && emp.busness_id) {
-        return emp.english_name + ' (' + emp.busness_id + ')';
-    }
-    if (emp.english_name && emp.arab_name) {
-        return emp.english_name + ' (' + emp.arab_name + ')';
-    }
-    return emp.english_name || emp.arab_name || emp.busness_id || '';
-}
-
-function setupAutocomplete(input) {
-    const list = JSON.parse(input.getAttribute('data-autocomplete-list'));
-    const field = input.getAttribute('data-autocomplete-field');
-    let dropdown;
-    input.addEventListener('input', function() {
-        closeDropdown();
-        const value = this.value.trim().toLowerCase();
-        if (!value) return;
-        dropdown = document.createElement('div');
-        dropdown.className = 'autocomplete-dropdown';
-        let matches = [];
-        if (field === 'full_name') {
-            matches = list.filter(emp => getFullName(emp).toLowerCase().includes(value)).slice(0, 8);
-        } else {
-            matches = list.filter(item => (item[field] || '').toLowerCase().includes(value)).slice(0, 8);
-        }
-        matches.forEach(item => {
-            const option = document.createElement('div');
-            option.className = 'autocomplete-option';
-            option.textContent = field === 'full_name' ? getFullName(item) : item[field];
-            option.addEventListener('mousedown', function(e) {
-                input.value = this.textContent;
-                closeDropdown();
-            });
-            dropdown.appendChild(option);
+// Autocomplete for employee search (name/business ID)
+const employeeInput = document.getElementById('employee_search');
+const employeeDropdown = document.getElementById('employeeAutocompleteDropdown');
+const employees = JSON.parse(employeeInput.getAttribute('data-autocomplete-list'));
+employeeInput.addEventListener('input', function() {
+    const value = this.value.trim().toLowerCase();
+    employeeDropdown.innerHTML = '';
+    if (!value) { employeeDropdown.style.display = 'none'; return; }
+    let matches = employees.filter(emp =>
+        (emp.english_name && emp.english_name.toLowerCase().includes(value)) ||
+        (emp.arab_name && emp.arab_name.toLowerCase().includes(value)) ||
+        (emp.busness_id && emp.busness_id.toLowerCase().includes(value))
+    ).map(emp => ({ label: emp.english_name + (emp.busness_id ? ' (' + emp.busness_id + ')' : ''), value: emp.english_name }));
+    matches = matches.slice(0, 8);
+    matches.forEach((item, idx) => {
+        const option = document.createElement('div');
+        option.className = 'autocomplete-option';
+        option.textContent = item.label;
+        option.addEventListener('mousedown', function(e) {
+            employeeInput.value = item.label;
+            employeeDropdown.style.display = 'none';
         });
-        if (matches.length > 0) {
-            input.parentNode.appendChild(dropdown);
-        }
+        employeeDropdown.appendChild(option);
     });
-    input.addEventListener('blur', function() {
-        setTimeout(closeDropdown, 100);
-    });
-    function closeDropdown() {
-        if (dropdown && dropdown.parentNode) {
-            dropdown.parentNode.removeChild(dropdown);
-            dropdown = null;
-        }
-    }
-}
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.autocomplete-input').forEach(setupAutocomplete);
-    // Skill search
-    document.querySelectorAll('.skill-search').forEach(initSkillSearch);
-    // Supervisor search
-    document.querySelectorAll('.supervisor-search').forEach(initSupervisorSearch);
-    // Department dropdown UX
-    const deptSelect = document.getElementById('search_department');
-    deptSelect.addEventListener('focus', function() {
-        const visibleOptions = Math.min(this.options.length, 5);
-        const optionHeight = 38;
-        this.size = visibleOptions;
-        this.style.height = `${visibleOptions * optionHeight}px`;
-    });
-    deptSelect.addEventListener('blur', function() {
-        this.size = 1;
-        this.style.height = '';
-    });
-    deptSelect.addEventListener('change', function() {
-        this.size = 1;
-        this.style.height = '';
-        this.blur();
-    });
-    // Add existing skills data to JavaScript
-    window.existingSkills = {{ existing_skills|tojson|safe }};
+    employeeDropdown.style.display = matches.length > 0 ? 'block' : 'none';
 });
+employeeInput.addEventListener('blur', function() { setTimeout(() => { employeeDropdown.style.display = 'none'; }, 100); });
+
+// Autocomplete for skill search
+const skillInput = document.getElementById('skill_search');
+const skillDropdown = document.getElementById('skillAutocompleteDropdown');
+const skills = JSON.parse(skillInput.getAttribute('data-autocomplete-skills'));
+skillInput.addEventListener('input', function() {
+    const value = this.value.trim().toLowerCase();
+    skillDropdown.innerHTML = '';
+    if (!value) { skillDropdown.style.display = 'none'; return; }
+    let matches = skills.filter(skill =>
+        skill.skill_name && skill.skill_name.toLowerCase().includes(value)
+    ).map(skill => ({ label: skill.skill_name, value: skill.skill_name }));
+    matches = matches.slice(0, 8);
+    matches.forEach((item, idx) => {
+        const option = document.createElement('div');
+        option.className = 'autocomplete-option';
+        option.textContent = item.label;
+        option.addEventListener('mousedown', function(e) {
+            skillInput.value = item.value;
+            skillDropdown.style.display = 'none';
+        });
+        skillDropdown.appendChild(option);
+    });
+    skillDropdown.style.display = matches.length > 0 ? 'block' : 'none';
+});
+skillInput.addEventListener('blur', function() { setTimeout(() => { skillDropdown.style.display = 'none'; }, 100); });
+
+// Autocomplete for supervisor search
+const supervisorInput = document.getElementById('search_supervisor');
+const supervisorDropdown = document.getElementById('supervisorAutocompleteDropdown');
+const supervisorList = JSON.parse(supervisorInput.getAttribute('data-autocomplete-list'));
+supervisorInput.addEventListener('input', function() {
+    const value = this.value.trim().toLowerCase();
+    supervisorDropdown.innerHTML = '';
+    if (!value) { supervisorDropdown.style.display = 'none'; return; }
+    let matches = supervisorList.filter(emp =>
+        (emp.english_name && emp.english_name.toLowerCase().includes(value)) ||
+        (emp.arab_name && emp.arab_name.toLowerCase().includes(value)) ||
+        (emp.busness_id && emp.busness_id.toLowerCase().includes(value))
+    ).map(emp => ({ label: emp.english_name + (emp.busness_id ? ' (' + emp.busness_id + ')' : ''), value: emp.english_name, emp_id: emp.emp_id }));
+    matches = matches.slice(0, 8);
+    matches.forEach((item, idx) => {
+        const option = document.createElement('div');
+        option.className = 'autocomplete-option';
+        option.textContent = item.label;
+        option.addEventListener('mousedown', function(e) {
+            supervisorInput.value = item.label;
+            document.getElementById('search_supervisor_emp_id').value = item.emp_id;
+            supervisorDropdown.style.display = 'none';
+        });
+        supervisorDropdown.appendChild(option);
+    });
+    supervisorDropdown.style.display = matches.length > 0 ? 'block' : 'none';
+});
+supervisorInput.addEventListener('blur', function() { setTimeout(() => { supervisorDropdown.style.display = 'none'; }, 100); });
+
+// Loading spinner
+const form = document.querySelector('.search-form');
+if (form) {
+    form.addEventListener('submit', function() {
+        document.getElementById('loadingSpinner').classList.add('active');
+    });
+}
 </script>
-<style>
-/* Make dropdown text black in all sidebars */
-.search-sidebar select, .search-sidebar option, .search-sidebar input, .search-sidebar .form-input {
-    color: #222 !important;
-    background: #fff !important;
-}
-.search-sidebar .form-input::placeholder {
-    color: #888 !important;
-}
-</style>
 {% endblock %}

@@ -42,6 +42,7 @@ class Employee(Base):
     )
     position = relationship("Position", back_populates="employees")
     documents = relationship("EmployeeDocument", back_populates="employee")
+    supervisor = relationship("Employee", remote_side=[emp_id], uselist=False)
     
     # Convenience properties
     @property

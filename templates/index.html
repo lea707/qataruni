@@ -4,6 +4,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/home.css') }}">
 {% endblock %}
 {% block content %}
+{% if session.username %}
+  <div class="logged-in-banner">
+    Logged in as <strong>{{ session.username }}</strong>
+  </div>
+{% endif %}
 <div class="home-hero">
     <h1>Welcome to the Employee Skills Tracker</h1>
     <p>Track employee skills, certifications, and documents with ease.<br>Empower your organization with modern HR tools.</p>

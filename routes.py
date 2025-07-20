@@ -28,6 +28,7 @@ from services.file_handler import handle_file_uploads
 from services.employee_service import EmployeeService
 from pathlib import Path
 from urllib.parse import urlencode
+import re
 
 employee_service = EmployeeService()
 employee_service = EmployeeService()
@@ -280,13 +281,73 @@ def init_routes(app):
     def add_department():
         if request.method == 'POST':
             name = request.form.get('name')
+            director_label = request.form.get('director_emp_id')
+            parent_department_label = request.form.get('parent_department_id')
+
+            # Map director label to ID
+            director_emp_id = None
+            if director_label:
+                for emp in employee_service.get_all_employees():
+                    label = f"{emp.english_name} ({emp.busness_id})"
+                    if label == director_label:
+                        director_emp_id = emp.emp_id
+                        break
+
+            # Map department label to ID
+            parent_department_id = None
+            if parent_department_label:
+                for dept in department_service.get_all_departments():
+                    if dept.department_name == parent_department_label:
+                        parent_department_id = dept.department_id
+                        break
+
             try:
-                department_id = department_service.create_department(name)
+                # Create the department
+                department_id = department_service.create_department(name, director_emp_id=director_emp_id, parent_id=parent_department_id)
+                # If a director is selected, update their department and position
+                if director_emp_id:
+                    from database.connection import db
+                    from models.employee import Employee
+                    from models.position import Position
+                    from models.level import EmployeeLevel
+                    session = db() if callable(db) else db
+                    try:
+                        # Get the Director position_id
+                        director_position = session.query(Position).filter(Position.position_name.ilike('Director')).first()
+                        if director_position:
+                            director_position_id = director_position.position_id
+                        else:
+                            # If not found, create it
+                            director_position = Position(position_name='Director', is_active=True)
+                            session.add(director_position)
+                            session.commit()
+                            director_position_id = director_position.position_id
+                        # Get the Director level_id
+                        director_level = session.query(EmployeeLevel).filter(EmployeeLevel.level_name.ilike('Director')).first()
+                        if director_level:
+                            director_level_id = director_level.level_id
+                        else:
+                            director_level = EmployeeLevel(level_name='Director')
+                            session.add(director_level)
+                            session.commit()
+                            director_level_id = director_level.level_id
+                        # Update the employee
+                        employee = session.query(Employee).get(int(director_emp_id))
+                        if employee:
+                            employee.department_id = department_id
+                            employee.position_id = director_position_id
+                            employee.level_id = director_level_id
+                            session.commit()
+                    finally:
+                        session.close()
                 flash(f"Department '{name}' created successfully!", "success")
                 return redirect(url_for('list_departments'))
             except ValueError as e:
                 flash(str(e), "error")
-        return render_template('departments/add.html')
+        # Fetch employees and departments for the form
+        all_employees = employee_service.get_all_employees()
+        all_departments = department_service.get_all_departments()
+        return render_template('departments/add.html', employees=all_employees, departments=all_departments)
 
     @app.route('/departments/<int:department_id>')
     def department_detail(department_id):
@@ -327,7 +388,12 @@ def init_routes(app):
             if department_service.delete_department(department_id):
                 flash('Department deleted successfully!', 'success')
             else:
-                flash('Department not found', 'error')
+                # Check if the department still has employees
+                department = department_service.get_department(department_id)
+                if department and getattr(department, 'employees', None) and len(department.employees) > 0:
+                    flash("You can't delete this department because it still has employees.", 'error')
+                else:
+                    flash('Department not found', 'error')
         except Exception as e:
             flash(f'Error deleting department: {str(e)}', 'error')
         return redirect(url_for('list_departments'))
@@ -335,15 +401,35 @@ def init_routes(app):
     @app.route('/search', methods=['GET'])
     def search():
         # Extract search parameters from query string
+        search_employee_query = request.args.get('employee_query', '').strip()
+        search_skill_query = request.args.get('skill_query', '').strip()
         search_business_id = request.args.get('business_id', '').strip()
         search_name = request.args.get('name', '').strip()
         search_department = request.args.get('department', '').strip()
-        search_skill_name = request.args.get('skill_name', '').strip()
+        search_skill_name = search_skill_query or request.args.get('skill_name', '').strip()
         search_skill_category = request.args.get('skill_category', '').strip()
         search_skill_level = request.args.get('skill_level', '').strip()
         search_certificate_type = request.args.get('certificate_type', '').strip()
         search_document_type = request.args.get('document_type', '').strip()
         search_supervisor_emp_id = request.args.get('supervisor_emp_id', '').strip()
+        search_position_id = request.args.get('position_id', '').strip()
+        search_hire_date_from = request.args.get('hire_date_from', '').strip()
+        search_hire_date_to = request.args.get('hire_date_to', '').strip()
+        sort_by = request.args.get('sort_by', '').strip()
+
+        # If employee_query is provided, use it for name or business_id
+        if search_employee_query:
+            import re
+            match = re.search(r'\(([^)]+)\)', search_employee_query)
+            if match:
+                search_business_id = match.group(1).strip()
+                search_name = ''
+            elif '-' in search_employee_query:
+                search_business_id = search_employee_query.strip()
+                search_name = ''
+            else:
+                search_name = search_employee_query.strip()
+                search_business_id = ''
 
         # Get all departments for the dropdown
         departments = [dept.department_name for dept in department_service.get_all_departments()]
@@ -351,6 +437,7 @@ def init_routes(app):
         skill_categories = skill_service.get_all_skill_categories()
         certificate_types = employee_document_service.get_all_certificate_types()
         document_types = employee_document_service.get_all_document_types()
+        positions = position_service.get_all_positions()
 
         # Get all employees for datalists
         all_employees = employee_service.get_all_employees()
@@ -364,7 +451,11 @@ def init_routes(app):
             skill_level=search_skill_level,
             certificate_type=search_certificate_type,
             document_type=search_document_type,
-            supervisor_emp_id=search_supervisor_emp_id
+            supervisor_emp_id=search_supervisor_emp_id,
+            position_id=search_position_id,
+            hire_date_from=search_hire_date_from,
+            hire_date_to=search_hire_date_to,
+            sort_by=sort_by
         )
         # Pagination
         page = int(request.args.get('page', 1))
@@ -381,6 +472,7 @@ def init_routes(app):
         # Convert all_employees to a list of dicts for JSON serialization
         all_employees_dicts = [
             {
+                'emp_id': emp.emp_id,
                 'busness_id': emp.busness_id,
                 'english_name': emp.english_name,
                 'arab_name': emp.arab_name,
@@ -388,7 +480,7 @@ def init_routes(app):
             }
             for emp in all_employees
         ]
-        return render_template('search.html', employees=paginated_employees, all_employees=all_employees_dicts, departments=departments, existing_skills=existing_skills, skill_categories=skill_categories, certificate_types=certificate_types, document_types=document_types, page=page, total_pages=total_pages, total_employees=total_employees, query_string=query_string)
+        return render_template('search.html', employees=paginated_employees, all_employees=all_employees_dicts, departments=departments, existing_skills=existing_skills, skill_categories=skill_categories, certificate_types=certificate_types, document_types=document_types, positions=positions, page=page, total_pages=total_pages, total_employees=total_employees, query_string=query_string)
 
     # Error handlers
     @app.errorhandler(404)

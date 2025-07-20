@@ -6,31 +6,243 @@
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/department_employee_list.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/department_detail.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}
 
 {% block content %}
+<style>
+  .accordion,
+  .accordion-item,
+  .accordion-header,
+  .accordion-button,
+  .accordion-body {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .accordion .accordion-header {
+    font-size: 1.15rem;
+    font-weight: 600;
+    width: 100%;
+    display: block;
+    box-sizing: border-box;
+  }
+  .accordion-button {
+    padding: 1.1rem 0 1.1rem 2.2rem; /* More left padding for text */
+    font-size: 1.1rem;
+    background: #f2f3f5; /* Grayish background */
+    color: #444;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    transition: background 0.2s, color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+    font-weight: 600;
+    gap: 1rem;
+  }
+  .accordion-button .accordion-title {
+    flex: 1 1 auto;
+  }
+  .accordion-button::after {
+    content: '\25BC'; /* Downward chevron */
+    display: block;
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%) rotate(0deg);
+    font-size: 1.1em;
+    color: #888;
+    transition: transform 0.2s;
+  }
+  .accordion-button:not(.collapsed)::after {
+    transform: translateY(-50%) rotate(-180deg); /* Rotate up when expanded */
+  }
+  .accordion-button.collapsed {
+    background: #f7f7f7;
+    color: #444;
+    border-radius: 8px;
+  }
+  .accordion-item {
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(139,0,0,0.04);
+    overflow: hidden;
+    width: 100%;
+  }
+  .accordion-body {
+    background: #fff;
+    padding: 0 0 1.2rem 0;
+    min-height: 120px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+  }
+  .accordion .table {
+    margin-bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    font-size: 1.05rem;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+    table-layout: fixed;
+  }
+  .accordion .table th, .accordion .table td {
+    padding: 0.85rem 1.1rem;
+    vertical-align: middle;
+    min-width: 0;
+    text-align: center;
+    word-break: break-word;
+  }
+  .accordion .table th {
+    background: #f6f7fa;
+    color: #333;
+    font-weight: 700;
+    font-size: 1.08rem;
+    border-bottom: 2px solid #e0e0e0;
+  }
+  .accordion .table td {
+    background: #fff;
+    font-size: 1.05rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .btn-view.btn-sm {
+    padding: 0.4em 1.1em;
+    font-size: 1em;
+    border-radius: 6px;
+    border: 1.2px solid #8B0000;
+    background: #fff;
+    color: #8B0000;
+    font-weight: 600;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .btn-view.btn-sm:hover {
+    background: #fbeaea;
+    color: #a30000;
+    border-color: #a30000;
+  }
+  .employee-row-active {
+    background: #b6f5c6 !important; /* Vivid green */
+  }
+  .employee-row-inactive {
+    background: #f7b6b6 !important; /* Vivid red */
+  }
+  .accordion .table tbody tr.employee-row-active,
+  .accordion .table tbody tr.employee-row-active td {
+    background-color: #f4fcf8 !important; /* Even lighter green */
+    box-shadow: 0 2px 8px 0 rgba(60,60,120,0.07);
+    transition: background 0.18s;
+  }
+  .accordion .table tbody tr.employee-row-inactive,
+  .accordion .table tbody tr.employee-row-inactive td {
+    background-color: #fdf4f4 !important; /* Even lighter red */
+    box-shadow: 0 2px 8px 0 rgba(60,60,120,0.07);
+    transition: background 0.18s;
+  }
+  .accordion .table tbody tr.employee-row-active:hover,
+  .accordion .table tbody tr.employee-row-active:hover td {
+    background-color: #eafaf1 !important; /* Previous green tint on hover */
+  }
+  .accordion .table tbody tr.employee-row-inactive:hover,
+  .accordion .table tbody tr.employee-row-inactive:hover td {
+    background-color: #fbeaea !important; /* Previous red tint on hover */
+  }
+  @media (max-width: 700px) {
+    .accordion .table, .accordion .table th, .accordion .table td {
+      font-size: 0.98rem;
+      min-width: 80px;
+      padding: 0.5rem 0.5rem;
+    }
+    .accordion-body {
+      padding: 0.7rem 0.5rem 0.7rem 0.5rem;
+    }
+  }
+</style>
 <div class="department-detail-container">
     <h1>{{ department.department_name }} Department</h1>
     <div class="department-info-card">
         <span class="info-label">Department Name:</span>
         <span class="info-value">{{ department.department_name }}</span><br>
+        <span class="info-label">Created:</span>
+        <span class="info-value">{{ department.created_at.strftime('%Y-%m-%d') if department.created_at else 'N/A' }}</span><br>
         {% if department.director %}
-        <span class="info-label">Director:</span>
+        <span class="info-label">Head of Department:</span>
         <span class="info-value">{{ department.director.english_name }}</span><br>
         {% endif %}
         {% if department.parent_department %}
         <span class="info-label">Parent Department:</span>
-        <span class="info-value">{{ department.parent_department.department_name }}</span><br>
+        <span class="info-value"><a href="{{ url_for('department_detail', department_id=department.parent_department.department_id) }}">{{ department.parent_department.department_name }}</a></span><br>
         {% endif %}
+    </div>
+    <div class="row-legend" style="margin-bottom: 18px; margin-top: 8px;">
+      <span style="display: inline-block; width: 22px; height: 18px; background: #b6f5c6; border: 1px solid #b6f5c6; border-radius: 3px; vertical-align: middle; margin-right: 7px;"></span>
+      <span style="margin-right: 18px; color: #217a3a; font-size: 1em;">Active Employee</span>
+      <span style="display: inline-block; width: 22px; height: 18px; background: #f7b6b6; border: 1px solid #f7b6b6; border-radius: 3px; vertical-align: middle; margin-right: 7px;"></span>
+      <span style="color: #a30000; font-size: 1em;">Inactive Employee</span>
     </div>
     <ul class="employee-list department-employee-list">
       {% if department.employees %}
+        {% set employees_by_position = {} %}
         {% for employee in department.employees %}
-          <li>
-            <h3>{{ employee.english_name }}</h3>
-            <p>Skills: {{ employee.skills | map(attribute='skill_name') | join(', ') }}</p>
-          </li>
+            {% set pos = employee.position.position_name if employee.position else '—' %}
+            {% if pos not in employees_by_position %}
+                {% set _ = employees_by_position.update({pos: []}) %}
+            {% endif %}
+            {% set _ = employees_by_position[pos].append(employee) %}
         {% endfor %}
+
+        <div class="accordion" id="positionAccordion">
+        {% for position, emps in employees_by_position.items() %}
+            {# Determine if any employee is inactive #}
+            {% set has_inactive = false %}
+            {% for employee in emps %}
+                {% if not employee.is_active %}
+                    {% set has_inactive = true %}
+                {% endif %}
+            {% endfor %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                        <span class="accordion-title">{{ position }} ({{ emps|length }})</span>
+                    </button>
+                </h2>
+                <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#positionAccordion">
+                    <div class="accordion-body">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Business ID</th>
+                                    <th>Level</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee in emps|sort(attribute='level.level_rank', reverse=True) %}
+                                <tr class="employee-row-{% if employee.is_active %}active{% else %}inactive{% endif %}">
+                                    <td>{{ employee.english_name }}</td>
+                                    <td>{{ employee.busness_id }}</td>
+                                    <td>{{ employee.level.level_name if employee.level else '\u2014' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('employee_detail', employee_id=employee.emp_id) }}" class="btn btn-view btn-sm">View</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
       {% else %}
         <p>No employees found in this department.</p>
       {% endif %}

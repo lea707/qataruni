@@ -16,7 +16,8 @@ class DepartmentRepository:
         session = SessionLocal()
         try:
             return session.query(Department).options(
-                joinedload(Department.employees).joinedload(Employee.skills),
+                joinedload(Department.employees).joinedload(Employee.level),
+                joinedload(Department.employees).joinedload(Employee.position),
                 joinedload(Department.director),
                 joinedload(Department.parent_department)
             ).filter_by(department_id=department_id).first()
@@ -62,7 +63,9 @@ class DepartmentRepository:
             department = session.query(Department).filter_by(department_id=department_id).first()
             if not department:
                 return False
-
+            # Prevent deletion if employees exist
+            if department.employees and len(department.employees) > 0:
+                return False
             session.delete(department)
             session.commit()
             return True

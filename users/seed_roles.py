@@ -1,4 +1,4 @@
-from users.models import Role, Permission
+from users.models.models import Role, Permission
 from database.connection import db, engine
 from sqlalchemy.orm import Session
 

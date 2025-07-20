@@ -132,9 +132,9 @@
                     <div class="form-group">
                         <label for="business_id">Business ID*</label>
                         <input type="text" id="business_id" name="business_id" required 
-                               pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{5,}$"
+                               pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*-)[A-Za-z\d-]{5,}$"
                                oninput="validateBusinessId()">
-                        <small class="form-text text-muted">Must be at least 5 characters with both letters and numbers</small>
+                        <small class="form-text text-muted">Must be at least 5 characters with both letters, numbers, and a dash ( - )</small>
                         <div id="businessIdFeedback" class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -253,17 +253,17 @@
 </div>
 
 <script>
-let skillIndex = 1;
+let skillIndex = 1; // Start at 1 because the first row uses document_file_0[]
 
 // Business ID Validation
 function validateBusinessId() {
     const input = document.getElementById('business_id');
     const feedback = document.getElementById('businessIdFeedback');
-    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{5,}$/;
+    const regex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*-)[A-Za-z\d-]{5,}$/;
     
     if (!regex.test(input.value)) {
         input.classList.add('is-invalid');
-        feedback.textContent = 'Must be at least 5 characters with both letters and numbers';
+        feedback.textContent = 'Must be at least 5 characters with both letters, numbers, and a dash ( - )';
         return false;
     }
     
@@ -689,5 +689,22 @@ function removeSkillRow(button) {
         // Don't decrement skillIndex as it's used for file naming
     }
 }
+
+document.getElementById('employee-form').addEventListener('submit', function(e) {
+    // Re-index all skill file inputs before submitting
+    const skillRows = document.querySelectorAll('#skills-container .skill-row');
+    skillRows.forEach((row, idx) => {
+        const fileInput = row.querySelector('.certification-details input[type="file"]');
+        if (fileInput) {
+            fileInput.name = `document_file_${idx}[]`;
+        }
+        // Patch: update certified checkbox value to match skill name
+        const skillInput = row.querySelector('input[name="skill_name[]"]');
+        const certifiedCheckbox = row.querySelector('input[type="checkbox"][name="certified[]"]');
+        if (certifiedCheckbox && skillInput) {
+            certifiedCheckbox.value = skillInput.value;
+        }
+    });
+});
 </script>
 {% endblock %}

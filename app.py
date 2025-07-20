@@ -1,5 +1,5 @@
 import os
-from flask import Flask, g, request
+from flask import Flask, g, request, session, redirect, url_for, flash
 from routes import init_routes
 from urllib.parse import urlencode
 
@@ -8,17 +8,14 @@ def test_create_employee_success():
 
 def create_app():
     app = Flask(__name__)
+
     @app.before_request
-    def load_fake_admin():
-        g.current_user = {
-            "username": "admin",
-            "permissions": [
-                "view_employee",
-                "edit_employee",
-                "delete_employee",
-                "add_employee"
-            ]
-        }
+    def require_login():
+        public_endpoints = ['user.login', 'static']
+        if request.endpoint not in public_endpoints and not session.get('user_id'):
+            flash('Please login or sign up to access this page.', 'danger')
+            return redirect(url_for('user.login', next=request.url))
+
 
     # ✅ Security headers
     @app.after_request
@@ -29,6 +26,8 @@ def create_app():
 
     app.secret_key = '973ybbfehfehuhnencuen'
     init_routes(app)
+    from users.user_routes import user_bp
+    app.register_blueprint(user_bp)
     return app
 
 if __name__ == '__main__':

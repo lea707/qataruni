@@ -5,17 +5,18 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/list.css') }}">
 {% endblock %}
 {% block content %}
+{% include '_flash_messages.html' %}
 <div class="employee-directory">
     <div class="directory-header">
         <h1>Employee Directory</h1>
-        {% if g.current_user and 'add_employee' in g.current_user.permissions %}
+        {% if session.permissions and 'add_employee' in session.permissions %}
         <a href="{{ url_for('add_employee') }}" class="btn btn-primary">
             <i class="fas fa-user-plus"></i> Add Employee
         </a>
         {% endif %}
     </div>
 
-    <div class="employee-table">
+    <div class="employee-table modern-table">
         <table>
             <thead>
                 <tr>
@@ -31,31 +32,41 @@
             <tbody>
                 {% for employee in employees %}
                 <tr>
-                    <td>{{ employee.busness_id or '—' }}</td>
-                    <td>{{ employee.english_name or '—' }}</td>
-                    <td>{{ employee.arab_name or '—' }}</td>
-                    <td>{{ employee.position.position_name if employee.position else '—' }}</td>
-                    <td>{{ employee.department.department_name if employee.department else '—' }}</td>
-                    <td>{% if employee.is_active %}<span class="status-active">Active</span>{% else %}<span class="status-inactive">Inactive</span>{% endif %}</td>
+                    <td><span class="biz-id">{{ employee.busness_id or '—' }}</span></td>
+                    <td><span class="emp-name emp-name-large">{{ employee.english_name or '—' }}</span></td>
+                    <td class="emp-arabic emp-arabic-large">{{ employee.arab_name or '—' }}</td>
+                    <td class="emp-position">{{ employee.position.position_name if employee.position else '—' }}</td>
+                    <td class="emp-department">{{ employee.department.department_name if employee.department else '—' }}</td>
+                    <td>
+                        {% if employee.is_active %}
+                            <span class="status-dot status-dot-active" title="Active"></span>
+                        {% else %}
+                            <span class="status-dot status-dot-inactive" title="Inactive"></span>
+                        {% endif %}
+                    </td>
                     <td class="actions-cell">
-                        <div class="actions-container">
-                            <a href="{{ url_for('employee_detail', employee_id=employee.emp_id) }}" class="btn btn-view">
+                        <div class="actions-container actions-align-row">
+                            <a href="{{ url_for('employee_detail', employee_id=employee.emp_id) }}" class="btn btn-view" title="View">
                                 <i class="fas fa-eye"></i> View
                             </a>
-                            <a href="/employees/edit/{{ employee.emp_id }}" class="btn btn-edit">
+                            {% if session.permissions and 'edit_employee' in session.permissions %}
+                            <a href="/employees/edit/{{ employee.emp_id }}" class="btn btn-edit" title="Edit">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
+                            {% endif %}
+                            {% if session.permissions and 'delete_employee' in session.permissions %}
                             <form action="{{ url_for('delete_employee', employee_id=employee.emp_id) }}" method="POST">
-                                <button type="submit" class="btn btn-delete" onclick="return confirm('Are you sure?')">
+                                <button type="submit" class="btn btn-delete" title="Delete" onclick="return confirm('Are you sure?')">
                                     <i class="fas fa-trash"></i> Delete
                                 </button>
                             </form>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" class="no-results">
+                    <td colspan="7" class="no-results">
                         No employees found.
                         {% if g.current_user and 'add_employee' in g.current_user.permissions %}
                         <a href="{{ url_for('add_employee') }}">Add your first employee</a>.
@@ -68,3 +79,38 @@
     </div>
 </div>
 {% endblock %}
+
+<style>
+.emp-name-large {
+  font-size: 1.25em;
+  font-weight: 700;
+}
+.emp-arabic-large {
+  font-size: 1.18em;
+  font-weight: 600;
+}
+.status-dot {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 0 auto;
+  vertical-align: middle;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1.5px #bbb;
+}
+.status-dot-active {
+  background: #38d39f;
+  box-shadow: 0 0 4px #38d39f44;
+}
+.status-dot-inactive {
+  background: #e57373;
+  box-shadow: 0 0 4px #e5737344;
+}
+.actions-align-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+}
+</style>

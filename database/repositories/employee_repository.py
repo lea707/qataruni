@@ -89,7 +89,8 @@ class EmployeeRepository:
                 joinedload(Employee.position),
                 joinedload(Employee.level),
                 joinedload(Employee.skills),
-                joinedload(Employee.documents)
+                joinedload(Employee.documents),
+                joinedload(Employee.supervisor)  # Eagerly load supervisor
             ).filter(Employee.emp_id == employee_id).first()
         finally:
             session.close()

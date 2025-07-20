@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul class="flashes">
+    {% for category, message in messages %}
+      <li class="flash {{ category }}">{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+<div class="account-container">
+    <h2>My Account</h2>
+    <div class="account-info">
+        <form method="post" action="/user/account/update" class="account-form" id="accountForm" novalidate>
+            <div class="form-group">
+                <label>Business ID</label>
+                <input type="text" name="business_user_id" id="business_user_id" value="{{ user.business_user_id or '' }}"
+                       pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*-)[A-Za-z\d-]{5,}$" minlength="5" maxlength="30">
+                <div class="invalid-feedback" id="businessIdFeedback"></div>
+            </div>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" name="username" id="username" value="{{ user.username }}" required minlength="2" maxlength="50" pattern="[A-Za-z0-9 .,'-]+">
+                <div class="invalid-feedback" id="nameFeedback"></div>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" id="email" value="{{ user.email or '' }}" maxlength="100">
+                <div class="invalid-feedback" id="emailFeedback"></div>
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" name="phone_number" id="phone_number" value="{{ user.phone_number or '' }}" pattern="\d{8}" maxlength="8">
+                <div class="invalid-feedback" id="phoneFeedback"></div>
+            </div>
+            <div class="form-group">
+                <label>Role</label>
+                <input type="text" value="{{ user.role.role_name if user.role else 'N/A' }}" readonly>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Info</button>
+        </form>
+        <form method="post" action="/user/logout" style="margin-top:1rem;">
+            <button type="submit" class="btn btn-secondary">Logout</button>
+        </form>
+        <form method="post" action="/user/account/delete" style="margin-top:1rem;">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete your account? This cannot be undone.');">Delete Account</button>
+        </form>
+    </div>
+</div>
+<script>
+function showError(input, message) {
+    input.classList.add('is-invalid');
+    const feedback = document.getElementById(input.id + 'Feedback');
+    if (feedback) feedback.textContent = message;
+}
+function clearError(input) {
+    input.classList.remove('is-invalid');
+    const feedback = document.getElementById(input.id + 'Feedback');
+    if (feedback) feedback.textContent = '';
+}
+document.getElementById('accountForm').addEventListener('submit', function(e) {
+    let valid = true;
+    // Name
+    const name = document.getElementById('username');
+    if (!name.value.trim()) {
+        showError(name, 'This field is required.');
+        valid = false;
+    } else if (name.value.length < 2 || name.value.length > 50) {
+        showError(name, 'Name must be between 2 and 50 characters.');
+        valid = false;
+    } else if (!/^[A-Za-z0-9 .,'-]+$/.test(name.value)) {
+        showError(name, 'Name contains invalid characters.');
+        valid = false;
+    } else {
+        clearError(name);
+    }
+    // Email
+    const email = document.getElementById('email');
+    if (email.value && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value)) {
+        showError(email, 'Invalid email format.');
+        valid = false;
+    } else {
+        clearError(email);
+    }
+    // Phone
+    const phone = document.getElementById('phone_number');
+    if (phone.value && !/^\d{8}$/.test(phone.value)) {
+        showError(phone, 'Phone number must be exactly 8 digits.');
+        valid = false;
+    } else {
+        clearError(phone);
+    }
+    // Business ID
+    const businessId = document.getElementById('business_user_id');
+    if (businessId.value && !/^(?=.*[A-Za-z])(?=.*\d)(?=.*-)[A-Za-z\d-]{5,}$/.test(businessId.value)) {
+        showError(businessId, 'Business ID must be at least 5 characters, contain letters, numbers, and a dash (-).');
+        valid = false;
+    } else {
+        clearError(businessId);
+    }
+    if (!valid) e.preventDefault();
+});
+</script>
+<style>
+.account-container {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 2rem 2.5rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+.account-container h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+.account-form .form-group {
+    margin-bottom: 1.2rem;
+}
+label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+}
+input[type="text"], input[type="email"] {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+.is-invalid {
+    border-color: #b71c1c;
+    background: #fdeaea;
+}
+.invalid-feedback {
+    color: #b71c1c;
+    font-size: 0.95em;
+    margin-top: 0.2rem;
+    min-height: 1.2em;
+}
+.btn {
+    padding: 0.7rem 1.2rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-right: 0.5rem;
+}
+.btn-primary { background: #217a3a; color: #fff; border: none; }
+.btn-primary:hover { background: #195e2d; }
+.btn-secondary { background: #eee; color: #333; border: none; }
+.btn-danger { background: #b71c1c; color: #fff; border: none; }
+.btn-danger:hover { background: #a31515; }
+</style>
+{% endblock %} 

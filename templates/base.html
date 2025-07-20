@@ -20,6 +20,9 @@
                 <a href="/about">About</a>
                 <a href="/search">Search</a>
                 <a href="/departments">Departments</a>
+                {% if session.username %}
+                  <a href="/user/account" class="nav-account-btn">My Account</a>
+                {% endif %}
             </div>
             <img src="{{ url_for('static', filename='images/doha institute.png') }}" class="logo" alt="Company Logo">
         </div>
@@ -34,5 +37,35 @@
             <p>© 2025 Doha Institute for Graduate Studies Employee Skills Tracker. All rights reserved.</p>
         </div>
     </footer>
+<style>
+.footer-account-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.7rem 1.5rem;
+  background: #217a3a;
+  color: #fff;
+  border-radius: 25px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(33,122,58,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.footer-account-btn:hover {
+  background: #195e2d;
+  box-shadow: 0 4px 16px rgba(33,122,58,0.15);
+}
+/* Navigation Account Button */
+.nav-account-btn {
+  margin-left: 1.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #217a3a;
+  transition: color 0.2s;
+}
+.nav-account-btn:hover {
+  color: #195e2d;
+  text-decoration: underline;
+}
+</style>
 </body>
 </html>

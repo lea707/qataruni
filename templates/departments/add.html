@@ -2,6 +2,7 @@
 {% block head %}
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/department_form.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
 {% endblock %}
 {% block content %}
 <div class="department-form-container">
@@ -13,21 +14,11 @@
     </div>
     <div class="form-group">
         <label for="director_emp_id">Director (Employee)</label>
-        <select id="director_emp_id" name="director_emp_id">
-            <option value="">-- Select Director --</option>
-            {% for emp in employees %}
-            <option value="{{ emp.emp_id }}">{{ emp.english_name }}</option>
-            {% endfor %}
-        </select>
+        <input id="director_emp_id" name="director_emp_id" class="awesomplete" placeholder="Type to search..." autocomplete="off">
     </div>
     <div class="form-group">
         <label for="parent_department_id">Parent Department</label>
-        <select id="parent_department_id" name="parent_department_id">
-            <option value="">-- None --</option>
-            {% for dept in departments %}
-            <option value="{{ dept.department_id }}">{{ dept.name }}</option>
-            {% endfor %}
-        </select>
+        <input id="parent_department_id" name="parent_department_id" class="awesomplete" placeholder="Type to search..." autocomplete="off">
     </div>
     <div class="form-actions">
         <button type="submit" class="btn">Save</button>
@@ -35,4 +26,30 @@
     </div>
 </form>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+<script>
+// Prepare the options for Awesomplete
+var directorList = [
+    {% for emp in employees %}
+        "{{ emp.english_name|e }} ({{ emp.busness_id|e }})"{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
+var departmentList = [
+    {% for dept in departments %}
+        "{{ dept.department_name|e }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
+new Awesomplete(document.getElementById("director_emp_id"), {
+    list: directorList,
+    minChars: 1,
+    maxItems: 10,
+    autoFirst: true
+});
+new Awesomplete(document.getElementById("parent_department_id"), {
+    list: departmentList,
+    minChars: 1,
+    maxItems: 10,
+    autoFirst: true
+});
+</script>
 {% endblock %}

@@ -51,6 +51,11 @@ class EmployeeService:
         temp_files = [] 
         
         try:
+            # Check for duplicate email before creating employee
+            existing_employee = session.query(Employee).filter_by(email=form_data.get('email')).first()
+            if existing_employee:
+                raise RuntimeError(f"An employee with email {form_data.get('email')} already exists.")
+
             business_id = form_data.get('business_id')
             if not business_id:
                 business_id = self._generate_business_id()
@@ -195,6 +200,16 @@ class EmployeeService:
             if not employee:
                 return False
 
+            # Check for duplicate email (exclude current employee)
+            new_email = form_data.get('email')
+            if new_email:
+                existing_employee = session.query(Employee).filter(
+                    Employee.email == new_email,
+                    Employee.emp_id != employee_id
+                ).first()
+                if existing_employee:
+                    raise RuntimeError(f"An employee with email {new_email} already exists.")
+
             # Update basic fields
             employee.english_name = form_data.get('english_name')
             employee.arab_name = form_data.get('arab_name')
@@ -205,7 +220,7 @@ class EmployeeService:
             employee.department_id = int(form_data['department_id'])
             employee.level_id = int(form_data.get('level_id', 0)) or None
             employee.supervisor_emp_id = int(form_data.get('supervisor_emp_id', 0)) or None
-            employee.is_active = 'is_active' in form_data
+            employee.is_active = form_data.get('is_active') == 'true'
             employee.updated_at = datetime.now()
 
             # Process skills using the same session
@@ -562,7 +577,7 @@ class EmployeeService:
             if callable(self.db):
                 session.close()
      
-    def search_employees(self, business_id=None, name=None, department=None, skill_name=None, skill_category=None, skill_level=None, certificate_type=None, document_type=None, supervisor_emp_id=None):
+    def search_employees(self, business_id=None, name=None, department=None, skill_name=None, skill_category=None, skill_level=None, certificate_type=None, document_type=None, supervisor_emp_id=None, position_id=None, hire_date_from=None, hire_date_to=None, sort_by=None):
         session = self.db() if callable(self.db) else self.db
         try:
             from sqlalchemy import or_, and_
@@ -576,24 +591,53 @@ class EmployeeService:
             if name:
                 query = query.filter(or_(Employee.english_name.ilike(f"%{name}%"), Employee.arab_name.ilike(f"%{name}%")))
             if department:
-                query = query.join(Employee.department).filter(Employee.department.has(name=department))
+                query = query.join(Employee.department).filter(Employee.department.has(department_name=department))
             if supervisor_emp_id:
                 query = query.filter(Employee.supervisor_emp_id == supervisor_emp_id)
+            if position_id:
+                query = query.filter(Employee.position_id == int(position_id))
+            if hire_date_from:
+                from datetime import datetime
+                try:
+                    date_from = datetime.strptime(hire_date_from, '%Y-%m-%d').date()
+                    query = query.filter(Employee.hire_date >= date_from)
+                except Exception:
+                    pass
+            if hire_date_to:
+                from datetime import datetime
+                try:
+                    date_to = datetime.strptime(hire_date_to, '%Y-%m-%d').date()
+                    query = query.filter(Employee.hire_date <= date_to)
+                except Exception:
+                    pass
             # Skill filters
             if skill_name:
                 query = query.join(Employee.skills).filter(Skill.skill_name.ilike(f"%{skill_name}%"))
             if skill_category:
                 query = query.join(Employee.skills).filter(Skill.category_id == skill_category)
             if skill_level:
-                query = query.join(Employee.skills, aliased=True).filter(employee_skills.c.skill_level == skill_level)
+                query = query.join(Employee.skills).filter(employee_skills.c.skill_level == skill_level)
             # Certificate/document filters
             if certificate_type:
                 query = query.join(Employee.documents).filter(Employee.documents.any(cert_type_id=certificate_type))
             if document_type:
                 query = query.join(Employee.documents).filter(Employee.documents.any(doc_type_id=document_type))
-            # If no filters, show all employees
+            # Sorting
+            if sort_by == 'name_asc':
+                query = query.order_by(Employee.english_name.asc())
+            elif sort_by == 'name_desc':
+                query = query.order_by(Employee.english_name.desc())
+            elif sort_by == 'id_asc':
+                query = query.order_by(Employee.busness_id.asc())
+            elif sort_by == 'id_desc':
+                query = query.order_by(Employee.busness_id.desc())
+            elif sort_by == 'hiredate_asc':
+                query = query.order_by(Employee.hire_date.asc())
+            elif sort_by == 'hiredate_desc':
+                query = query.order_by(Employee.hire_date.desc())
+
             employees = query.distinct().all()
-            # Format for template
+
             result = []
             for emp in employees:
                 result.append({
