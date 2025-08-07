@@ -188,31 +188,37 @@
             <div class="autocomplete-wrapper" style="flex:1;">
                 <input type="text" name="skill_query" id="skill_search" class="form-input autocomplete-input" placeholder="Search by skill name..." value="{{ request.args.get('skill_query', '') }}" autocomplete="off" data-autocomplete-skills='{{ existing_skills|tojson }}'>
                 <div id="skillAutocompleteDropdown" class="autocomplete-dropdown" style="display:none;"></div>
-            </div>
+        </div>
             <div class="search-actions">
                 <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
                 <a href="{{ url_for('search') }}" class="btn btn-secondary">Clear</a>
             </div>
         </div>
         <div class="advanced-filters" id="advancedFilters">
-            <div class="form-group">
+        <div class="form-group">
                 <label for="search_department">Department:</label>
-                <select id="search_department" name="department" class="form-input">
-                    <option value="">All Departments</option>
-                    {% for dept in departments %}
+            <select id="search_department" name="department" class="form-input">
+                <option value="">All Departments</option>
+                {% if session.role_name == 'Admin' %}
+                {% for dept in departments %}
+                <option value="{{ dept }}" {% if request.args.get('department') == dept %}selected{% endif %}>{{ dept }}</option>
+                {% endfor %}
+                {% else %}
+                    {% for dept in g.allowed_departments %}
                     <option value="{{ dept }}" {% if request.args.get('department') == dept %}selected{% endif %}>{{ dept }}</option>
                     {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="search_skill_category">Skill Category:</label>
-                <select id="search_skill_category" name="skill_category" class="form-input">
-                    <option value="">All Categories</option>
-                    {% for cat in skill_categories %}
-                    <option value="{{ cat.category_id }}" {% if request.args.get('skill_category') == cat.category_id|string %}selected{% endif %}>{{ cat.category_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+                {% endif %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="search_skill_category">Skill Category:</label>
+            <select id="search_skill_category" name="skill_category" class="form-input">
+                <option value="">All Categories</option>
+                {% for cat in skill_categories %}
+                <option value="{{ cat.category_id }}" {% if request.args.get('skill_category') == cat.category_id|string %}selected{% endif %}>{{ cat.category_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
             <div class="form-group">
                 <label for="search_skill_level">Skill Level:</label>
                 <select id="search_skill_level" name="skill_level" class="form-input">
@@ -265,8 +271,8 @@
                     <input type="date" name="hire_date_from" class="form-input" value="{{ request.args.get('hire_date_from', '') }}">
                     <span style="font-weight: 600; color: #888;">to</span>
                     <input type="date" name="hire_date_to" class="form-input" value="{{ request.args.get('hire_date_to', '') }}">
-                </div>
             </div>
+        </div>
         </div>
     </form>
     <div class="loading-spinner" id="loadingSpinner">
@@ -350,7 +356,7 @@ const employeeInput = document.getElementById('employee_search');
 const employeeDropdown = document.getElementById('employeeAutocompleteDropdown');
 const employees = JSON.parse(employeeInput.getAttribute('data-autocomplete-list'));
 employeeInput.addEventListener('input', function() {
-    const value = this.value.trim().toLowerCase();
+        const value = this.value.trim().toLowerCase();
     employeeDropdown.innerHTML = '';
     if (!value) { employeeDropdown.style.display = 'none'; return; }
     let matches = employees.filter(emp =>
@@ -360,15 +366,15 @@ employeeInput.addEventListener('input', function() {
     ).map(emp => ({ label: emp.english_name + (emp.busness_id ? ' (' + emp.busness_id + ')' : ''), value: emp.english_name }));
     matches = matches.slice(0, 8);
     matches.forEach((item, idx) => {
-        const option = document.createElement('div');
-        option.className = 'autocomplete-option';
+            const option = document.createElement('div');
+            option.className = 'autocomplete-option';
         option.textContent = item.label;
-        option.addEventListener('mousedown', function(e) {
+            option.addEventListener('mousedown', function(e) {
             employeeInput.value = item.label;
             employeeDropdown.style.display = 'none';
-        });
+            });
         employeeDropdown.appendChild(option);
-    });
+        });
     employeeDropdown.style.display = matches.length > 0 ? 'block' : 'none';
 });
 employeeInput.addEventListener('blur', function() { setTimeout(() => { employeeDropdown.style.display = 'none'; }, 100); });
@@ -421,7 +427,7 @@ supervisorInput.addEventListener('input', function() {
             supervisorInput.value = item.label;
             document.getElementById('search_supervisor_emp_id').value = item.emp_id;
             supervisorDropdown.style.display = 'none';
-        });
+    });
         supervisorDropdown.appendChild(option);
     });
     supervisorDropdown.style.display = matches.length > 0 ? 'block' : 'none';
@@ -433,7 +439,7 @@ const form = document.querySelector('.search-form');
 if (form) {
     form.addEventListener('submit', function() {
         document.getElementById('loadingSpinner').classList.add('active');
-    });
+});
 }
 </script>
 {% endblock %}

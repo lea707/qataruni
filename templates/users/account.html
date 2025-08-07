@@ -40,6 +40,26 @@
             </div>
             <button type="submit" class="btn btn-primary">Update Info</button>
         </form>
+        <button type="button" class="btn btn-secondary" id="showChangePasswordBtn" style="margin-top:1.2rem;">Change Password</button>
+        <form method="post" action="/user/account/change_password" class="account-form" id="changePasswordForm" style="margin-top:2rem; display:none;">
+            <h3>Change Password</h3>
+            <div class="form-group">
+                <label for="current_password">Current Password</label>
+                <input type="password" name="current_password" id="current_password" required minlength="6" maxlength="128">
+                <div class="invalid-feedback" id="currentPasswordFeedback"></div>
+            </div>
+            <div class="form-group">
+                <label for="new_password">New Password</label>
+                <input type="password" name="new_password" id="new_password" required minlength="6" maxlength="128">
+                <div class="invalid-feedback" id="newPasswordFeedback"></div>
+            </div>
+            <div class="form-group">
+                <label for="confirm_new_password">Confirm New Password</label>
+                <input type="password" name="confirm_new_password" id="confirm_new_password" required minlength="6" maxlength="128">
+                <div class="invalid-feedback" id="confirmNewPasswordFeedback"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Change Password</button>
+        </form>
         <form method="post" action="/user/logout" style="margin-top:1rem;">
             <button type="submit" class="btn btn-secondary">Logout</button>
         </form>
@@ -119,6 +139,58 @@ document.getElementById('accountForm').addEventListener('submit', function(e) {
     if (!validatePhone()) valid = false;
     if (!validateBusinessId()) valid = false;
     if (!valid) e.preventDefault();
+});
+
+// Password validation
+function validateCurrentPassword() {
+    const current = document.getElementById('current_password');
+    if (!current.value.trim()) {
+        showError(current, 'Current password is required.');
+        return false;
+    } else {
+        clearError(current);
+        return true;
+    }
+}
+function validateNewPassword() {
+    const newPass = document.getElementById('new_password');
+    if (!newPass.value.trim()) {
+        showError(newPass, 'New password is required.');
+        return false;
+    } else if (newPass.value.length < 6) {
+        showError(newPass, 'Password must be at least 6 characters.');
+        return false;
+    } else {
+        clearError(newPass);
+        return true;
+    }
+}
+function validateConfirmNewPassword() {
+    const newPass = document.getElementById('new_password');
+    const confirm = document.getElementById('confirm_new_password');
+    if (confirm.value !== newPass.value) {
+        showError(confirm, 'Passwords do not match.');
+        return false;
+    } else {
+        clearError(confirm);
+        return true;
+    }
+}
+if (document.getElementById('changePasswordForm')) {
+    document.getElementById('current_password').addEventListener('input', validateCurrentPassword);
+    document.getElementById('new_password').addEventListener('input', validateNewPassword);
+    document.getElementById('confirm_new_password').addEventListener('input', validateConfirmNewPassword);
+    document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+        let valid = true;
+        if (!validateCurrentPassword()) valid = false;
+        if (!validateNewPassword()) valid = false;
+        if (!validateConfirmNewPassword()) valid = false;
+        if (!valid) e.preventDefault();
+    });
+}
+document.getElementById('showChangePasswordBtn').addEventListener('click', function() {
+    document.getElementById('changePasswordForm').style.display = 'block';
+    this.style.display = 'none';
 });
 </script>
 <style>

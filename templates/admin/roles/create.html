@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Create New Role</h2>
+<form method="post">
+  <div class="form-group">
+    <label for="role_name">Role Name</label>
+    <input type="text" name="role_name" id="role_name" required class="form-input">
+  </div>
+  <div class="form-group">
+    <label>Permissions</label><br>
+    {% for perm in permissions %}
+      <label style="margin-right:1.5em;">
+        <input type="checkbox" name="permissions" value="{{ perm.permission_id }}"> {{ perm.permission_name }}
+      </label>
+    {% endfor %}
+  </div>
+  <button type="submit" class="btn btn-primary">Create Role</button>
+  <a href="{{ url_for('user.list_roles') }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %} 

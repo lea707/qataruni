@@ -76,7 +76,7 @@ footer {
 }
 .content {
     min-height: calc(100vh - 240px); /* Adjust based on your header/footer */
-    padding-top: 140px; /* Add top padding to prevent content from hiding under sticky nav */
+    padding-top: 0; /* Remove top padding to prevent gap under sticky nav */
     padding-bottom: 60px;
 }
 main.content:has(.search-page) {

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Role: {{ role.role_name }}</h2>
+<div class="form-group">
+  <label>Permissions:</label>
+  <div>
+    {% for perm in role.permissions %}
+      <span class="perm-tag">{{ perm.permission_name }}</span>
+    {% else %}
+      <span class="perm-tag perm-tag-none">No permissions assigned.</span>
+    {% endfor %}
+  </div>
+</div>
+<a href="{{ url_for('user.edit_role', role_id=role.role_id) }}" class="btn btn-primary">Edit</a>
+<a href="{{ url_for('user.list_roles') }}" class="btn btn-secondary">Back to Roles</a>
+<style>
+.perm-tag {
+  display: inline-block;
+  background: #eafaf1;
+  color: #217a3a;
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 0.98em;
+  font-weight: 600;
+  margin-right: 6px;
+  margin-bottom: 3px;
+  border: 1px solid #b6e2d3;
+}
+.perm-tag-none {
+  background: #f5f5f5;
+  color: #888;
+  border: 1px solid #ddd;
+}
+</style>
+{% endblock %} 

@@ -11,11 +11,10 @@ def create_app():
 
     @app.before_request
     def require_login():
-        public_endpoints = ['user.login', 'static']
+        public_endpoints = ['user.login', 'user.signup', 'static']
         if request.endpoint not in public_endpoints and not session.get('user_id'):
             flash('Please login or sign up to access this page.', 'danger')
             return redirect(url_for('user.login', next=request.url))
-
 
     # ✅ Security headers
     @app.after_request
@@ -28,6 +27,12 @@ def create_app():
     init_routes(app)
     from users.user_routes import user_bp
     app.register_blueprint(user_bp)
+
+    # Debug: Print all registered routes
+    print("\nRegistered routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"{rule.endpoint}: {rule}")
+
     return app
 
 if __name__ == '__main__':

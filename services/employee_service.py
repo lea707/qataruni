@@ -18,6 +18,7 @@ import os
 from werkzeug.utils import secure_filename
 from models.certificate_type import CertificateType
 from models.document_type import DocumentType
+from processor.employee_processor import EmployeeDocumentProcessor
 
 class EmployeeService:
     def __init__(self, db_session=None):
@@ -48,17 +49,15 @@ class EmployeeService:
     
     def create_employee(self, form_data, files=None):
         session = self.db() if callable(self.db) else self.db
-        temp_files = [] 
-        
+        temp_files = []
+
         try:
-            # Check for duplicate email before creating employee
             existing_employee = session.query(Employee).filter_by(email=form_data.get('email')).first()
             if existing_employee:
                 raise RuntimeError(f"An employee with email {form_data.get('email')} already exists.")
 
-            business_id = form_data.get('business_id')
-            if not business_id:
-                business_id = self._generate_business_id()
+            business_id = form_data.get('business_id') or self._generate_business_id()
+
             employee = Employee(
                 english_name=form_data.get('english_name'),
                 arab_name=form_data.get('arab_name'),
@@ -74,27 +73,34 @@ class EmployeeService:
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow()
             )
-            
+
             session.add(employee)
-            session.flush() 
+            session.flush()
+
             self._process_employee_skills(form_data, employee.emp_id, session)
+
             if files:
                 current_app.logger.info(f"Processing documents for employee {employee.emp_id} with business_id: {employee.busness_id}")
                 temp_files = self._process_employee_documents(form_data, files, employee.emp_id, employee.busness_id, session)
-            
+
             session.commit()
+
+            # 🔄 Post-creation document processor
+            processor = EmployeeDocumentProcessor(employee.emp_id, employee.busness_id)
+            processor.process_documents()
+
             return employee.emp_id
-            
+
         except Exception as e:
             session.rollback()
             if temp_files:
                 self._cleanup_temp_files(temp_files)
             current_app.logger.error(f"Employee creation failed: {e}")
             raise RuntimeError(f"Could not create employee: {e}")
+
         finally:
             if callable(self.db):
                 session.close()
-    
     def _prepare_skills_data(self, form_data):
         """Handle both MultiDict and regular dict for skill data"""
         skills = []
@@ -193,8 +199,8 @@ class EmployeeService:
 
     def update_employee(self, employee_id, form_data, files=None):
         session = self.db() if callable(self.db) else self.db
-        temp_files = []  # Track temporary files for cleanup
-        
+        temp_files = []
+
         try:
             employee = session.query(Employee).get(employee_id)
             if not employee:
@@ -223,24 +229,27 @@ class EmployeeService:
             employee.is_active = form_data.get('is_active') == 'true'
             employee.updated_at = datetime.now()
 
-            # Process skills using the same session
             self._process_employee_skills(form_data, employee_id, session)
-            
-            # Process new documents if files are provided
+
             if files:
                 current_app.logger.info(f"Processing new documents for employee {employee_id}")
                 temp_files = self._process_employee_documents(form_data, files, employee_id, employee.busness_id, session)
 
             session.commit()
+
+            # 🔄 Trigger document processor after update
+            processor = EmployeeDocumentProcessor(employee_id, employee.busness_id)
+            processor.process_documents()
+
             return True
 
         except Exception as e:
             session.rollback()
-            # Clean up any temporary files if update failed
             if temp_files:
                 self._cleanup_temp_files(temp_files)
             current_app.logger.error(f"Employee update failed: {e}")
             raise RuntimeError(f"Could not update employee: {e}")
+
         finally:
             if callable(self.db):
                 session.close()
@@ -642,9 +651,11 @@ class EmployeeService:
             for emp in employees:
                 result.append({
                     'id': emp.emp_id,
+                    'emp_id': emp.emp_id,  # Add this for consistency
                     'business_id': emp.busness_id,
                     'name': f"{emp.english_name} ({emp.arab_name})",
                     'department': emp.department.department_name if emp.department else '',
+                    'supervisor_emp_id': emp.supervisor_emp_id,  # Add supervisor_emp_id
                     'skills': {
                         'Technical': [s.skill_name for s in emp.skills],
                     }

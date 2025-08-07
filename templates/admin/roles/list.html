@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Role Management</h2>
+<a href="{{ url_for('user.create_role') }}" class="btn btn-primary" style="margin-bottom:1rem;">+ Create New Role</a>
+<table class="modern-table role-table">
+  <thead>
+    <tr>
+      <th>Role Name</th>
+      <th>Permissions</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for role in roles %}
+    <tr>
+      <td>{{ role.role_name }}</td>
+      <td>
+        {% for perm in role.permissions %}
+          <span class="perm-tag">{{ perm.permission_name }}</span>
+        {% else %}
+          <span class="perm-tag perm-tag-none">No permissions</span>
+        {% endfor %}
+      </td>
+      <td>
+        <a href="{{ url_for('user.edit_role', role_id=role.role_id) }}" class="btn btn-primary btn-sm">Edit</a>
+        <form method="post" action="{{ url_for('user.delete_role', role_id=role.role_id) }}" style="display:inline;" onsubmit="return confirm('Delete this role?');">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<style>
+.role-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+.role-table th, .role-table td {
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+.role-table th {
+  background: #fdeaea;
+  color: #b71c1c;
+  font-weight: 600;
+}
+.role-table tr:last-child td {
+  border-bottom: none;
+}
+.perm-tag {
+  display: inline-block;
+  background: #f5f5f5;
+  color: #444;
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 0.98em;
+  font-weight: 600;
+  margin-right: 6px;
+  margin-bottom: 3px;
+  border: 1px solid #ddd;
+}
+.perm-tag-none {
+  background: #f5f5f5;
+  color: #888;
+  border: 1px solid #ddd;
+}
+.btn-sm {
+  padding: 0.45rem 1.1rem;
+  font-size: 0.97em;
+  border-radius: 5px;
+  margin-right: 0.4rem;
+  border: 1px solid #bbb;
+  background: #f7f7f7;
+  color: #222;
+  box-shadow: none;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+}
+.btn-sm:hover {
+  background: #e0e0e0;
+  color: #111;
+  border-color: #888;
+}
+.btn-primary.btn-sm, .btn-danger.btn-sm {
+  background: #f7f7f7;
+  color: #222;
+  border: 1px solid #bbb;
+}
+.btn-primary.btn-sm:hover, .btn-danger.btn-sm:hover {
+  background: #e0e0e0;
+  color: #111;
+  border-color: #888;
+}
+</style>
+{% endblock %} 

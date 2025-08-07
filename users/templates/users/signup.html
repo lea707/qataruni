@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% block title %}Sign Up{% endblock %}
+{% block content %}
+<div class="signup-modern-container">
+    <div class="signup-modern-card">
+        <div class="signup-accent-bar"></div>
+        <h2 class="signup-title">Create Your Account</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="signup-alert signup-alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        <form id="signupForm" method="POST" novalidate autocomplete="off">
+            <div class="signup-field">
+                <label for="username" class="signup-label">Username</label>
+                <input type="text" class="signup-input" id="username" name="username" required minlength="2" maxlength="50" pattern="[A-Za-z0-9 .,'-]+" value="{{ form_data.username if form_data else '' }}">
+                <div class="signup-invalid">Username is required (2-50 chars, letters/numbers/spaces/punctuation).</div>
+            </div>
+            <div class="signup-field">
+                <label for="email" class="signup-label">Email</label>
+                <input type="email" class="signup-input" id="email" name="email" required value="{{ form_data.email if form_data else '' }}">
+                <div class="signup-invalid">Please enter a valid email address.</div>
+            </div>
+            <div class="signup-field" id="confirm-email-field" style="display:none;">
+                <label for="email_confirm" class="signup-label">Confirm Email</label>
+                <input type="email" class="signup-input" id="email_confirm" name="email_confirm">
+                <div class="signup-invalid">Emails must match.</div>
+            </div>
+            <div class="signup-field">
+                <label for="phone_number" class="signup-label">Phone Number</label>
+                <input type="text" class="signup-input" id="phone_number" name="phone_number" required pattern="\d{8}" maxlength="8" value="{{ form_data.phone_number if form_data else '' }}">
+                <div class="signup-invalid">Phone number must be exactly 8 digits.</div>
+            </div>
+            <div class="signup-field">
+                <label for="business_user_id" class="signup-label">Business ID</label>
+                <input type="text" class="signup-input" id="business_user_id" name="business_user_id" required pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*-)[A-Za-z\d-]{5,}$" value="{{ form_data.business_user_id if form_data else '' }}">
+                <div class="signup-invalid">Business ID must be at least 5 characters, contain letters, numbers, and a dash (-).</div>
+            </div>
+            <div class="signup-field">
+                <label for="password" class="signup-label">Password</label>
+                <input type="password" class="signup-input" id="password" name="password" required minlength="6">
+                <div class="signup-invalid">Password is required (min 6 characters).</div>
+            </div>
+            <div class="signup-field" id="confirm-password-field" style="display:none;">
+                <label for="password_confirm" class="signup-label">Confirm Password</label>
+                <input type="password" class="signup-input" id="password_confirm" name="password_confirm" minlength="6">
+                <div class="signup-invalid">Passwords must match.</div>
+            </div>
+            <button type="submit" class="signup-btn" id="submitBtn" disabled>Sign Up</button>
+        </form>
+        <div class="signup-bottom-link">
+            <a href="{{ url_for('user.login') }}">Already have an account? Log in</a>
+        </div>
+    </div>
+</div>
+<style>
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.navbar, .nav-bar {
+    margin-bottom: 0 !important;
+    box-shadow: none !important;
+}
+.signup-modern-container {
+    margin-top: 0;
+    display: flex;
+    justify-content: center;
+    background: #f4f8fb;
+    min-height: 100vh;
+}
+.signup-modern-card {
+    background: #fff;
+    padding: 2.7rem 2.7rem 2.2rem 2.7rem;
+    border-radius: 18px;
+    box-shadow: 0 6px 32px rgba(33, 122, 58, 0.10), 0 1.5px 6px rgba(0,0,0,0.04);
+    width: 100%;
+    max-width: 480px;
+    margin-top: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+.signup-accent-bar {
+    height: 6px;
+    width: 60px;
+    background: linear-gradient(90deg, #217a3a 60%, #4fd1c5 100%);
+    border-radius: 3px;
+    margin-bottom: 1.2rem;
+    align-self: flex-start;
+}
+.signup-title {
+    font-size: 2.1rem;
+    font-weight: 800;
+    color: #217a3a;
+    margin-bottom: 1.7rem;
+    letter-spacing: -1px;
+    text-align: left;
+}
+.signup-field {
+    margin-bottom: 1.3rem;
+    display: flex;
+    flex-direction: column;
+}
+.signup-label {
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: #195e2d;
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.01em;
+}
+.signup-input {
+    font-size: 1.13rem;
+    padding: 0.7rem 1rem;
+    border: 1.5px solid #cbe7d8;
+    border-radius: 6px;
+    background: #f8fafb;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    color: #195e2d;
+    font-weight: 500;
+}
+.signup-input:focus {
+    border-color: #217a3a;
+    box-shadow: 0 0 0 2px #4fd1c540;
+    background: #fff;
+}
+.signup-input.is-invalid {
+    border-color: #e53e3e;
+    background: #fff5f5;
+}
+.signup-input.is-valid {
+    border-color: #38a169;
+    background: #f0fff4;
+}
+.signup-invalid {
+    color: #e53e3e;
+    font-size: 0.97rem;
+    margin-top: 0.2rem;
+    display: none;
+}
+.signup-input.is-invalid + .signup-invalid {
+    display: block;
+}
+.signup-btn {
+    width: 100%;
+    padding: 0.95rem;
+    background: linear-gradient(90deg, #217a3a 60%, #4fd1c5 100%);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.18rem;
+    font-weight: 700;
+    margin-top: 0.7rem;
+    box-shadow: 0 2px 8px rgba(33,122,58,0.07);
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+.signup-btn:disabled {
+    background: #b7e2c7;
+    color: #fff;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+.signup-btn:not(:disabled):hover {
+    background: linear-gradient(90deg, #195e2d 60%, #38b2ac 100%);
+    box-shadow: 0 4px 16px rgba(33,122,58,0.13);
+}
+.signup-bottom-link {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+.signup-bottom-link a {
+    color: #217a3a;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.05rem;
+    transition: color 0.2s;
+}
+.signup-bottom-link a:hover {
+    color: #195e2d;
+    text-decoration: underline;
+}
+.signup-alert {
+    padding: 0.8rem 1.1rem;
+    border-radius: 6px;
+    margin-bottom: 1.1rem;
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+.signup-alert-success {
+    background: #e6f9ed;
+    color: #217a3a;
+}
+.signup-alert-danger {
+    background: #fdeaea;
+    color: #b71c1c;
+}
+</style>
+<script>
+// Real-time validation
+const form = document.getElementById('signupForm');
+const submitBtn = document.getElementById('submitBtn');
+const fields = ['username', 'email', 'phone_number', 'business_user_id', 'password'];
+
+function validateField(field) {
+    const input = document.getElementById(field);
+    if (!input.checkValidity()) {
+        input.classList.add('is-invalid');
+        input.classList.remove('is-valid');
+        return false;
+    } else {
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+        return true;
+    }
+}
+
+function validateEmailMatch() {
+    const email = document.getElementById('email');
+    const emailConfirm = document.getElementById('email_confirm');
+    if (emailConfirm.value === '' || email.value !== emailConfirm.value) {
+        emailConfirm.classList.add('is-invalid');
+        emailConfirm.classList.remove('is-valid');
+        return false;
+    } else {
+        emailConfirm.classList.remove('is-invalid');
+        emailConfirm.classList.add('is-valid');
+        return true;
+    }
+}
+
+function validatePasswordMatch() {
+    const pw = document.getElementById('password');
+    const pwc = document.getElementById('password_confirm');
+    if (pwc.value === '' || pw.value !== pwc.value) {
+        pwc.classList.add('is-invalid');
+        pwc.classList.remove('is-valid');
+        return false;
+    } else {
+        pwc.classList.remove('is-invalid');
+        pwc.classList.add('is-valid');
+        return true;
+    }
+}
+
+function checkFormValidity() {
+    let valid = true;
+    for (const field of fields) {
+        if (!validateField(field)) valid = false;
+    }
+    // Email confirmation
+    const email = document.getElementById('email');
+    const emailConfirm = document.getElementById('email_confirm');
+    if (emailConfirm && emailConfirm.parentElement.style.display !== 'none') {
+        if (!validateEmailMatch()) valid = false;
+    }
+    // Password confirmation
+    const pw = document.getElementById('password');
+    const pwc = document.getElementById('password_confirm');
+    if (pwc && pwc.parentElement.style.display !== 'none') {
+        if (!validatePasswordMatch()) valid = false;
+    }
+    submitBtn.disabled = !valid;
+    return valid;
+}
+
+// Show/hide confirm email
+const emailInput = document.getElementById('email');
+const confirmEmailField = document.getElementById('confirm-email-field');
+emailInput.addEventListener('input', function() {
+    // Show confirm email if email is valid and not empty
+    if (emailInput.value && emailInput.checkValidity()) {
+        confirmEmailField.style.display = '';
+    } else {
+        confirmEmailField.style.display = 'none';
+        document.getElementById('email_confirm').value = '';
+        document.getElementById('email_confirm').classList.remove('is-valid', 'is-invalid');
+    }
+    checkFormValidity();
+});
+document.getElementById('email_confirm').addEventListener('input', function() {
+    validateEmailMatch();
+    checkFormValidity();
+});
+
+// Show/hide confirm password
+const passwordInput = document.getElementById('password');
+const confirmPasswordField = document.getElementById('confirm-password-field');
+passwordInput.addEventListener('input', function() {
+    if (passwordInput.value) {
+        confirmPasswordField.style.display = '';
+    } else {
+        confirmPasswordField.style.display = 'none';
+        document.getElementById('password_confirm').value = '';
+        document.getElementById('password_confirm').classList.remove('is-valid', 'is-invalid');
+    }
+    checkFormValidity();
+});
+document.getElementById('password_confirm').addEventListener('input', function() {
+    validatePasswordMatch();
+    checkFormValidity();
+});
+
+fields.forEach(field => {
+    document.getElementById(field).addEventListener('input', function() {
+        validateField(field);
+        checkFormValidity();
+    });
+});
+
+form.addEventListener('submit', function(event) {
+    if (!checkFormValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+});
+
+window.addEventListener('DOMContentLoaded', checkFormValidity);
+</script>
+{% endblock %} 

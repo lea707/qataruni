@@ -1,0 +1,16 @@
+from sqlalchemy import Column, Integer, String, Date, Text, ForeignKey
+from sqlalchemy.orm import relationship
+from database.connection import Base
+
+class ParsedExperience(Base):
+    __tablename__ = 'parsed_experience'
+
+    id = Column(Integer, primary_key=True)
+    emp_id = Column(Integer, ForeignKey('employee.emp_id'), nullable=False)
+    job_title = Column(String(100), nullable=False)
+    company_name = Column(String(100))
+    start_date = Column(Date)
+    end_date = Column(Date)
+    description = Column(Text)
+
+    employee = relationship('Employee', backref='parsed_experience')

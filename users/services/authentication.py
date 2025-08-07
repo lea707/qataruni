@@ -27,11 +27,18 @@ def authenticate_user(username, password):
             password_check = check_password_hash(user.password_hash, password)
             print(f"[DEBUG] Password check result: {password_check}")
             if user.is_active and password_check:
+                # Check if linked employee is active (if emp_id is set)
+                if user.emp_id:
+                    from models.employee import Employee
+                    employee = db_session.query(Employee).filter_by(emp_id=user.emp_id).first()
+                    if not employee or not employee.is_active:
+                        print("[DEBUG] Linked employee is not active.")
+                        return None, 'Your account is deactivated. Please contact HR.'
                 # Eagerly load permissions for session storage
                 user.permissions = get_user_permissions(user)
-                return user
+                return user, None
         else:
             print("[DEBUG] No user found with that username.")
-        return None
+        return None, 'Invalid username or password.'
     finally:
         db_session.close() 
