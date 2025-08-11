@@ -57,6 +57,5 @@ class Employee(Base):
     def level_name(self):
         return self.level.level_name if self.level else "—"
 
-    @property
     def __repr__(self):
         return f"<Employee(id={self.emp_id}, name='{self.english_name}')>"

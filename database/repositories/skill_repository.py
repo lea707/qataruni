@@ -41,3 +41,31 @@ class SkillRepository:
             ).order_by(Skill.skill_name).limit(10).all()
         finally:
             session.close()
+
+    def get_by_name(self, skill_name):
+        session = db()
+        try:
+            return session.query(Skill).filter(
+                Skill.skill_name.ilike(skill_name)
+            ).first()
+        finally:
+            session.close()
+    
+    def get_or_create_skill(self, skill_name, category_id=None):
+        session = db()
+        try:
+            skill = session.query(Skill).filter(
+                Skill.skill_name.ilike(skill_name)
+            ).first()
+            
+            if not skill:
+                skill = Skill(
+                    skill_name=skill_name,
+                    category_id=category_id
+                )
+                session.add(skill)
+                session.flush()
+            
+            return skill
+        finally:
+            session.close()       

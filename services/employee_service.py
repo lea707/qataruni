@@ -1,29 +1,99 @@
 import uuid
-from flask import current_app, session
+import json
+import os
+from pathlib import Path
+from flask import current_app
+from datetime import datetime
+from werkzeug.utils import secure_filename
+from sqlalchemy import text, select
+from sqlalchemy.orm import joinedload
 from database.repositories.employee_repository import EmployeeRepository
 from database.repositories.position_repository import PositionRepository
 from database.repositories.skill_repository import SkillRepository
-from datetime import datetime
 from database.connection import db
-from models import skill
 from models.employee import Employee
 from models.skill import Skill
+from models.skill_category import SkillCategory
 from models.employee_document import EmployeeDocument
-from sqlalchemy import text
-from sqlalchemy.orm import joinedload
-from models.associations import employee_skills
-
-from pathlib import Path
-import os
-from werkzeug.utils import secure_filename
 from models.certificate_type import CertificateType
 from models.document_type import DocumentType
+from models.associations import employee_skills
 from processor.employee_processor import EmployeeDocumentProcessor
 
 class EmployeeService:
     def __init__(self, db_session=None):
         self.db = db_session if db_session is not None else db
         self.repository = EmployeeRepository()
+
+
+    def _process_json_skills(self, employee_id: int, business_id: str, session):
+        """Process skills from JSON file (now uses converted/json_files)"""
+        json_path = Path("converted/json_files") / f"{business_id}.json"
+        if not json_path.exists():
+            current_app.logger.debug(f"No JSON file found at {json_path}")
+            return
+        
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                
+            for skill_data in data.get('skills', []):
+                skill_name = skill_data.get('skill', '').strip()
+                if not skill_name:
+                    continue
+                    
+                # Get or create category
+                category_name = skill_data.get('category', '').strip()
+                category = None
+                if category_name:
+                    category = session.execute(
+                        select(SkillCategory)
+                        .where(SkillCategory.category_name.ilike(category_name))
+                    ).scalar_one_or_none()
+                    if not category:
+                        category = SkillCategory(category_name=category_name)
+                        session.add(category)
+                        session.flush()
+                
+                # Get or create skill
+                skill = session.execute(
+                    select(Skill).where(Skill.skill_name.ilike(skill_name))
+                ).scalar_one_or_none()
+                if not skill:
+                    skill = Skill(
+                        skill_name=skill_name,
+                        category_id=category.category_id if category else None
+                    )
+                    session.add(skill)
+                    session.flush()
+                
+                # Create association if not exists
+                if not session.execute(
+                    select(employee_skills)
+                    .where(
+                        (employee_skills.c.employee_id == employee_id) &
+                        (employee_skills.c.skill_id == skill.skill_id)
+                    )
+                ).scalar_one_or_none():
+                    session.execute(
+                        employee_skills.insert().values(
+                            employee_id=employee_id,
+                            skill_id=skill.skill_id,
+                            skill_level=skill_data.get('level'),
+                            certified=skill_data.get('certified', False)
+                        )
+                    )
+            
+            # Archive the file after processing
+            processed_dir = Path("converted/json_processed")
+            processed_dir.mkdir(exist_ok=True)
+            json_path.rename(processed_dir / f"{business_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.json")
+            
+        except json.JSONDecodeError as e:
+            current_app.logger.error(f"Invalid JSON in {json_path}: {str(e)}")
+        except Exception as e:
+            current_app.logger.error(f"Failed to process JSON skills: {str(e)}")
+            raise
 
     def _prepare_employee_data(self, form_data, session):
         is_active = 'is_active' in form_data
@@ -39,14 +109,14 @@ class EmployeeService:
                 'hire_date': datetime.strptime(form_data.get('hire_date'), '%Y-%m-%d').date(),
                 'supervisor_emp_id': int(form_data['supervisor_emp_id']) if form_data.get('supervisor_emp_id') else None,
                 'busness_id': self.repository._generate_business_id(session),
-                'is_active': is_active ,
+                'is_active': is_active,
                 'created_at': datetime.utcnow(),
                 'updated_at': datetime.utcnow()
             }
         except Exception as e:
             current_app.logger.error(f"Error preparing employee data: {e}")
             raise
-    
+
     def create_employee(self, form_data, files=None):
         session = self.db() if callable(self.db) else self.db
         temp_files = []
@@ -85,7 +155,6 @@ class EmployeeService:
 
             session.commit()
 
-            # 🔄 Post-creation document processor
             processor = EmployeeDocumentProcessor(employee.emp_id, employee.busness_id)
             processor.process_documents()
 
@@ -97,12 +166,67 @@ class EmployeeService:
                 self._cleanup_temp_files(temp_files)
             current_app.logger.error(f"Employee creation failed: {e}")
             raise RuntimeError(f"Could not create employee: {e}")
-
         finally:
             if callable(self.db):
                 session.close()
+
+    def _process_employee_skills(self, form_data, employee_id: int, session=None) -> None:
+        if session is None:
+            session = self.db() if callable(self.db) else self.db
+            should_close = True
+        else:
+            should_close = False
+
+        try:
+            certified_indices = form_data.getlist('certified[]')
+            
+            session.execute(
+                employee_skills.delete().where(employee_skills.c.employee_id == employee_id)
+            )
+
+            skill_names = form_data.getlist('skill_name[]')
+            skill_categories = form_data.getlist('skill_category[]')
+            skill_levels = form_data.getlist('skill_level[]')
+
+            for idx, (name, category, level) in enumerate(zip(skill_names, skill_categories, skill_levels)):
+                name = name.strip()
+                if not name:
+                    continue
+
+                is_certified = name in certified_indices
+                skill = session.query(Skill).filter_by(skill_name=name).first()
+                if not skill:
+                    skill = Skill(
+                        skill_name=name,
+                        category_id=int(category) if category and category != "select category" else None
+                    )
+                    session.add(skill)
+                    session.flush()
+                
+                session.execute(employee_skills.insert().values(
+                    employee_id=employee_id,
+                    skill_id=skill.skill_id,
+                    skill_level=level if level and level != "select level" else None,
+                    certified=1 if is_certified else 0
+                ))
+
+            employee = session.query(Employee).get(employee_id)
+            if employee:
+                self._process_json_skills(employee_id, employee.busness_id, session)
+
+            if should_close:
+                session.commit()
+
+        except Exception as e:
+            if should_close:
+                session.rollback()
+            current_app.logger.error(f"Error processing employee skills: {e}")
+            raise
+        finally:
+            if should_close and callable(self.db):
+                session.close()
+
     def _prepare_skills_data(self, form_data):
-        """Handle both MultiDict and regular dict for skill data"""
         skills = []
         
         if hasattr(form_data, 'getlist'):
@@ -129,7 +253,6 @@ class EmployeeService:
         return self.repository.get_all_employees()
 
     def get_employee(self, employee_id):
-        """Get employee details by ID"""
         try:
             employee = self.repository.get_employee(employee_id)
             if not employee:
@@ -140,12 +263,10 @@ class EmployeeService:
             raise
 
     def delete_employee(self, employee_id: int) -> bool:
-        """Delete an employee by ID with proper cleanup"""
         session = self.db() if callable(self.db) else self.db
         should_close = callable(self.db)
         
         try:
-            # Get employee with all relationships
             employee = session.query(Employee).options(
                 joinedload(Employee.documents),
                 joinedload(Employee.skills)
@@ -154,10 +275,8 @@ class EmployeeService:
             if not employee:
                 return False
             
-            # Store business_id for folder cleanup
             business_id = employee.busness_id
             
-            # Delete associated documents and their files
             for document in employee.documents:
                 if document.file_path:
                     try:
@@ -169,14 +288,11 @@ class EmployeeService:
                         current_app.logger.error(f"Failed to delete file {document.file_path}: {e}")
                 session.delete(document)
             
-            # Clear skill associations
             employee.skills.clear()
             
-            # Delete the employee
             session.delete(employee)
             session.commit()
             
-            # Clean up the employee's document folder
             try:
                 employee_folder = Path('employee_documents') / business_id
                 if employee_folder.exists():
@@ -206,7 +322,6 @@ class EmployeeService:
             if not employee:
                 return False
 
-            # Check for duplicate email (exclude current employee)
             new_email = form_data.get('email')
             if new_email:
                 existing_employee = session.query(Employee).filter(
@@ -216,7 +331,6 @@ class EmployeeService:
                 if existing_employee:
                     raise RuntimeError(f"An employee with email {new_email} already exists.")
 
-            # Update basic fields
             employee.english_name = form_data.get('english_name')
             employee.arab_name = form_data.get('arab_name')
             employee.email = form_data.get('email')
@@ -237,7 +351,6 @@ class EmployeeService:
 
             session.commit()
 
-            # 🔄 Trigger document processor after update
             processor = EmployeeDocumentProcessor(employee_id, employee.busness_id)
             processor.process_documents()
 
@@ -254,148 +367,61 @@ class EmployeeService:
             if callable(self.db):
                 session.close()
    
-    def _process_employee_skills(self, form_data, employee_id: int, session=None) -> None:
-        if session is None:
-            session = self.db() if callable(self.db) else self.db
-            should_close = True
-        else:
-            should_close = False
-        try:
-            certified_indices = form_data.getlist('certified[]')
-            current_app.logger.info(f"Processing skills for employee {employee_id}")
-            current_app.logger.info(f"Certified indices: {certified_indices}")
-            # Clear existing skills
-            session.execute(
-                employee_skills.delete().where(employee_skills.c.employee_id == employee_id)
-            )
-            # Extract skill data
-            skill_names = form_data.getlist('skill_name[]')
-            skill_categories = form_data.getlist('skill_category[]')
-            skill_levels = form_data.getlist('skill_level[]')
-            current_app.logger.info(f"Skill names: {skill_names}")
-            current_app.logger.info(f"Skill categories: {skill_categories}")
-            current_app.logger.info(f"Skill levels: {skill_levels}")
-            for idx, (name, category, level) in enumerate(zip(skill_names, skill_categories, skill_levels)):
-                name = name.strip()
-                if not name:
-                    current_app.logger.info(f"Skipping empty skill name at index {idx}")
-                    continue
-                # Fix: ensure certified is set to True/1 if checked
-                is_certified = name in certified_indices
-                current_app.logger.info(f"Skill '{name}' at index {idx}: is_certified={is_certified} (certified_indices={certified_indices})")
-
-                skill = session.query(Skill).filter_by(skill_name=name).first()
-                if not skill:
-                    skill = Skill(
-                        skill_name=name,
-                        category_id=int(category) if category and category != "select category" else None
-                    )
-                    session.add(skill)
-                    session.flush()
-                    current_app.logger.info(f"Created new skill: {skill.skill_id}")
-                
-                session.execute(employee_skills.insert().values(
-                    employee_id=employee_id,
-                    skill_id=skill.skill_id,
-                    skill_level=level if level and level != "select level" else None,
-                    certified=1 if is_certified else 0
-                ))
-                current_app.logger.info(f"Associated skill {skill.skill_id} with employee {employee_id}, certified={1 if is_certified else 0}")
-            if should_close:
-                session.commit()
-        except Exception as e:
-            if should_close:
-                session.rollback()
-            current_app.logger.error(f"Error processing employee skills: {e}")
-            raise
-        finally:
-            if should_close and callable(self.db):
-                session.close()
-
     def _process_employee_documents(self, form_data, files, employee_id: int, business_id: str, session=None) -> list:
-        """Process employee documents within the same transaction. Returns list of saved file paths for cleanup."""
         if session is None:
             session = self.db() if callable(self.db) else self.db
             should_close = True
         else:
             should_close = False
             
-        saved_files = []  # Track all saved files for potential cleanup
+        saved_files = []
         
         try:
-            # Create folder structure: employee_documents/business_id/certificates and documents
             base_path = Path('employee_documents')
             employee_folder = base_path / business_id
             certificates_folder = employee_folder / 'certificates'
             documents_folder = employee_folder / 'documents'
             
-            current_app.logger.info(f"Creating folders for business_id: {business_id}")
-            current_app.logger.info(f"Employee folder: {employee_folder}")
-            current_app.logger.info(f"Certificates folder: {certificates_folder}")
-            current_app.logger.info(f"Documents folder: {documents_folder}")
-            
-            # Create directories
             certificates_folder.mkdir(parents=True, exist_ok=True)
             documents_folder.mkdir(parents=True, exist_ok=True)
             
-            # Track file names to handle duplicates
+            # FIX: Define certified_indices before use
+            certified_indices = form_data.getlist('certified[]') if hasattr(form_data, 'getlist') else []
             used_certificate_names = set()
             used_document_names = set()
             
-            # Process certificate files
-            certified_indices = form_data.getlist('certified[]') if hasattr(form_data, 'getlist') else []
-            current_app.logger.info(f"Certified indices: {certified_indices}")
-            current_app.logger.info(f"Available files: {list(files.keys()) if hasattr(files, 'keys') else 'No files'}")
-            
-            # Find all certificate files first
             certificate_files = {}
             for key in files.keys():
                 if key.startswith('document_file_') and key.endswith('[]'):
-                    # Extract the index from the key (e.g., 'document_file_1[]' -> 1)
                     try:
                         file_index = int(key.replace('document_file_', '').replace('[]', ''))
                         certificate_files[file_index] = files[key]
-                        current_app.logger.info(f"Found certificate file at index {file_index}: {key}")
                     except ValueError:
                         continue
             
-            # Extract skill names for certificate association
             skill_names = form_data.getlist('skill_name[]') if hasattr(form_data, 'getlist') else []
-
             for idx, is_certified in enumerate(certified_indices):
                 if is_certified:
-                    current_app.logger.info(f"Processing certified skill at index {idx}")
-                    
-                    # Look for the file at this index
                     file = certificate_files.get(idx)
-                    if file:
-                        current_app.logger.info(f"Found file for certified skill at index {idx}")
-                    else:
-                        current_app.logger.warning(f"No file found for certified skill at index {idx}")
+                    if not file:
                         continue
                     
                     if file and file.filename:
-                        current_app.logger.info(f"Processing file: {file.filename}")
                         cert_type_id = form_data.getlist('certificate_type_id[]')[idx] if hasattr(form_data, 'getlist') else form_data.get('certificate_type_id[]')
                         cert_type = session.query(CertificateType).get(int(cert_type_id)) if cert_type_id else None
                         cert_type_name = self._get_certificate_type_name(session, cert_type_id)
-                        current_app.logger.info(f"Certificate type: {cert_type_name}")
                         
-                        # Generate filename based on certificate type
                         filename = self._generate_unique_filename(
                             cert_type_name, 
                             file.filename, 
                             certificates_folder, 
                             used_certificate_names
                         )
-                        current_app.logger.info(f"Generated filename: {filename}")
                         
                         file_path = certificates_folder / filename
                         file.save(file_path)
-                        current_app.logger.info(f"File saved to: {file_path}")
-                        saved_files.append(file_path)  # Track for cleanup
+                        saved_files.append(file_path)
                         
-                        # Save certificate record
                         issuing_org = (
                             (form_data.getlist('issuing_organization[]')[idx] if hasattr(form_data, 'getlist') else form_data.get('issuing_organization[]'))
                             or (cert_type.default_issuing_org if cert_type else None)
@@ -407,8 +433,8 @@ class EmployeeService:
                         document = EmployeeDocument(
                             employee_id=employee_id,
                             cert_type_id=int(cert_type_id) if cert_type_id else None,
-                            doc_type_id=None,  # Explicitly set to None for certificates
-                            document_name=filename,  # Use the filename as document name
+                            doc_type_id=None,
+                            document_name=filename,
                             file_path=str(file_path),
                             upload_date=datetime.utcnow().date(),
                             skill_name=skill_names[idx] if idx < len(skill_names) else None,
@@ -417,16 +443,13 @@ class EmployeeService:
                         )
                         session.add(document)
             
-            # Process general documents
             general_files = files.getlist('general_document_file[]') if hasattr(files, 'getlist') else []
             doc_type_ids = form_data.getlist('general_document_type_id[]') if hasattr(form_data, 'getlist') else []
             
             for file, doc_type_id in zip(general_files, doc_type_ids):
                 if file and file.filename:
-                    # Get document type name
                     doc_type_name = self._get_document_type_name(session, doc_type_id)
                     
-                    # Generate filename based on document type
                     filename = self._generate_unique_filename(
                         doc_type_name, 
                         file.filename, 
@@ -436,13 +459,13 @@ class EmployeeService:
                     
                     file_path = documents_folder / filename
                     file.save(file_path)
-                    saved_files.append(file_path)  # Track for cleanup
+                    saved_files.append(file_path)
                     
                     document = EmployeeDocument(
                         employee_id=employee_id,
                         doc_type_id=int(doc_type_id) if doc_type_id else None,
-                        cert_type_id=None,  # General documents don't have certificate types
-                        document_name=filename,  # Use the filename as document name
+                        cert_type_id=None,
+                        document_name=filename,
                         file_path=str(file_path),
                         upload_date=datetime.utcnow().date()
                     )
@@ -451,7 +474,6 @@ class EmployeeService:
         except Exception as e:
             if should_close:
                 session.rollback()
-            # Clean up any files that were saved before the error
             if saved_files:
                 self._cleanup_temp_files(saved_files)
             raise RuntimeError(f"Document processing failed: {str(e)}")
@@ -462,7 +484,6 @@ class EmployeeService:
         return saved_files
 
     def _get_certificate_type_name(self, session, cert_type_id):
-        """Get certificate type name by ID"""
         if not cert_type_id:
             return "Unknown_Certificate"
         
@@ -470,7 +491,6 @@ class EmployeeService:
         return cert_type.type_name if cert_type else "Unknown_Certificate"
     
     def _get_document_type_name(self, session, doc_type_id):
-        """Get document type name by ID"""
         if not doc_type_id:
             return "Unknown_Document"
         
@@ -478,18 +498,11 @@ class EmployeeService:
         return doc_type.doc_type_name if doc_type else "Unknown_Document"
     
     def _generate_unique_filename(self, type_name, original_filename, folder_path, used_names):
-        """Generate a unique filename based on type name and handle duplicates"""
-        # Clean the type name for use in filename
         clean_type_name = "".join(c for c in type_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
         clean_type_name = clean_type_name.replace(' ', '_')
         
-        # Get file extension
         file_ext = os.path.splitext(original_filename)[1]
-        
-        # Base filename
         base_filename = f"{clean_type_name}{file_ext}"
-        
-        # Check if filename already exists
         counter = 1
         final_filename = base_filename
         
@@ -502,7 +515,6 @@ class EmployeeService:
         return final_filename
 
     def _cleanup_temp_files(self, file_paths):
-        """Clean up temporary files if employee creation fails"""
         for file_path in file_paths:
             try:
                 if isinstance(file_path, str):
@@ -515,9 +527,9 @@ class EmployeeService:
 
     def get_employee_skills_with_metadata(self, employee_id):
         if callable(self.db):
-            session = self.db()  # It's a factory, create a session
+            session = self.db()
         else:
-            session = self.db  # It's already a session
+            session = self.db
         try:
             result = session.execute(
                 text("""
@@ -535,31 +547,24 @@ class EmployeeService:
             session.close()
    
     def _generate_business_id(self):
-        """Generate sequential business ID in BIZYYYY-NNNN format"""
         session = self.db() if callable(self.db) else self.db
         try:
-            # Get the current year
             current_year = datetime.now().year
             
-            # Get the highest existing business ID for this year
             max_id = session.query(Employee.busness_id)\
                           .filter(Employee.busness_id.like(f'BIZ{current_year}-%'))\
                           .order_by(Employee.busness_id.desc())\
                           .first()
             
             if max_id and max_id[0]:
-                # Extract the numeric part and increment
                 last_num = int(max_id[0].split('-')[1])
                 new_num = last_num + 1
             else:
-                # First ID of the year
                 new_num = 1
                 
-            # Format as BIZYYYY-000X
             return f'BIZ{current_year}-{str(new_num).zfill(4)}'
         except Exception as e:
             current_app.logger.error(f"Error generating business ID: {e}")
-            # Fallback to UUID if sequential generation fails
             return f'BIZ{current_year}-{str(uuid.uuid4().int)[:4]}'
         finally:
             session.close()
@@ -573,7 +578,6 @@ class EmployeeService:
                 session.close()
     
     def search_supervisors(self, query):
-        """Search employees by name for supervisor selection"""
         session = self.db() if callable(self.db) else self.db
         try:
             return session.query(Employee).filter(
@@ -619,19 +623,16 @@ class EmployeeService:
                     query = query.filter(Employee.hire_date <= date_to)
                 except Exception:
                     pass
-            # Skill filters
             if skill_name:
                 query = query.join(Employee.skills).filter(Skill.skill_name.ilike(f"%{skill_name}%"))
             if skill_category:
                 query = query.join(Employee.skills).filter(Skill.category_id == skill_category)
             if skill_level:
                 query = query.join(Employee.skills).filter(employee_skills.c.skill_level == skill_level)
-            # Certificate/document filters
             if certificate_type:
                 query = query.join(Employee.documents).filter(Employee.documents.any(cert_type_id=certificate_type))
             if document_type:
                 query = query.join(Employee.documents).filter(Employee.documents.any(doc_type_id=document_type))
-            # Sorting
             if sort_by == 'name_asc':
                 query = query.order_by(Employee.english_name.asc())
             elif sort_by == 'name_desc':
@@ -651,11 +652,11 @@ class EmployeeService:
             for emp in employees:
                 result.append({
                     'id': emp.emp_id,
-                    'emp_id': emp.emp_id,  # Add this for consistency
+                    'emp_id': emp.emp_id,
                     'business_id': emp.busness_id,
                     'name': f"{emp.english_name} ({emp.arab_name})",
                     'department': emp.department.department_name if emp.department else '',
-                    'supervisor_emp_id': emp.supervisor_emp_id,  # Add supervisor_emp_id
+                    'supervisor_emp_id': emp.supervisor_emp_id,
                     'skills': {
                         'Technical': [s.skill_name for s in emp.skills],
                     }
@@ -664,4 +665,3 @@ class EmployeeService:
         finally:
             if callable(self.db):
                 session.close()
-     

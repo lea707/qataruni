@@ -6,6 +6,7 @@ from pathlib import Path
 from converter.word_converter import WordConverter
 from converter.pdf_converter import PDFConverter
 from .ai_processor import process_file
+from ai.json_skill_importer import JSONSkillImporter
 
 class EmployeeDocumentProcessor:
     def __init__(self, employee_id, business_id, output_path=None):
@@ -72,13 +73,16 @@ class EmployeeDocumentProcessor:
             os.makedirs(self.json_output_dir, exist_ok=True)
             json_output_path = os.path.join(
                 self.json_output_dir,
-                f"{Path(self.output_path).stem}_skills.json"
+                f"{self.business_id}.json"  
             )
             
-            # Process the file with AI
             result = process_file(self.output_path)
-            
+
             if result:
+                # ✅ Inject business_id if missing
+                if "business_id" not in result:
+                    result["business_id"] = self.business_id
+
                 with open(json_output_path, "w", encoding="utf-8") as f:
                     json.dump(result, f, indent=4, ensure_ascii=False)
                 print(f"✅ Saved AI output to: {json_output_path}")
@@ -115,14 +119,12 @@ class EmployeeDocumentProcessor:
         current_files = {os.path.basename(f): f for f in self.input_files}
         rebuild_needed = False
 
-        # Check for deleted files
         for filename in list(meta.keys()):
             if filename not in current_files:
                 print(f"🧹 Document deleted: {filename}")
                 del meta[filename]
                 rebuild_needed = True
 
-        # Check for new or modified files
         for filename, file_path in current_files.items():
             current_mtime = os.path.getmtime(file_path)
             if filename not in meta or meta[filename] != current_mtime:
@@ -130,23 +132,22 @@ class EmployeeDocumentProcessor:
                 meta[filename] = current_mtime
                 rebuild_needed = True
 
-        # Rebuild the complete output file if needed
         if rebuild_needed:
             print("🔨 Rebuilding output file...")
-            # Remove old output file if exists
             if os.path.exists(self.output_path):
                 os.remove(self.output_path)
 
-            # Process all current files
             for file_path in current_files.values():
                 text = self._extract_text(file_path)
                 if text:
                     self._save_text(text, file_path)
                     print(f"✅ Processed: {os.path.basename(file_path)}")
 
-            # Update metadata
             self.save_metadata(meta)
 
-            self._process_with_ai()
+            # Process with AI and then import skills
+            if self._process_with_ai():
+                importer = JSONSkillImporter()
+                importer.process_all_files()
         else:
             print("⏸️ No changes detected. Skipping processing.")
