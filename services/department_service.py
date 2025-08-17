@@ -2,6 +2,7 @@
 from database.repositories.department_repository import DepartmentRepository
 from models.department import Department
 from typing import List, Optional
+from database.connection import db 
 class DepartmentService:
     def __init__(self):
         self.repository = DepartmentRepository()
@@ -42,3 +43,29 @@ class DepartmentService:
     def delete_department(self, department_id: int) -> bool:
         """Delete a department"""
         return self.repository.delete_department(department_id)
+    @staticmethod
+    def ensure_department_by_name(dept_name: str) -> Optional[Department]:
+        """Ensure a department exists by name, normalized to lowercase"""
+        if not dept_name:
+            return None
+
+        # 🔧 Normalize: strip whitespace and lowercase
+        normalized_name = dept_name.strip().lower()
+
+        session = db()
+        try:
+            # 🔍 Compare using lowercase
+            dept = session.query(Department).filter(
+                Department.department_name.ilike(normalized_name)
+            ).first()
+
+            if not dept:
+                # Create with original casing (optional)
+                dept = Department(department_name=dept_name.strip())
+                session.add(dept)
+                session.commit()
+                session.refresh(dept)
+
+            return dept
+        finally:
+            session.close()

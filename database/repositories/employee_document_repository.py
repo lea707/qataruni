@@ -57,3 +57,33 @@ class EmployeeDocumentRepository:
             return document
         finally:
             session.close()
+    
+    def delete(self, document_id):
+        """Delete a document by its ID"""
+        session = db()
+        try:
+            document = session.query(EmployeeDocument).filter_by(document_id=document_id).first()
+            if document:
+                # Delete the physical file if it exists
+                if document.file_path and os.path.exists(document.file_path):
+                    os.remove(document.file_path)
+                
+                session.delete(document)
+                session.commit()
+                return True
+            return False
+        except Exception as e:
+            session.rollback()
+            current_app.logger.error(f"Error deleting document {document_id}: {e}")
+            return False
+        finally:
+            session.close()
+    
+    def get_by_employee(self, employee_id):
+        """Get all documents for an employee"""
+        session = db()
+        try:
+            documents = session.query(EmployeeDocument).filter_by(employee_id=employee_id).all()
+            return documents
+        finally:
+            session.close()

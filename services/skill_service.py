@@ -1,45 +1,73 @@
-
 from database.repositories.skill_repository import SkillRepository
 from database.repositories.skill_category_repository import SkillCategoryRepository
 from models.employee import Employee
 from models.skill import Skill
 from models.skill_category import SkillCategory
 from models.associations import employee_skills
-from database.connection import db
+from database.connection import db  # Import the global session
 from sqlalchemy import select, and_
 import json
 from pathlib import Path
 from typing import Dict, List
 from flask import current_app
+from sqlalchemy.orm import joinedload
+from database.repositories.skill_repository import SkillRepository
+from database.repositories.skill_category_repository import SkillCategoryRepository
+from models.skill import Skill
+from models.skill_category import SkillCategory
+from database.connection import db  # This imports your SessionLocal instance
+from sqlalchemy.orm import joinedload
+from flask import current_app
 
 class SkillService:
     def __init__(self):
         self.repository = SkillRepository()
-        self.category_repository = SkillCategoryRepository()  
-        self.all_skills = self.repository.get_all_skills() 
+        self.category_repository = SkillCategoryRepository()
+        self.all_skills = self.repository.get_all_skills()
+        from database.connection import db
+        self.db = db() 
+    def get_all_skills_serializable(self, include_category=False):
+        try:
+            query = self.db.query(Skill)  # Use the session directly
+            
+            if include_category:
+                query = query.options(joinedload(Skill.category))
+                
+            skills = query.all()
+            
+            return [{
+                'skill_id': s.skill_id,
+                'skill_name': s.skill_name,
+                'category': s.category.category_name if include_category and s.category else None
+            } for s in skills]
+        except Exception as e:
+            current_app.logger.error(f"Error getting skills: {str(e)}")
+            return []
+        finally:
+            self.db.close()
     def get_skills_by_employee(self, employee_id):
         return self.repository.get_skills_by_employee(employee_id)
+
     def get_all_skill_categories(self):
-        return self.category_repository.get_all_categories()  
+        return self.category_repository.get_all_categories()
+
     def get_all_skill_levels(self):
-        session = self.db()
+        session = self.db() if callable(self.db) else self.db
         try:
             return self.repository.get_distinct_skill_levels(session)
         finally:
-            session.close()
+            if callable(self.db):
+                session.close()
+
     def get_all_skills(self):
-     return self.repository.get_all_skills()
+        return self.repository.get_all_skills()
+
     def search_skills(self, query):
         """Search skills by name (case-insensitive partial match)"""
         return self.repository.search_skills(query)
+
     def process_json_directory(self, folder_path: str = "converted/json") -> Dict[str, int]:
-        """
-        Process all JSON files in a directory
-        Args:
-            folder_path: Path to folder containing JSON files
-        Returns:
-            Dictionary with processing results
-        """
+        """Process all JSON files in a directory"""
         json_folder = Path(folder_path)
         if not json_folder.exists():
             raise FileNotFoundError(f"JSON folder not found: {folder_path}")
@@ -64,27 +92,10 @@ class SkillService:
 
         return results
 
-    def import_skills_from_json_file(self, file_path: str) -> Dict[str, int]:
-        """
-        Import skills from a single JSON file
-        Args:
-            file_path: Path to JSON file
-        Returns:
-            Dictionary with import results
-        """
-        with open(file_path, 'r', encoding='utf-8') as f:
-            json_data = json.load(f)
-        return self._import_skills_data(json_data)
-
+    
     def _import_skills_data(self, json_data: Dict) -> Dict[str, int]:
-        """
-        Internal method to process skill data
-        Args:
-            json_data: Dictionary with business_id and skills list
-        Returns:
-            Dictionary with import results
-        """
-        session = db()
+        """Internal method to process skill data"""
+        session = self.db() if callable(self.db) else self.db
         results = {
             'skills_added': 0,
             'employee_found': True,
@@ -159,4 +170,5 @@ class SkillService:
             session.rollback()
             raise RuntimeError(f"Failed to import skills: {str(e)}")
         finally:
-            session.close()
+            if callable(self.db):
+                session.close()

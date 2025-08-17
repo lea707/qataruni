@@ -1,0 +1,169 @@
+{
+    "skills": [
+        {
+            "name": "C++",
+            "category": "technical"
+        },
+        {
+            "name": "Java",
+            "category": "technical"
+        },
+        {
+            "name": "Data Structures",
+            "category": "technical"
+        },
+        {
+            "name": "Object-Oriented Programming",
+            "category": "technical"
+        },
+        {
+            "name": "Database Design",
+            "category": "technical"
+        },
+        {
+            "name": "Routing & Switching",
+            "category": "technical"
+        },
+        {
+            "name": "Open Source Systems",
+            "category": "technical"
+        },
+        {
+            "name": "Red Hat Linux",
+            "category": "technical"
+        },
+        {
+            "name": "HTML",
+            "category": "technical"
+        },
+        {
+            "name": "CSS",
+            "category": "technical"
+        },
+        {
+            "name": "SQL",
+            "category": "technical"
+        },
+        {
+            "name": "Relational Modeling",
+            "category": "technical"
+        },
+        {
+            "name": "Logical Modeling",
+            "category": "technical"
+        },
+        {
+            "name": "Cisco",
+            "category": "technical"
+        },
+        {
+            "name": "Visual Studio Code",
+            "category": "technical"
+        },
+        {
+            "name": "Circuit Design",
+            "category": "technical"
+        },
+        {
+            "name": "Breadboard",
+            "category": "technical"
+        },
+        {
+            "name": "Logic Gates",
+            "category": "technical"
+        },
+        {
+            "name": "Amplifiers",
+            "category": "technical"
+        },
+        {
+            "name": "Transistors",
+            "category": "technical"
+        },
+        {
+            "name": "File Handling",
+            "category": "technical"
+        },
+        {
+            "name": "Data Processing",
+            "category": "technical"
+        },
+        {
+            "name": "Responsive Design",
+            "category": "technical"
+        },
+        {
+            "name": "Data Retrieval",
+            "category": "technical"
+        },
+        {
+            "name": "Data Management",
+            "category": "technical"
+        },
+        {
+            "name": "Circuit Troubleshooting",
+            "category": "technical"
+        },
+        {
+            "name": "Analytical Skills",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Problem-Solving",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Team player",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Communication",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Fast learner",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Adaptable",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Organized",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Reliable",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Arabic",
+            "category": "language"
+        },
+        {
+            "name": "English",
+            "category": "language"
+        },
+        {
+            "name": "French",
+            "category": "language"
+        },
+        {
+            "name": "Robotics",
+            "category": "other"
+        },
+        {
+            "name": "Embedded Systems",
+            "category": "technical"
+        },
+        {
+            "name": "Software Development",
+            "category": "technical"
+        },
+        {
+            "name": "AI",
+            "category": "technical"
+        }
+    ],
+    "business_id": "empl-1"
+}

@@ -8,7 +8,7 @@ role_permissions = {
         "view_employees", "add_employee", "edit_employee", "delete_employee",
         "manage_roles", "manage_permissions",
         "view_departments", "add_department", "edit_department", "delete_department",
-        "view_documents", "upload_documents"
+        "view_documents", "upload_documents",
     ],
     "HR": [
         "view_employees", "add_employee", "edit_employee",
@@ -20,7 +20,7 @@ role_permissions = {
         "view_departments"
     ]
 }
-# ... your existing code ...
+
 
 def seed_roles_and_permissions():
     print("🔄 Starting role and permission seeding...")

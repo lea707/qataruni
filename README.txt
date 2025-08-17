@@ -1,67 +1,82 @@
-Developed for Qatar University
-HR Development Team
-Doha, Qatar
-
-Employee Skills Tracker - Qatar University
-
-![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)
-![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
-![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)
-
-A Flask web application for tracking employee skills and certifications at Qatar University.
-
-                                  ___Features___
- 
-- Employee directory with department filtering
-- Skills tracking (Technical, Business, Languages)
-- Search functionality across all employee attributes
-- Department overview pages
-- Responsive web design
-
-                                ___Installation___
-  Requirments:
+﻿annotated-types==0.7.0
+anyio==4.10.0
 blinker==1.9.0
+cachetools==5.5.2
+certifi==2025.7.14
+cffi==1.17.1
+charset-normalizer==3.4.2
 click==8.2.1
 colorama==0.4.6
+cryptography==45.0.5
+et_xmlfile==2.0.0
+filelock==3.18.0
 Flask==3.1.1
 Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.2
+fsspec==2025.7.0
+google-ai-generativelanguage==0.6.15
+google-api-core==2.25.1
+google-api-python-client==2.177.0
+google-auth==2.40.3
+google-auth-httplib2==0.2.0
+google-genai==1.28.0
+google-generativeai==0.8.5
+googleapis-common-protos==1.70.0
 greenlet==3.2.3
+grpcio==1.74.0
+grpcio-status==1.71.2
+h11==0.16.0
+httpcore==1.0.9
+httplib2==0.22.0
+httpx==0.28.1
+idna==3.10
+iniconfig==2.1.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
+lxml==6.0.0
 MarkupSafe==3.0.2
+mpmath==1.3.0
+networkx==3.5
+numpy==2.3.2
+openpyxl==3.1.5
+packaging==25.0
+pandas==2.3.1
+pdfminer.six==20250506
+pdfplumber==0.11.7
+pillow==11.3.0
+pluggy==1.6.0
+proto-plus==1.26.1
+protobuf==5.29.5
+psycopg2-binary==2.9.10
+pyasn1==0.6.1
+pyasn1_modules==0.4.2
+pycparser==2.22
+pydantic==2.11.7
+pydantic_core==2.33.2
+Pygments==2.19.2
+pyparsing==3.2.3
+pypdfium2==4.30.0
+pytest==8.4.1
+python-dateutil==2.9.0.post0
+python-docx==1.2.0
+python-dotenv==1.1.0
+pytz==2025.2
+requests==2.32.4
+rsa==4.9.1
+setuptools==80.9.0
+six==1.17.0
+sniffio==1.3.1
 SQLAlchemy==2.0.41
+sympy==1.14.0
+tenacity==8.5.0
+torch==2.7.1
+tqdm==4.67.1
+typing-inspection==0.4.1
 typing_extensions==4.14.0
+tzdata==2025.2
+uritemplate==4.2.0
+urllib3==2.5.0
+websockets==15.0.1
 Werkzeug==3.1.3
 WTForms==3.2.1
-
- Setup:
- 1. Clone the repository:
-   ```bash
-   git clone https://github.com/lea707/qataruni.git
-   cd employee_tracker
-2.Install dependencies:
-  pip install -r requirements.txt
-Running the Application
-- Start the development server:
-python app.py
-- Open your browser to:
-http://localhost:5000
-
-                        ___project structure___
-
-employee_tracker/
-├── app.py                # Main application entry point
-├── routes.py             # All application routes
-├── requirements.txt      # Python dependencies
-├── static/               # Static files (CSS, JS, images)
-├── templates/            # HTML templates
-│   ├── base.html         # Base template
-│   ├── employees.html    # Employee directory
-│   └── ...               # Other templates
-└── README.md             # This file
-
-
-
-

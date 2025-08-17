@@ -24,11 +24,14 @@ def create_app():
         return response
 
     app.secret_key = '973ybbfehfehuhnencuen'
+    
+    # Configure upload folder
+    app.config['UPLOAD_FOLDER'] = 'employee_documents'
+    
     init_routes(app)
     from users.user_routes import user_bp
     app.register_blueprint(user_bp)
 
-    # Debug: Print all registered routes
     print("\nRegistered routes:")
     for rule in app.url_map.iter_rules():
         print(f"{rule.endpoint}: {rule}")

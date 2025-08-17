@@ -7,8 +7,9 @@ from models.employee import Employee
 from models.skill import Skill
 from models.skill_category import SkillCategory
 from models.associations import employee_skills
-from sqlalchemy import select
-import shutil  
+from sqlalchemy import select, func
+from sqlalchemy.orm.exc import MultipleResultsFound
+import shutil
 
 class JSONSkillImporter:
     def __init__(self):
@@ -40,95 +41,38 @@ class JSONSkillImporter:
             except Exception as e:
                 print(f"[ERROR] {json_file.name}: {str(e)}")
                 self._quarantine_file(json_file, str(e))
-
+ 
     def process_file(self, json_path: Path):
-        """Process and archive a single JSON file"""
-        with open(json_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-
-        if not isinstance(data, dict):
-            raise ValueError("Invalid JSON format: Expected dictionary")
-
-        business_id = data.get("business_id")
-        if not business_id:
-            raise ValueError("Missing business_id in JSON")
-
-        skills = data.get("skills", [])
-        if not skills:
-            print(f"[INFO] No skills found in {json_path.name}")
-            self._archive_file(json_path, business_id)
-            return
-
-        session = db()
         try:
-            employee = session.scalars(
-                select(Employee).where(Employee.busness_id == business_id)
-            ).one_or_none()
-
-            if not employee:
-                print(f"[WARN] No employee found for busness_id: {business_id}")
-                self._quarantine_file(json_path, f"No employee found for busness_id: {business_id}")
-                return
-
-            print(f"[DEBUG] Matched employee: {employee.emp_id} — {employee.english_name}")
-
-            for skill_data in skills:
-                self._process_skill(session, employee.emp_id, skill_data)
-
-            session.commit()
-            print(f"[SUCCESS] Processed {len(skills)} skills from {json_path.name}")
-            self._archive_file(json_path, business_id)
-
+            with open(json_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                
+            # Debug: Print raw JSON
+            print(f"RAW JSON CONTENT:\n{json.dumps(data, indent=2)}")
+            
+            # Enhanced validation
+            if not isinstance(data, dict):
+                raise ValueError("Top-level must be a dictionary")
+                
+            if "skills" not in data:
+                raise ValueError("Missing 'skills' array")
+                
+            valid_skills = [
+                s for s in data["skills"] 
+                if isinstance(s, dict) and s.get("name", "").strip()
+            ]
+            
+            if not valid_skills:
+                raise ValueError(f"No valid skills in {len(data['skills'])} entries")
+                
+            # Process only valid skills
+            data["skills"] = valid_skills
+            return self._process_valid_file(json_path, data)
+            
         except Exception as e:
-            session.rollback()
+            self._quarantine_file(json_path, str(e))
             raise
-        finally:
-            session.close()
-    def _process_skill(self, session, employee_id: int, skill_data: Dict):
-        """Process individual skill entry"""
-        skill_name = skill_data.get("skill", "").strip()
-        category_name = skill_data.get("category", "").strip()
-
-        if not skill_name:
-            return
-
-        category = session.execute(
-            select(SkillCategory).where(SkillCategory.category_name.ilike(category_name))
-        ).scalar_one_or_none()
-
-        if not category and category_name:
-            category = SkillCategory(category_name=category_name)
-            session.add(category)
-            session.flush()
-
-        skill = session.execute(
-            select(Skill).where(Skill.skill_name.ilike(skill_name))
-        ).scalar_one_or_none()
-
-        if not skill:
-            skill = Skill(
-                skill_name=skill_name,
-                category_id=category.category_id if category else None
-            )
-            session.add(skill)
-            session.flush()
-
-        exists = session.execute(
-            select(employee_skills).where(
-                (employee_skills.c.employee_id == employee_id) &
-                (employee_skills.c.skill_id == skill.skill_id)
-            )
-        ).scalar_one_or_none()
-
-        if not exists:
-            session.execute(
-                employee_skills.insert().values(
-                    employee_id=employee_id,
-                    skill_id=skill.skill_id,
-                    certified=skill_data.get("certified", False),
-                    skill_level=skill_data.get("level")
-                )
-            )
+    
     def _archive_file(self, json_path: Path, business_id: str):
         """Copy file to processed directory with timestamp, preserving original"""
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -136,31 +80,163 @@ class JSONSkillImporter:
         new_path = self.processed_dir / new_name
 
         try:
-            shutil.copy2(json_path, new_path)  # ✅ Copy instead of move
+            shutil.copy2(json_path, new_path)
             print(f"[ARCHIVE] Copied to: {new_path}")
         except Exception as e:
             print(f"[ERROR] Failed to archive {json_path.name}: {e}")
+ 
+    def _process_valid_file(self, json_path: Path, data: dict):
+        """Process a validated JSON file with skills data"""
+        session = db()
+        try:
+            business_id = data.get("business_id")
+            if not business_id:
+                raise ValueError("Missing business_id in JSON")
+            
+            # Find employee
+            employee = session.scalars(
+                select(Employee).where(Employee.busness_id == business_id)
+            ).one_or_none()
+            
+            if not employee:
+                raise ValueError(f"No employee found for business_id: {business_id}")
+            
+            print(f"👤 Processing skills for employee: {employee.english_name} (ID: {employee.emp_id})")
+            
+            # Process each skill - ONLY ADD NEW ONES
+            skill_count = 0
+            for skill_data in data["skills"]:
+                try:
+                    # Only add if association doesn't exist
+                    skill_name = skill_data.get("name", "").strip()
+                    if not skill_name:
+                        continue
+                        
+                    # Check if skill already exists for employee
+                    existing = session.scalars(
+                        select(employee_skills)
+                        .join(Skill)
+                        .where(
+                            (employee_skills.c.employee_id == employee.emp_id) &
+                            (func.lower(Skill.skill_name) == func.lower(skill_name))
+                        )
+                    ).one_or_none()
+                    
+                    if not existing:
+                        self._process_skill(session, employee.emp_id, skill_data)
+                        skill_count += 1
+                except Exception as e:
+                    print(f"⚠️ Failed to process skill {skill_data.get('name')}: {str(e)}")
+                    continue
+            
+            session.commit()
+            print(f"✅ Added {skill_count} new skills (of {len(data['skills'])} total) for {business_id}")
+            self._archive_file(json_path, business_id)
+            
+            return {
+                "employee_id": employee.emp_id,
+                "skills_added": skill_count,
+                "total_skills_in_file": len(data["skills"])
+            }
+            
+        except Exception as e:
+            session.rollback()
+            print(f"❌ Transaction failed: {str(e)}")
+            self._quarantine_file(json_path, str(e))
+            raise
+        finally:
+            session.close()
+    
+    def _quarantine_file(self, json_path: Path, error: str):
+        # Save error copy
+        debug_path = self.quarantine_dir / f"DEBUG_{json_path.name}"
+        try:
+            with open(json_path, 'r') as src, open(debug_path, 'w') as dst:
+                dst.write(f"// ERROR: {error}\n")
+                dst.write(src.read())
+        except Exception as e:
+            print(f"DEBUG SAVE FAILED: {e}")
+    
+    def _process_skill(self, session, employee_id: int, skill_data: Dict):
+        """Process skill with robust category handling"""
+        skill_name = skill_data.get("name", "").strip()
+        category_name = skill_data.get("category", "").strip()
+        
+        if not skill_name:
+            print(f"⚠️ Invalid skill (missing name): {skill_data}")
+            return
 
-    def _quarantine_file(self, json_path: Path, reason: str = "Unknown error"):
-        """Log problematic file without moving it"""
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        error_tag = reason.split(":")[0].replace(" ", "_").replace("[", "").replace("]", "")
-        new_name = f"{json_path.stem}_ERROR_{datetime.now().strftime('%Y%m%d_%H%M%S')}{json_path.suffix}"
-        quarantine_path = self.quarantine_dir / new_name
+        print(f"\n🔍 Processing: {skill_name} (Category: '{category_name}')")
 
-        print(f"[QUARANTINE] Would quarantine: {json_path.name} → {quarantine_path.name} due to: {reason}")
+        # 1. Handle Uncategorized Skills
+        if not category_name:
+            print("⚠️ No category specified - assigning to 'Uncategorized'")
+            category_name = "Uncategorized"
 
-        # Log to quarantine report
-        with open(self.report_path, "a", encoding="utf-8") as report:
-            report.write(f"File: {json_path.name}\n")
-            report.write(f"Reason: {reason}\n")
-            report.write(f"Suggested Action: Check format, structure, or database integrity\n")
-            report.write(f"---\n")
-
-        # Optional: remove empty quarantine folder
-        if self.quarantine_dir.exists() and not any(self.quarantine_dir.iterdir()):
+        # 2. Case-Insensitive Category Lookup
+        try:
+            category = session.scalars(
+                select(SkillCategory).where(
+                    func.lower(SkillCategory.category_name) == func.lower(category_name)
+                )
+            ).one_or_none()
+        except MultipleResultsFound as e:
+            print(f"❌ ERROR: Multiple categories found for '{category_name}'. Using the first one.")
+            category = session.scalars(
+                select(SkillCategory).where(
+                    func.lower(SkillCategory.category_name) == func.lower(category_name)
+                )
+            ).first()
+        
+        # 3. Create New Category if Needed
+        if not category:
+            print(f"➕ Creating NEW category: '{category_name}'")
             try:
-                self.quarantine_dir.rmdir()
-                print(f"[CLEANUP] Removed empty quarantine folder")
+                category = SkillCategory(category_name=category_name)
+                session.add(category)
+                session.flush()
+                print(f"Created category ID: {category.category_id}")
             except Exception as e:
-                print(f"[WARN] Could not remove quarantine folder: {e}")
+                # This fallback is what's causing your issue, so we'll log it clearly
+                print(f"❌ Failed to create category '{category_name}': {e}")
+                # Fallback to existing 'Uncategorized' category
+                category = session.scalars(
+                    select(SkillCategory).where(
+                        func.lower(SkillCategory.category_name) == "uncategorized"
+                    )
+                ).one_or_none()
+                if not category:
+                    raise ValueError("Could not find or create category")
+        
+        # 4. Skill Processing
+        skill = session.scalars(
+            select(Skill).where(func.lower(Skill.skill_name) == func.lower(skill_name))
+        ).one_or_none()
+
+        if not skill:
+            print(f"➕ Creating new skill: '{skill_name}'")
+            skill = Skill(
+                skill_name=skill_name,
+                category_id=category.category_id
+            )
+            session.add(skill)
+            session.flush()
+
+        # 5. Create Association
+        exists = session.scalars(
+            select(employee_skills).where(
+                (employee_skills.c.employee_id == employee_id) &
+                (employee_skills.c.skill_id == skill.skill_id)
+            )
+        ).one_or_none()
+
+        if not exists:
+            print(f"🤝 Creating association for {skill_name}")
+            session.execute(
+                employee_skills.insert().values(
+                    employee_id=employee_id,
+                    skill_id=skill.skill_id,
+                    certified=skill_data.get("certified", False),
+                    skill_level=skill_data.get("level", "Not Specified")
+                )
+            )

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}File Upload{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/upload.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <h1>Upload Employee Documents</h1>
+
+    <!-- Downloadable Excel Template -->
+    <a href="{{ url_for('static', filename='templates/employee_template.xlsx') }}" download class="template-link">
+        📥 Download Excel Template
+    </a>
+
+    <!-- Upload Form -->
+    <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" class="upload-form">
+        <div class="file-drop-area" id="dropArea">
+            <span class="drop-message">Drag & drop files here or click to browse</span>
+            <input type="file" name="documents" id="fileInput" multiple class="file-input" required>
+        </div>
+
+        <div class="file-preview" id="filePreview">
+            <p class="no-files">No files selected</p>
+        </div>
+
+        <div class="form-footer">
+            <button type="submit" class="upload-btn">Upload Files</button>
+            <div class="progress-container" id="progressContainer" style="display: none;">
+                <div class="progress-bar" id="progressBar"></div>
+                <span class="progress-text" id="progressText">0%</span>
+            </div>
+        </div>
+    </form>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="flash-messages">
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const dropArea = document.getElementById("dropArea");
+    const fileInput = document.getElementById("fileInput");
+    const filePreview = document.getElementById("filePreview");
+    const progressContainer = document.getElementById("progressContainer");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+
+    dropArea.addEventListener("click", (e) => {
+    if (e.target !== fileInput) {
+        fileInput.click();
+    }
+});
+    dropArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropArea.classList.add("drag-over");
+    });
+
+    dropArea.addEventListener("dragleave", () => {
+        dropArea.classList.remove("drag-over");
+    });
+
+    dropArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropArea.classList.remove("drag-over");
+
+        const droppedFiles = e.dataTransfer.files;
+        const dataTransfer = new DataTransfer();
+        for (let i = 0; i < droppedFiles.length; i++) {
+            dataTransfer.items.add(droppedFiles[i]);
+        }
+        fileInput.files = dataTransfer.files;
+
+        updatePreview();
+    });
+
+    fileInput.addEventListener("change", updatePreview);
+
+    function updatePreview() {
+        const files = fileInput.files;
+        filePreview.innerHTML = "";
+
+        if (files.length === 0) {
+            filePreview.innerHTML = "<p class='no-files'>No files selected</p>";
+            return;
+        }
+
+        const list = document.createElement("ul");
+        for (let i = 0; i < files.length; i++) {
+            const item = document.createElement("li");
+            item.textContent = `${files[i].name} (${Math.round(files[i].size / 1024)} KB)`;
+            list.appendChild(item);
+        }
+        filePreview.appendChild(list);
+    }
+
+    const form = document.querySelector(".upload-form");
+    form.addEventListener("submit", function () {
+        progressContainer.style.display = "block";
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 10;
+            progressBar.style.width = progress + "%";
+            progressText.textContent = progress + "%";
+            if (progress >= 100) clearInterval(interval);
+        }, 100);
+    });
+});
+</script>
+{% endblock %}

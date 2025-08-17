@@ -3,7 +3,10 @@ import json
 import sys
 from pathlib import Path
 
-module_dir = os.path.abspath('C:/Users/lea/OneDrive/Desktop/internship/qataruni/employee_tracker/ai')
+# Get the current directory and add the ai module to the path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+module_dir = os.path.join(project_root, 'ai')
 sys.path.append(module_dir)
 
 from ai.extract_skills import extract_skills_from_text
