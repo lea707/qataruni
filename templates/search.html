@@ -190,16 +190,29 @@
                     <input type="hidden" name="{{ key }}" value="{{ value }}">
                 {% endfor %}
                 <label for="sort_by" style="font-weight: 500;">Sort by:</label>
-                <select name="sort_by" id="sort_by" class="form-input" onchange="document.getElementById('sortForm').submit()">
-                    <option value="">Default</option>
-                    <option value="name_asc" {% if request.args.get('sort_by') == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
-                    <option value="name_desc" {% if request.args.get('sort_by') == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
-                    <option value="id_asc" {% if request.args.get('sort_by') == 'id_asc' %}selected{% endif %}>Business ID (ascending)</option>
-                    <option value="id_desc" {% if request.args.get('sort_by') == 'id_desc' %}selected{% endif %}>Business ID (descending)</option>
-                    <option value="hiredate_desc" {% if request.args.get('sort_by') == 'hiredate_desc' %}selected{% endif %}>Hire Date (newest first)</option>
-                    <option value="hiredate_asc" {% if request.args.get('sort_by') == 'hiredate_asc' %}selected{% endif %}>Hire Date (oldest first)</option>
+                <select name="sort_by" id="sort_by">
+                    <option value="">-- Sort By --</option>
+                    <option value="id_asc" {{ 'selected' if request.args.get('sort_by') == 'id_asc' else '' }}>Business ID (Ascending)</option>
+                    <option value="id_desc" {{ 'selected' if request.args.get('sort_by') == 'id_desc' else '' }}>Business ID (Descending)</option>
+                    <option value="name_asc" {{ 'selected' if request.args.get('sort_by') == 'name_asc' else '' }}>English Name (A → Z)</option>
+                    <option value="name_desc" {{ 'selected' if request.args.get('sort_by') == 'name_desc' else '' }}>English Name (Z → A)</option>
+                    <option value="hiredate_asc" {{ 'selected' if request.args.get('sort_by') == 'hiredate_asc' else '' }}>Hire Date (Oldest First)</option>
+                    <option value="hiredate_desc" {{ 'selected' if request.args.get('sort_by') == 'hiredate_desc' else '' }}>Hire Date (Newest First)</option>
                 </select>
+                
+                
             </form>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const sortSelect = document.getElementById('sort_by');
+                    if (sortSelect) {
+                        sortSelect.addEventListener('change', function() {
+                            this.form.submit();
+                        });
+                    }
+                });
+                </script>
+                
 
             {% if employees %}
                 <div class="table-container">

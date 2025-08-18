@@ -1,7 +1,4 @@
-#
-# This file contains the core business logic for managing employees,
-# including create, read, update, and delete operations.
-#
+
 from sqlalchemy import text
 import uuid
 import json
@@ -26,8 +23,8 @@ from models.certificate_type import CertificateType
 from models.document_type import DocumentType
 from models.associations import employee_skills
 from processor.employee_processor import EmployeeDocumentProcessor
-from services.file_handler import handle_file_uploads # Import the new file handler service
-
+from services.file_handler import handle_file_uploads 
+from services.skill_service import SkillService  
 class EmployeeService:
     def __init__(self, db_session=None):
         self.db = db_session if db_session is not None else db
@@ -70,25 +67,10 @@ class EmployeeService:
                         
         except Exception as e:
             current_app.logger.error(f"Failed to process skills from JSON for employee {business_id}: {e}")
-
+   
     def update_employee(self, employee_id: int, form_data, files=None):
-        """
-        Updates an existing employee's details and handles new skill and document uploads.
-        
-        Args:
-            employee_id: The ID of the employee to update.
-            form_data: The form data from the POST request.
-            files: The files dictionary from the POST request (request.files).
-        """
         session = self.db() if callable(self.db) else self.db
-        
-        # --- DEBUGGING PRINTS START ---
-        print("\n--- DEBUG: Incoming Update Data ---")
-        print(f"Employee ID: {employee_id}")
-        print(f"Form Data Keys: {form_data.keys()}")
-        print(f"Files Keys: {files.keys()}")
-        print("------------------------------------\n")
-        # --- DEBUGGING PRINTS END ---
+        skill_service = SkillService()
 
         try:
             employee = session.query(Employee).filter_by(emp_id=employee_id).first()
@@ -96,120 +78,147 @@ class EmployeeService:
                 current_app.logger.warning(f"Employee with ID {employee_id} not found for update.")
                 return False
 
-            # Update core employee fields from form data
-            employee.english_name = form_data.get('english_name', employee.english_name)
-            employee.arab_name = form_data.get('arab_name', employee.arab_name)
-            employee.busness_id = form_data.get('business_id', employee.busness_id)
-            employee.email = form_data.get('email', employee.email)
-            employee.phone = form_data.get('phone', employee.phone)
-            
-            # Check for and handle hire_date update
-            hire_date_str = form_data.get('hire_date')
-            if hire_date_str:
-                try:
-                    employee.hire_date = datetime.strptime(hire_date_str, '%Y-%m-%d').date()
-                except ValueError as e:
-                    current_app.logger.error(f"Invalid hire_date format: {hire_date_str}. Error: {e}")
-            
-            employee.department_id = form_data.get('department_id', employee.department_id)
-            employee.position_id = form_data.get('position_id', employee.position_id)
-            employee.level_id = form_data.get('level_id', employee.level_id)
-            employee.supervisor_emp_id = form_data.get('supervisor_emp_id') if form_data.get('supervisor_emp_id') else None
-            employee.is_active = 'is_active' in form_data
-            
-            # ==================== SKILLS UPDATE LOGIC ====================
-            # Clear all existing skills to handle removals and updates
-            employee.skills.clear()
-            
-            # Process and add existing skills (from the original form)
-            # This assumes the skills select box sends skill IDs
-            selected_skills = form_data.getlist('skills[]')
-            for skill_id in selected_skills:
-                skill = session.query(Skill).get(skill_id)
-                if skill:
-                    employee.skills.append(skill)
-            
-            # Process and add new skills (from the dynamically added hidden inputs)
-            new_skills_json = form_data.getlist('new_skills[]')
-            for skill_json in new_skills_json:
-                try:
-                    skill_data = json.loads(skill_json)
-                    skill_name = skill_data.get('name')
-                    skill_level = skill_data.get('level')
-                    skill_category_id = skill_data.get('category_id')
-                    
-                    # Check if skill already exists in the database
-                    skill = session.query(Skill).filter_by(skill_name=skill_name).first()
-                    if not skill:
-                        # Create a new skill if it doesn't exist
-                        skill = Skill(skill_name=skill_name, category_id=skill_category_id)
-                        session.add(skill)
-                        session.flush() # Flush to get the new skill ID
-                    
-                    # Link the skill to the employee with level and certification status
-                    employee.skills.append(skill)
-                    
-                except json.JSONDecodeError as e:
-                    current_app.logger.error(f"Failed to decode skill JSON: {e}")
-            
-            # ==================== DOCUMENTS UPDATE LOGIC ====================
-            # Handle file uploads for new documents
+            current_app.logger.debug(f"[UPDATE] Updating employee {employee_id}")
+            current_app.logger.debug(f"[UPDATE] form_data keys: {list(form_data.keys())}")
+
+            # ✅ Basic fields
+            employee.english_name = form_data.get("english_name", employee.english_name)
+            employee.arab_name = form_data.get("arab_name", employee.arab_name)
+            employee.busness_id = form_data.get("busness_id", employee.busness_id)
+            employee.email = form_data.get("email", employee.email)
+            employee.phone = form_data.get("phone", employee.phone)
+
+            # ✅ Foreign keys
+            if form_data.get("department_id"):
+                employee.department_id = int(form_data["department_id"])
+            if form_data.get("position_id"):
+                employee.position_id = int(form_data["position_id"])
+            if form_data.get("level_id"):
+                employee.level_id = int(form_data["level_id"])
+
+            # ✅ is_active
+            if "is_active" in form_data:
+                val = str(form_data["is_active"]).lower()
+                employee.is_active = val in ("true", "1", "yes", "on")
+                current_app.logger.debug(f"[UPDATE] is_active set to {employee.is_active}")
+
+            # ✅ Skills handling
+            skill_entries = []
+            i = 0
+            while f"skill_name[{i}]" in form_data:
+                nm = (form_data.get(f"skill_name[{i}]") or "").strip()
+                if nm:
+                    cat_val = form_data.get(f"skill_category[{i}]")
+                    cat_id = int(cat_val) if cat_val and str(cat_val).isdigit() else None
+                    lvl = form_data.get(f"skill_level[{i}]")
+                    cert = form_data.get(f"skill_certified[{i}]")
+                    certified = str(cert).lower() in ("on", "true", "1", "yes")
+                    skill_entries.append({
+                        "skill": nm,
+                        "category_id": cat_id,   # ✅ FIX
+                        "level": lvl,
+                        "certified": certified
+                    })
+                i += 1
+
+            if skill_entries:
+                current_app.logger.debug(f"[UPDATE] Parsed {len(skill_entries)} skills for employee {employee_id}")
+                employee.skills.clear()
+                session.commit()
+
+                skill_service._import_skills_data({
+                    "business_id": employee.busness_id,
+                    "skills": skill_entries
+                })
+
+            # ✅ Files
             if files:
-                current_app.logger.info(f"Processing file uploads for employee {employee_id}")
-                current_app.logger.info(f"Files received: {list(files.keys())}")
-                try:
-                    # Use the file_handler service to save the files
-                    handle_file_uploads(session, employee_id, files, form_data)
-                    current_app.logger.info(f"Successfully processed file uploads for employee {employee_id}")
-                except Exception as e:
-                    current_app.logger.error(f"Error processing file uploads for employee {employee_id}: {e}")
-                    # Don't fail the entire update if file upload fails
-            
+                for file in files.getlist("documents"):
+                    if file.filename:
+                        new_doc = EmployeeDocument(
+                            employee_id=employee_id,
+                            document_name=file.filename
+                        )
+                        session.add(new_doc)
+
             session.commit()
-            print(f"✅ Successfully updated employee with ID {employee_id}")
+            current_app.logger.debug(f"[UPDATE] Employee {employee_id} updated successfully")
             return True
 
         except Exception as e:
             session.rollback()
-            current_app.logger.error(f"Failed to update employee {employee_id}: {e}")
-            print(f"❌ Failed to update employee with ID {employee_id}")
+            current_app.logger.error(f"Error updating employee {employee_id}: {e}")
             return False
-
         finally:
             if callable(self.db):
                 session.close()
 
+
     def create_employee(self, form_data, files=None):
         session = self.db() if callable(self.db) else self.db
-        temp_files = []
+        skill_service = SkillService()
+
         try:
-            # Create a new employee object
+            # ✅ Parse is_active
+            active_value = str(form_data.get("is_active", "")).lower()
+
             new_employee = Employee(
-                english_name=form_data['english_name'],
-                arab_name=form_data['arab_name'],
-                busness_id=form_data['business_id'],
-                email=form_data.get('email'),
-                phone=form_data.get('phone'),
-                # The 'address' field is not supported in the Employee model.
-                # Remove this to avoid the same error on create.
-                # address=form_data.get('address'),
-                hire_date=datetime.strptime(form_data['hire_date'], '%Y-%m-%d').date(),
-                department_id=form_data.get('department_id'),
-                position_id=form_data.get('position_id'),
-                level_id=form_data.get('level_id'),
-                supervisor_emp_id=form_data.get('supervisor_emp_id') if form_data.get('supervisor_emp_id') else None
+                english_name=form_data["english_name"],
+                arab_name=form_data["arab_name"],
+                busness_id=form_data["business_id"],
+                email=form_data.get("email"),
+                phone=form_data.get("phone"),
+                hire_date=datetime.strptime(form_data["hire_date"], "%Y-%m-%d").date(),
+                department_id=form_data.get("department_id"),
+                position_id=form_data.get("position_id"),
+                level_id=form_data.get("level_id"),
+                supervisor_emp_id=form_data.get("supervisor_emp_id") or None,
+                is_active=active_value in ("true", "1", "on", "yes")  # ✅ FIX
             )
-
             session.add(new_employee)
-            session.flush() # Use flush to get the new emp_id before commit
+            session.flush()
 
-            # Handle file uploads if they exist
+            current_app.logger.debug(f"[CREATE] form_data keys: {list(form_data.keys())}")
+
+            # ✅ Skills
+            skill_entries = []
+            names_arr = form_data.getlist("skill_name[]")
+            cats_arr = form_data.getlist("skill_category[]")
+            levels_arr = form_data.getlist("skill_level[]")
+            certs_arr = form_data.getlist("skill_certified[]")
+
+            if names_arr:
+                for i, nm in enumerate(names_arr):
+                    nm = (nm or "").strip()
+                    if not nm:
+                        continue
+                    cat_val = cats_arr[i] if i < len(cats_arr) else None
+                    cat_id = int(cat_val) if cat_val and str(cat_val).isdigit() else None
+                    lvl = levels_arr[i] if i < len(levels_arr) else None
+                    cert_val = certs_arr[i] if i < len(certs_arr) else None
+                    certified = str(cert_val).lower() in ("on", "true", "1", "yes")
+                    skill_entries.append({
+                        "skill": nm,
+                        "category_id": cat_id,   # ✅ FIX
+                        "level": lvl,
+                        "certified": certified
+                    })
+
+            current_app.logger.debug(f"[CREATE] Parsed {len(skill_entries)} skill entries for {new_employee.busness_id}")
+
+            if skill_entries:
+                skill_service._import_skills_data({
+                    "business_id": new_employee.busness_id,
+                    "skills": skill_entries
+                })
+
+            # ✅ Files
             if files:
                 handle_file_uploads(session, new_employee.emp_id, files, form_data)
 
             session.commit()
             return new_employee.emp_id
-            
+
         except Exception as e:
             session.rollback()
             current_app.logger.error(f"Error creating new employee: {e}")
@@ -291,7 +300,6 @@ class EmployeeService:
             if callable(self.db):
                 session.close()
 
-   
 
     def get_employee_skills_with_metadata(self, employee_id):
         try:
@@ -363,9 +371,14 @@ class EmployeeService:
                     Skill.skill_name.ilike(f"%{filters['skill_name']}%")
                 )
             if filters.get('skill_category'):
-                query = query.join(Employee.skills).join(Skill.category).filter(
-                    SkillCategory.category_id == filters['skill_category']
-                )
+                try:
+                    category_id = int(filters['skill_category'])
+                    query = query.join(Employee.skills).join(Skill.category).filter(
+                        SkillCategory.category_id == category_id
+                    )
+                except ValueError:
+                    pass
+
 
             # Document-related filters
             if filters.get('certificate_type'):

@@ -17,9 +17,7 @@
         .is-invalid {
             border-color: #dc3545;
         }
-        .skill-search-container {
-            position: relative;
-        }
+        .skill-search-container { position: relative; }
         .skill-suggestions {
             display: none;
             position: absolute;
@@ -33,23 +31,14 @@
         .skill-suggestion {
             padding: 8px 12px;
             cursor: pointer;
+            border-bottom: 1px solid #eee;
         }
-        .skill-suggestion:hover,
-        .skill-suggestion.active {
+        .skill-suggestion:last-child { border-bottom: none; }
+        .skill-suggestion:hover, .skill-suggestion.active {
             background-color: #007bff;
             color: white;
         }
-        .skill-suggestion {
-            padding: 8px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-        }
-        .skill-suggestion:last-child {
-            border-bottom: none;
-        }
-        .supervisor-search-container {
-            position: relative;
-        }
+        .supervisor-search-container { position: relative; }
         .supervisor-suggestions {
             display: none;
             position: absolute;
@@ -65,11 +54,8 @@
             cursor: pointer;
             border-bottom: 1px solid #eee;
         }
-        .supervisor-suggestion:last-child {
-            border-bottom: none;
-        }
-        .supervisor-suggestion:hover,
-        .supervisor-suggestion.active {
+        .supervisor-suggestion:last-child { border-bottom: none; }
+        .supervisor-suggestion:hover, .supervisor-suggestion.active {
             background-color: #007bff;
             color: white;
         }
@@ -82,7 +68,9 @@
 
     {% include '_flash_messages.html' %}
 
-    <form method="POST" enctype="multipart/form-data" action="{{ url_for('add_employee') }}" onsubmit="return validateForm()">
+    <!-- ✅ added id="employee-form" -->
+    <form id="employee-form" method="POST" enctype="multipart/form-data" action="{{ url_for('add_employee') }}" onsubmit="return validateForm()">
+        
         <!-- Basic Information -->
         <div class="form-section">
             <h2><i class="fas fa-id-card"></i> Basic Information</h2>
@@ -141,8 +129,10 @@
             </div>
         </div>
 
+        <!-- Active Checkbox -->
         <div class="form-group">
             <label class="checkbox-container">
+                <!-- ✅ value fixed to true -->
                 <input type="checkbox" name="is_active" value="true" checked>
                 <span class="checkmark"></span>
                 Active Employee
@@ -156,14 +146,15 @@
                 <div class="skill-row">
                     <div class="form-group skill-search-container">
                         <label>Skill*</label>
-                        <input type="text" name="skill_name[]" class="skill-search" placeholder="Start typing to search skills" required oninput="updateCertifiedValue(this)">
+                        <input type="text" name="skill_name[]" class="skill-search" placeholder="Start typing to search skills" required>
                         <div class="skill-suggestions"></div>
                     </div>
 
+                    <!-- ✅ use categories consistently -->
                     <select name="skill_category[]">
                         <option value="">Select category</option>
-                        {% for cat in skill_categories %}
-                        <option value="{{ cat.category_id }}">{{ cat.category_name }}</option>
+                        {% for category in skill_categories %}
+                            <option value="{{ category.category_id }}">{{ category.category_name }}</option>
                         {% endfor %}
                     </select>
 
@@ -176,8 +167,9 @@
                         <option value="Not Applicable">Not Applicable</option>
                     </select>
 
+                    <!-- ✅ checkbox simplified -->
                     <label class="checkbox-label">
-                        <input type="checkbox" name="certified[]" value="" onchange="toggleCertification(this)"> Certified
+                        <input type="checkbox" name="certified[]" value="true"> Certified
                     </label>
 
                     <div class="certification-details" style="display: none;">
@@ -267,7 +259,6 @@ function validateBusinessId() {
         return false;
     }
     
-    // Check if ID exists using actual API call
     if (input.value.length >= 5) {
         fetch(`/api/check-business-id?id=${encodeURIComponent(input.value)}`)
             .then(response => response.json())
@@ -279,286 +270,22 @@ function validateBusinessId() {
                     input.classList.remove('is-invalid');
                     feedback.textContent = '';
                 }
-            })
-            .catch(error => {
-                console.error('Error checking business ID:', error);
-                // Don't show error to user, just log it
             });
     }
-    
     return true;
 }
 
-// Form validation
 function validateForm() {
     return validateBusinessId();
 }
 
-// Skill Search Functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize for existing skill inputs
-    document.querySelectorAll('.skill-search').forEach(initSkillSearch);
-    
-    // Initialize supervisor search
-    initSupervisorSearch();
-    
-    // Add existing skills data to JavaScript
-    window.existingSkills = {{ existing_skills|tojson|safe }};
-});
-
-function initSkillSearch(input) {
-    const container = input.closest('.skill-search-container');
-    const suggestionsDiv = container.querySelector('.skill-suggestions');
-    let currentFocus = -1;
-    
-    input.addEventListener('input', async function() {
-        const searchTerm = this.value.trim();
-        suggestionsDiv.innerHTML = '';
-        currentFocus = -1;
-        
-        if (searchTerm.length < 1) {
-            // Show all skills when input is empty
-            showAllSkills();
-            return;
-        }
-        
-        try {
-            // Call your backend API to search skills
-            const response = await fetch(`/api/skills/search?q=${encodeURIComponent(searchTerm)}`);
-            if (!response.ok) throw new Error('Network response was not ok');
-            
-            const skills = await response.json();
-            
-            if (skills.length > 0) {
-                suggestionsDiv.style.display = 'block';
-                skills.forEach((skill, index) => {
-                    const suggestion = document.createElement('div');
-                    suggestion.className = 'skill-suggestion';
-                    suggestion.textContent = skill.skill_name;
-                    suggestion.setAttribute('data-index', index);
-                    
-                    suggestion.addEventListener('click', () => {
-                        input.value = skill.skill_name;
-                        suggestionsDiv.style.display = 'none';
-                        input.focus();
-                    });
-                    
-                    suggestion.addEventListener('mouseenter', () => {
-                        currentFocus = index;
-                        updateActiveSuggestion();
-                    });
-                    
-                    suggestionsDiv.appendChild(suggestion);
-                });
-            } else {
-                suggestionsDiv.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Error fetching skills:', error);
-            // Fallback to client-side search
-            showFilteredSkills(searchTerm);
-        }
-    });
-    
-    function showAllSkills() {
-        if (window.existingSkills && window.existingSkills.length > 0) {
-            suggestionsDiv.style.display = 'block';
-            window.existingSkills.slice(0, 10).forEach((skill, index) => {
-                const suggestion = document.createElement('div');
-                suggestion.className = 'skill-suggestion';
-                suggestion.textContent = skill.skill_name;
-                suggestion.setAttribute('data-index', index);
-                
-                suggestion.addEventListener('click', () => {
-                    input.value = skill.skill_name;
-                    suggestionsDiv.style.display = 'none';
-                    input.focus();
-                });
-                
-                suggestionsDiv.appendChild(suggestion);
-            });
-        }
-    }
-    
-    function showFilteredSkills(searchTerm) {
-        if (window.existingSkills) {
-            const filtered = window.existingSkills.filter(skill => 
-                skill.skill_name.toLowerCase().includes(searchTerm.toLowerCase())
-            ).slice(0, 10);
-            
-            if (filtered.length > 0) {
-                suggestionsDiv.style.display = 'block';
-                filtered.forEach((skill, index) => {
-                    const suggestion = document.createElement('div');
-                    suggestion.className = 'skill-suggestion';
-                    suggestion.textContent = skill.skill_name;
-                    suggestion.setAttribute('data-index', index);
-                    
-                    suggestion.addEventListener('click', () => {
-                        input.value = skill.skill_name;
-                        suggestionsDiv.style.display = 'none';
-                        input.focus();
-                    });
-                    
-                    suggestionsDiv.appendChild(suggestion);
-                });
-            } else {
-                suggestionsDiv.style.display = 'none';
-            }
-        }
-    }
-    
-    function updateActiveSuggestion() {
-        const suggestions = suggestionsDiv.querySelectorAll('.skill-suggestion');
-        suggestions.forEach((suggestion, index) => {
-            if (index === currentFocus) {
-                suggestion.classList.add('active');
-            } else {
-                suggestion.classList.remove('active');
-            }
-        });
-    }
-    
-    // Keyboard navigation
-    input.addEventListener('keydown', (e) => {
-        const suggestions = suggestionsDiv.querySelectorAll('.skill-suggestion');
-        
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            currentFocus = (currentFocus + 1) % suggestions.length;
-            updateActiveSuggestion();
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            currentFocus = currentFocus <= 0 ? suggestions.length - 1 : currentFocus - 1;
-            updateActiveSuggestion();
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (currentFocus >= 0 && suggestions[currentFocus]) {
-                input.value = suggestions[currentFocus].textContent;
-                suggestionsDiv.style.display = 'none';
-            }
-        } else if (e.key === 'Escape') {
-            suggestionsDiv.style.display = 'none';
-            currentFocus = -1;
-        }
-    });
-    
-    // Show suggestions on focus if input is empty
-    input.addEventListener('focus', () => {
-        if (!input.value.trim()) {
-            showAllSkills();
-        }
-    });
-    
-    // Hide suggestions when clicking elsewhere
-    document.addEventListener('click', (e) => {
-        if (!container.contains(e.target)) {
-            suggestionsDiv.style.display = 'none';
-            currentFocus = -1;
-        }
-    });
+// toggle certification details
+function toggleCertification(checkbox) {
+    const certSection = checkbox.closest('.skill-row').querySelector('.certification-details');
+    certSection.style.display = checkbox.checked ? 'block' : 'none';
 }
 
-function initSupervisorSearch() {
-    const input = document.querySelector('.supervisor-search');
-    const hiddenInput = document.getElementById('supervisor_emp_id');
-    const container = input.closest('.supervisor-search-container');
-    const suggestionsDiv = container.querySelector('.supervisor-suggestions');
-    let currentFocus = -1;
-    
-    input.addEventListener('input', async function() {
-        const searchTerm = this.value.trim();
-        suggestionsDiv.innerHTML = '';
-        currentFocus = -1;
-        
-        if (searchTerm.length < 2) {
-            suggestionsDiv.style.display = 'none';
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/supervisors/search?q=${encodeURIComponent(searchTerm)}`);
-            if (!response.ok) throw new Error('Network response was not ok');
-            
-            const supervisors = await response.json();
-            
-            if (supervisors.length > 0) {
-                suggestionsDiv.style.display = 'block';
-                supervisors.forEach((supervisor, index) => {
-                    const suggestion = document.createElement('div');
-                    suggestion.className = 'supervisor-suggestion';
-                    suggestion.textContent = supervisor.name;
-                    suggestion.setAttribute('data-emp-id', supervisor.emp_id);
-                    
-                    suggestion.addEventListener('click', () => {
-                        input.value = supervisor.name;
-                        hiddenInput.value = supervisor.emp_id;
-                        suggestionsDiv.style.display = 'none';
-                        input.focus();
-                    });
-                    
-                    suggestion.addEventListener('mouseenter', () => {
-                        currentFocus = index;
-                        updateActiveSupervisorSuggestion();
-                    });
-                    
-                    suggestionsDiv.appendChild(suggestion);
-                });
-            } else {
-                suggestionsDiv.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Error fetching supervisors:', error);
-            suggestionsDiv.style.display = 'none';
-        }
-    });
-    
-    function updateActiveSupervisorSuggestion() {
-        const suggestions = suggestionsDiv.querySelectorAll('.supervisor-suggestion');
-        suggestions.forEach((suggestion, index) => {
-            if (index === currentFocus) {
-                suggestion.classList.add('active');
-            } else {
-                suggestion.classList.remove('active');
-            }
-        });
-    }
-    
-    // Keyboard navigation
-    input.addEventListener('keydown', (e) => {
-        const suggestions = suggestionsDiv.querySelectorAll('.supervisor-suggestion');
-        
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            currentFocus = (currentFocus + 1) % suggestions.length;
-            updateActiveSupervisorSuggestion();
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            currentFocus = currentFocus <= 0 ? suggestions.length - 1 : currentFocus - 1;
-            updateActiveSupervisorSuggestion();
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (currentFocus >= 0 && suggestions[currentFocus]) {
-                const supervisor = suggestions[currentFocus];
-                input.value = supervisor.textContent;
-                hiddenInput.value = supervisor.getAttribute('data-emp-id');
-                suggestionsDiv.style.display = 'none';
-            }
-        } else if (e.key === 'Escape') {
-            suggestionsDiv.style.display = 'none';
-            currentFocus = -1;
-        }
-    });
-    
-    // Hide suggestions when clicking elsewhere
-    document.addEventListener('click', (e) => {
-        if (!container.contains(e.target)) {
-            suggestionsDiv.style.display = 'none';
-            currentFocus = -1;
-        }
-    });
-}
-
+// add dynamic skill row
 function addSkillField() {
     const container = document.getElementById('skills-container');
     const newRow = document.createElement('div');
@@ -566,14 +293,14 @@ function addSkillField() {
     newRow.innerHTML = `
         <div class="form-group skill-search-container">
             <label>Skill*</label>
-            <input type="text" name="skill_name[]" class="skill-search" placeholder="Start typing to search skills" required oninput="updateCertifiedValue(this)">
+            <input type="text" name="skill_name[]" class="skill-search" placeholder="Start typing to search skills" required>
             <div class="skill-suggestions"></div>
         </div>
 
         <select name="skill_category[]">
             <option value="">Select category</option>
-            {% for cat in skill_categories %}
-            <option value="{{ cat.category_id }}">{{ cat.category_name }}</option>
+            {% for category in categories %}
+            <option value="{{ category.category_id }}">{{ category.category_name }}</option>
             {% endfor %}
         </select>
 
@@ -587,7 +314,7 @@ function addSkillField() {
         </select>
 
         <label class="checkbox-label">
-            <input type="checkbox" name="certified[]" value="" onchange="toggleCertification(this)"> Certified
+            <input type="checkbox" name="certified[]" value="true" onchange="toggleCertification(this)"> Certified
         </label>
 
         <div class="certification-details" style="display: none;">
@@ -620,37 +347,6 @@ function addSkillField() {
     `;
     container.appendChild(newRow);
     skillIndex++;
-    
-    // Initialize the new search field
-    initSkillSearch(newRow.querySelector('.skill-search'));
-}
-
-function toggleCertification(checkbox) {
-    const certSection = checkbox.closest('.skill-row').querySelector('.certification-details');
-    certSection.style.display = checkbox.checked ? 'block' : 'none';
-}
-
-function updateCertifiedValue(skillInput) {
-    // Find the certified checkbox in the same skill-row
-    const skillRow = skillInput.closest('.skill-row');
-    if (!skillRow) return;
-    const certifiedCheckbox = skillRow.querySelector('input[type="checkbox"][name="certified[]"]');
-    if (certifiedCheckbox) {
-        certifiedCheckbox.value = skillInput.value;
-    }
-}
-
-function fillDefaults(selectElement) {
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const orgInput = selectElement.closest('.certification-details').querySelector('input[name="issuing_organization[]"]');
-    const validityInput = selectElement.closest('.certification-details').querySelector('input[name="validity_period_months[]"]');
-
-    if (orgInput && selectedOption.hasAttribute('data-default-org')) {
-        orgInput.value = selectedOption.getAttribute('data-default-org');
-    }
-    if (validityInput && selectedOption.hasAttribute('data-default-validity')) {
-        validityInput.value = selectedOption.getAttribute('data-default-validity');
-    }
 }
 
 function addDocumentField(button) {
@@ -659,6 +355,11 @@ function addDocumentField(button) {
     input.type = 'file';
     input.name = group.querySelector('input').name;
     group.appendChild(input);
+}
+
+function removeSkillRow(button) {
+    const skillRow = button.closest('.skill-row');
+    if (skillRow) skillRow.remove();
 }
 
 function addGeneralDocument() {
@@ -681,30 +382,5 @@ function addGeneralDocument() {
     `;
     container.appendChild(row);
 }
-
-function removeSkillRow(button) {
-    const skillRow = button.closest('.skill-row');
-    if (skillRow) {
-        skillRow.remove();
-        // Don't decrement skillIndex as it's used for file naming
-    }
-}
-
-document.getElementById('employee-form').addEventListener('submit', function(e) {
-    // Re-index all skill file inputs before submitting
-    const skillRows = document.querySelectorAll('#skills-container .skill-row');
-    skillRows.forEach((row, idx) => {
-        const fileInput = row.querySelector('.certification-details input[type="file"]');
-        if (fileInput) {
-            fileInput.name = `document_file_${idx}[]`;
-        }
-        // Patch: update certified checkbox value to match skill name
-        const skillInput = row.querySelector('input[name="skill_name[]"]');
-        const certifiedCheckbox = row.querySelector('input[type="checkbox"][name="certified[]"]');
-        if (certifiedCheckbox && skillInput) {
-            certifiedCheckbox.value = skillInput.value;
-        }
-    });
-});
 </script>
 {% endblock %}

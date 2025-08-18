@@ -198,14 +198,15 @@
                                 <tr class="skill-row" data-skill-name="{{ skill.name }}">
                                     {% if loop.first %}
                                     <td rowspan="{{ skill_list|length }}" style="font-weight:700; color:#217a3a; background:#f6f7fa; vertical-align:middle;">
-                                        <select name="skill_category[]" class="form-control form-control-sm">
-                                            <option value="">Select category</option>
-                                            {% for category in skill_categories %}
-                                                <option value="{{ category.category_id }}" {% if type == category.category_name %}selected{% endif %}>
+                                        <select name="skill_category[{{ loop.index0 }}]">
+                                            {% for category in categories %}
+                                                <option value="{{ category.category_id }}"
+                                                    {% if skill.category and skill.category.category_id == category.category_id %}selected{% endif %}>
                                                     {{ category.category_name }}
                                                 </option>
                                             {% endfor %}
                                         </select>
+                                        
                                     </td>
                                     {% endif %}
                                     <td>
@@ -458,6 +459,7 @@
         const skillName = document.getElementById('new-skill-name').value.trim();
         const categorySelect = document.getElementById('new-skill-category');
         const categoryId = categorySelect.value;
+        const categoryName = categorySelect.options[categorySelect.selectedIndex].text;
         const level = document.getElementById('new-skill-level').value;
         const isCertified = document.getElementById('new-skill-certified').checked;
 
@@ -467,179 +469,123 @@
             return;
         }
 
+        // Create the new row
+        const newRow = document.createElement('tr');
+        newRow.className = 'skill-row';
+
+        // Generate category options HTML
+        let categoryOptions = '<option value="">Select category</option>';
+        const allCategories = document.getElementById('new-skill-category').options;
+        for (let i = 0; i < allCategories.length; i++) {
+            const option = allCategories[i];
+            if (option.value) {
+                categoryOptions += `<option value="${option.value}" ${option.value === categoryId ? 'selected' : ''}>${option.text}</option>`;
+            }
+        }
+
+        // Create row HTML with preselected category
+        newRow.innerHTML = `
+            <td>
+                <select name="skill_category[]" class="form-control form-control-sm">
+                    ${categoryOptions}
+                </select>
+            </td>
+            <td>
+                <input type="text" name="skill_name[]" class="form-control form-control-sm" value="${skillName}">
+            </td>
+            <td>
+                <select name="skill_level[]" class="form-control form-control-sm">
+                    <option value="">Select level</option>
+                    <option value="Beginner" ${level === 'Beginner' ? 'selected' : ''}>Beginner</option>
+                    <option value="Intermediate" ${level === 'Intermediate' ? 'selected' : ''}>Intermediate</option>
+                    <option value="Advanced" ${level === 'Advanced' ? 'selected' : ''}>Advanced</option>
+                </select>
+            </td>
+            <td>
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" name="certified[]" 
+                           ${isCertified ? 'checked' : ''} onchange="toggleCertification(this)">
+                    <label class="custom-control-label"></label>
+                </div>
+            </td>
+            <td class="action-buttons">
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeSkillRow(this)">
+                    <i class="fas fa-trash-alt"></i> Remove
+                </button>
+            </td>
+        `;
+
+        // Add to table
         const tbody = document.querySelector('#skills-table tbody');
-        
+
         // Remove "no skills" message if present
         const noSkillsRow = tbody.querySelector('tr td[colspan="5"]');
         if (noSkillsRow) noSkillsRow.closest('tr').remove();
 
-        // Check if category exists
-        let categoryRow = null;
-        document.querySelectorAll('#skills-table tr').forEach(row => {
-            const catSelect = row.querySelector('select[name="skill_category[]"]');
-            if (catSelect && catSelect.value === categoryId) {
-                categoryRow = row;
-            }
-        });
+        tbody.appendChild(newRow);
 
-        // Create new row
-        const newRow = document.createElement('tr');
-        newRow.className = 'skill-row';
-        
-        if (!categoryRow) {
-            // New category
-            newRow.innerHTML = `
-                <td rowspan="1" style="font-weight:700;color:#217a3a;background:#f6f7fa;vertical-align:middle">
-                    <select name="skill_category[]" class="form-control form-control-sm">
-                        ${document.getElementById('new-skill-category').innerHTML}
-                    </select>
-                </td>
-                <td><input type="text" name="skill_name[]" class="form-control form-control-sm" value="${skillName}"></td>
-                <td>
-                    <select name="skill_level[]" class="form-control form-control-sm">
-                        <option value="">Select level</option>
-                        <option value="Beginner" ${level === 'Beginner' ? 'selected' : ''}>Beginner</option>
-                        <option value="Intermediate" ${level === 'Intermediate' ? 'selected' : ''}>Intermediate</option>
-                        <option value="Advanced" ${level === 'Advanced' ? 'selected' : ''}>Advanced</option>
-                    </select>
-                </td>
-                <td>
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" name="certified[]" 
-                               ${isCertified ? 'checked' : ''} onchange="toggleCertification(this)">
-                        <label class="custom-control-label"></label>
-                    </div>
-                </td>
-                <td class="action-buttons">
-                    <button type="button" class="btn btn-danger btn-sm" onclick="removeSkillRow(this)">
-                        <i class="fas fa-trash-alt"></i> Remove
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(newRow);
-        } else {
-            // Existing category
-            newRow.innerHTML = `
-                <td><input type="text" name="skill_name[]" class="form-control form-control-sm" value="${skillName}"></td>
-                <td>
-                    <select name="skill_level[]" class="form-control form-control-sm">
-                        <option value="">Select level</option>
-                        <option value="Beginner" ${level === 'Beginner' ? 'selected' : ''}>Beginner</option>
-                        <option value="Intermediate" ${level === 'Intermediate' ? 'selected' : ''}>Intermediate</option>
-                        <option value="Advanced" ${level === 'Advanced' ? 'selected' : ''}>Advanced</option>
-                    </select>
-                </td>
-                <td>
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" name="certified[]" 
-                               ${isCertified ? 'checked' : ''} onchange="toggleCertification(this)">
-                        <label class="custom-control-label"></label>
-                    </div>
-                </td>
-                <td class="action-buttons">
-                    <button type="button" class="btn btn-danger btn-sm" onclick="removeSkillRow(this)">
-                        <i class="fas fa-trash-alt"></i> Remove
-                    </button>
-                </td>
-            `;
-            
-            // Insert after last row of category
-            let lastRow = categoryRow;
-            while (lastRow.nextElementSibling && !lastRow.nextElementSibling.querySelector('select[name="skill_category[]"]')) {
-                lastRow = lastRow.nextElementSibling;
-            }
-            lastRow.after(newRow);
-            
-            // Update rowspan
-            const catCell = categoryRow.querySelector('td:first-child');
-            catCell.rowSpan = (parseInt(catCell.rowSpan) || 1) + 1;
-        }
-
-        // Handle certification
+        // Handle certification if needed
         if (isCertified) {
             toggleCertification(newRow.querySelector('input[type="checkbox"]'));
         }
 
         // Clear form
         document.getElementById('new-skill-name').value = '';
+        document.getElementById('new-skill-category').selectedIndex = 0;
         document.getElementById('new-skill-level').selectedIndex = 0;
         document.getElementById('new-skill-certified').checked = false;
     }
 
-    // ====================== DOCUMENT FUNCTIONS ======================
-    
-    function addNewDocumentRow() {
-        const container = document.getElementById('new-documents-container');
-        const newRow = document.createElement('div');
-        newRow.className = 'document-row form-row';
-        // Create the new row HTML without Jinja2 template code
-        const documentTypesOptions = Array.from(document.querySelector('[name="general_document_type_id[]"]').options)
-            .map(option => `<option value="${option.value}">${option.text}</option>`)
-            .join('');
-            
-        newRow.innerHTML = `
-            <div class="form-group col-md-4">
-                <label>Document Type*</label>
-                <select name="general_document_type_id[]" class="form-control form-control-sm" >
-                    <option value="">Select type</option>
-                    ${documentTypesOptions}
-                </select>
-            </div>
-            <div class="form-group col-md-6">
-                <label>Document File*</label>
-                <div class="custom-file">
-                    <input type="file" name="general_document_file[]" class="custom-file-input" >
-                    <label class="custom-file-label">Choose file</label>
-                </div>
-            </div>
-            <div class="form-group col-md-2 d-flex align-items-end">
-                <button type="button" class="btn btn-danger btn-sm" onclick="removeDocumentRow(this)">
-                    <i class="fas fa-trash"></i> Remove
-                </button>
-            </div>
-        `;
-        container.appendChild(newRow);
-        
-        // Initialize the new file input
-        const newFileInput = newRow.querySelector('.custom-file-input');
-        newFileInput.addEventListener('change', function(e) {
-            const fileName = e.target.files[0] ? e.target.files[0].name : "Choose file";
-            e.target.nextElementSibling.textContent = fileName;
-        });
+    function removeSkillRow(button) {
+        const row = button.closest('tr');
+        const categoryCell = row.querySelector('td[style*="font-weight:700"]');
+
+        if (categoryCell) {
+            const rowspan = parseInt(categoryCell.getAttribute('rowspan')) || 1;
+            if (rowspan > 1) {
+                const nextRow = row.nextElementSibling;
+                if (nextRow && !nextRow.classList.contains('cert-details-row')) {
+                    nextRow.insertBefore(categoryCell, nextRow.firstChild);
+                    categoryCell.rowSpan = rowspan - 1;
+                }
+            }
+        } else {
+            let prevRow = row.previousElementSibling;
+            while (prevRow) {
+                const catCell = prevRow.querySelector('td[style*="font-weight:700"]');
+                if (catCell) {
+                    catCell.rowSpan = (parseInt(catCell.getAttribute('rowspan')) || 1) - 1;
+                    break;
+                }
+                prevRow = prevRow.previousElementSibling;
+            }
+        }
+
+        const nextRow = row.nextElementSibling;
+        if (nextRow && nextRow.classList.contains('cert-details-row')) {
+            nextRow.remove();
+        }
+
+        row.remove();
+
+        if (document.querySelectorAll('#skills-table tbody tr').length === 0) {
+            document.querySelector('#skills-table tbody').innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align:center; color:#888;">No skills recorded for this employee.</td>
+                </tr>
+            `;
+        }
     }
 
-function removeDocumentRow(button) {
-    const row = button.closest('.document-row');
-    row.remove();
-}
-// Initialize file input labels
-document.addEventListener('DOMContentLoaded', function() {
-    // File input change handler
-    document.querySelectorAll('.custom-file-input').forEach(input => {
-        input.addEventListener('change', function(e) {
-            const fileName = e.target.files[0] ? e.target.files[0].name : "Choose file";
-            e.target.nextElementSibling.textContent = fileName;
-        });
-    });
-    
-    // Create documents container if it doesn't exist
-    if (!document.querySelector('.documents-container')) {
-        const container = document.createElement('div');
-        container.className = 'documents-container mt-3';
-        document.querySelector('.form-section:nth-child(3) .bg-light').appendChild(container);
-    }
-});
-    // ====================== HELPER FUNCTIONS ======================
     function toggleCertification(checkbox) {
         const row = checkbox.closest('tr');
         const nextRow = row.nextElementSibling;
-        
+
         if (checkbox.checked && (!nextRow || !nextRow.classList.contains('cert-details-row'))) {
-            // Get certificate types options from existing select
             const certTypesOptions = Array.from(document.querySelector('[name="certificate_type_id[]"]').options)
                 .map(option => `<option value="${option.value}" data-default-org="${option.dataset.defaultOrg || ''}" data-default-validity="${option.dataset.defaultValidity || ''}">${option.text}</option>`)
                 .join('');
-                
+
             const certRow = document.createElement('tr');
             certRow.className = 'cert-details-row';
             certRow.innerHTML = `
@@ -679,53 +625,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function removeSkillRow(button) {
-        const row = button.closest('tr');
-        const categoryCell = row.querySelector('td[style*="font-weight:700"]');
-        
-        if (categoryCell) {
-            // This is first row of category
-            const rowspan = parseInt(categoryCell.getAttribute('rowspan')) || 1;
-            if (rowspan > 1) {
-                // Move category cell to next row
-                const nextRow = row.nextElementSibling;
-                if (nextRow && !nextRow.classList.contains('cert-details-row')) {
-                    nextRow.insertBefore(categoryCell, nextRow.firstChild);
-                    categoryCell.rowSpan = rowspan - 1;
-                }
-            }
-        } else {
-            // Not first row - decrement rowspan
-            let prevRow = row.previousElementSibling;
-            while (prevRow) {
-                const catCell = prevRow.querySelector('td[style*="font-weight:700"]');
-                if (catCell) {
-                    catCell.rowSpan = (parseInt(catCell.getAttribute('rowspan')) || 1) - 1;
-                    break;
-                }
-                prevRow = prevRow.previousElementSibling;
-            }
-        }
-        
-        // Remove certification row if exists
-        const nextRow = row.nextElementSibling;
-        if (nextRow && nextRow.classList.contains('cert-details-row')) {
-            nextRow.remove();
-        }
-        
-        // Remove the row
-        row.remove();
-        
-        // Add "no skills" message if empty
-        if (document.querySelectorAll('#skills-table tbody tr').length === 0) {
-            document.querySelector('#skills-table tbody').innerHTML = `
-                <tr>
-                    <td colspan="5" style="text-align:center; color:#888;">No skills recorded for this employee.</td>
-                </tr>
-            `;
-        }
-    }
-
     function initFileInput(input) {
         input.addEventListener('change', function(e) {
             const fileName = e.target.files[0] ? e.target.files[0].name : "Choose file";
@@ -743,18 +642,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-        // File inputs
         document.querySelectorAll('.custom-file-input').forEach(initFileInput);
-        
-        // Create documents container if needed
+
         const docSection = document.querySelector('.form-section:nth-child(3) .bg-light');
         if (docSection && !docSection.querySelector('.documents-container')) {
             const container = document.createElement('div');
             container.className = 'documents-container';
             docSection.insertBefore(container, docSection.querySelector('.form-row:last-child'));
         }
+    });
+
+    // ====================== FORM SUBMISSION INDEXING ======================
+    document.getElementById('employee-form').addEventListener('submit', function(e) {
+        // Ensure all skill data is properly indexed before submission
+        const skillRows = document.querySelectorAll('.skill-row');
+        skillRows.forEach((row, index) => {
+            const inputs = row.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.name.includes('[]')) {
+                    input.name = input.name.replace('[]', `[${index}]`);
+                }
+            });
+        });
     });
 </script>
 {% endblock %}

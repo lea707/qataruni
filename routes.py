@@ -40,6 +40,9 @@ import re
 from flask import g
 from utils.role_helpers import get_director_department_ids
 
+
+
+
 employee_service = EmployeeService()
 department_service = DepartmentService()
 employee_document_service = EmployeeDocumentService()
@@ -115,6 +118,7 @@ def init_routes(app):
             # Regular employees see only themselves
             user_emp_id = session.get('emp_id')
             employees = [e for e in employee_service.get_all_employees() if e.emp_id == user_emp_id]
+        employees = sorted(employees, key=lambda e: e.busness_id or "")
         return render_template('employees/list.html', employees=employees)
 
     @app.route('/employees/<int:employee_id>')
@@ -370,7 +374,14 @@ def init_routes(app):
                     file.save(temp_path)
                     
                     # Process the file using the AI processor
-                    result = process_file(temp_path)
+                    # Handle Excel separately
+                    if filename.lower().endswith(".xlsx"):
+                        processor = EmployeeProfileProcessor([temp_path])
+                        result = processor._process_excel(temp_path)
+                    else:
+                        # Process non-Excel files using AI processor
+                        result = process_file(temp_path)
+
                     
                     if result:
                         processed_files.append({
@@ -388,12 +399,11 @@ def init_routes(app):
                 return jsonify({'error': f'File type not allowed: {file.filename}'}), 400
         
         if processed_files:
-            return jsonify({
-                'message': f'Successfully processed {len(processed_files)} files',
-                'processed_files': processed_files
-            }), 200
+            flash(f"Successfully processed {len(processed_files)} file(s).", "success")
+            return redirect(url_for('upload_file'))
         else:
-            return jsonify({'error': 'No files were successfully processed'}), 400
+            flash("No files were successfully processed.", "danger")
+            return redirect(url_for('upload_file'))
 
     @app.route('/documents/download/<int:doc_id>')
     def download_document(doc_id):
@@ -419,20 +429,31 @@ def init_routes(app):
             flash('Document not found.', 'danger')
             return redirect(url_for('home'))
 
-    @app.route('/departments')
+    @app.route("/departments")
     def list_departments():
         departments = department_service.get_all_departments()
-        return render_template('departments/list.html', departments=departments)
+        employees = employee_service.get_all_employees()
+  
+        return render_template(
+            "departments/list.html",
+            departments=departments,
+            all_employees=employees
+        )
 
     @app.route('/departments/add', methods=['GET', 'POST'])
     def add_department():
-        if request.method == 'POST':
-            name = request.form['department_name']
-            description = request.form['description']
-            department_service.create_department(name, description)
-            flash("Department added successfully!", "success")
-            return redirect(url_for('list_departments'))
-        return render_template('departments/add.html')
+            if request.method == 'POST':
+                name = request.form.get('department_name')  # safe getter
+                department_service.create_department(name)
+                flash("Department added successfully!", "success")
+                return redirect(url_for('list_departments'))
+            return render_template(
+                "departments/add.html",
+                employees=employee_service.get_all_employees(),
+                departments=department_service.get_all_departments()
+            )
+
+
 
     @app.route('/departments/<int:department_id>')
     def department_detail(department_id):
@@ -442,19 +463,89 @@ def init_routes(app):
             return redirect(url_for('list_departments'))
         return render_template('departments/details.html', department=department)
 
-    @app.route('/departments/edit/<int:department_id>', methods=['GET', 'POST'])
+    @app.route("/departments/<int:department_id>/edit", methods=["GET", "POST"])
     def edit_department(department_id):
+        print(f"[ROUTE] edit_department called with department_id={department_id}")
+
         department = department_service.get_department(department_id)
         if not department:
-            flash('Department not found', 'error')
-            return redirect(url_for('list_departments'))
-        if request.method == 'POST':
-            name = request.form['department_name']
-            description = request.form['description']
-            department_service.update_department(department_id, name, description)
-            flash("Department updated successfully!", "success")
-            return redirect(url_for('list_departments'))
-        return render_template('departments/edit.html', department=department)
+            print("[ROUTE] Department not found.")
+            flash("Department not found.", "danger")
+            return redirect(url_for("list_departments"))
+
+        if request.method == "POST":
+            print("[ROUTE] Received POST request")
+            print("DEBUG: request.form =", request.form)
+
+            new_name = request.form.get("department_name")
+            new_director_id = request.form.get("director_emp_id")
+
+            print(f"DEBUG: new_name={new_name}, new_director_id={new_director_id}")
+
+            try:
+                # --- Step 1: Handle Director Reassignment ---
+                if new_director_id and str(new_director_id).isdigit():
+                    print(f"[ROUTE] Processing new director with id={new_director_id}")
+                    new_director = employee_service.get_employee(int(new_director_id))
+                    print(f"DEBUG: fetched new_director={new_director}")
+
+                    if new_director:
+                        if department.director_emp_id and department.director_emp_id != new_director.emp_id:
+                            old_director = employee_service.get_employee(department.director_emp_id)
+                            print(f"[ROUTE] Found old director: {old_director}")
+
+                            if old_director:
+                                print("[ROUTE] Moving old director to Unassigned")
+                                employee_service.update_employee(
+                                    old_director.emp_id,
+                                    {
+                                        "department_id": 57,  # Unassigned dept
+                                        "position_id": None
+                                    }
+                                )
+
+                        print("[ROUTE] Assigning new director position")
+                        director_position = position_service.get_or_create_position("Director", department.department_id)
+                        print(f"DEBUG: director_position={director_position}")
+
+                        employee_service.update_employee(
+                            new_director.emp_id,
+                            {
+                                "department_id": department.department_id,
+                                "position_id": director_position.position_id
+                            }
+                        )
+
+                        print("[ROUTE] Updating department record")
+                        department_service.update_department(
+                            department_id,
+                            name=new_name,
+                            director_emp_id=new_director.emp_id
+                        )
+                    else:
+                        print("[ROUTE] new_director was None")
+
+                else:
+                    print("[ROUTE] No director change, only updating name")
+                    department_service.update_department(department_id, name=new_name)
+
+                flash("Department updated successfully.", "success")
+                print("[ROUTE] Department update complete, redirecting")
+                return redirect(url_for("department_detail", department_id=department_id))
+
+            except Exception as e:
+                print(f"[ROUTE] Exception: {str(e)}")
+                flash(f"Error updating department: {str(e)}", "danger")
+
+        # GET request -> render edit form
+        print("[ROUTE] GET request - rendering edit form")
+        employees = employee_service.get_all_employees()
+        return render_template(
+            "departments/edit.html",
+            department=department,
+            employees=employees
+        )
+
 
     @app.route('/departments/delete/<int:department_id>', methods=['POST'])
     def delete_department(department_id):

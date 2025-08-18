@@ -19,6 +19,7 @@ from database.connection import db  # This imports your SessionLocal instance
 from sqlalchemy.orm import joinedload
 from flask import current_app
 
+
 class SkillService:
     def __init__(self):
         self.repository = SkillRepository()

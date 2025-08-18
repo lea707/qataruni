@@ -101,14 +101,3 @@ class EmployeeDocumentService:
 
     def delete_document(self, document_id):
         return self.document_repo.delete(document_id)
-    
-    def get_document(self, document_id):
-        """Get a document by its ID"""
-        session = self.db() if callable(self.db) else self.db
-        try:
-            from models.employee_document import EmployeeDocument
-            document = session.query(EmployeeDocument).filter_by(document_id=document_id).first()
-            return document
-        finally:
-            if callable(self.db):
-                session.close()

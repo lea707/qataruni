@@ -1,55 +1,192 @@
 {% extends "base.html" %}
+
+{% block title %}Add Department | Employee Skills Tracker{% endblock %}
+
 {% block head %}
-    {{ super() }}
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles/department_form.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
+  {{ super() }}
+  <style>
+    /* Department Form Styles */
+    .department-form-container {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 14px;
+        box-shadow: 0 4px 24px rgba(56, 178, 172, 0.10);
+        padding: 36px 28px 28px 28px;
+        max-width: 520px;
+        margin: 48px auto 0 auto;
+    }
+    .department-form-container h1 {
+        color: #319795;
+        font-size: 1.7rem;
+        font-weight: 800;
+        margin-bottom: 22px;
+        letter-spacing: 0.01em;
+        text-align: center;
+    }
+    .department-form-container .form-group {
+        margin-bottom: 18px;
+    }
+    .department-form-container label {
+        color: #285e61;
+        font-weight: 600;
+        margin-bottom: 6px;
+        display: block;
+    }
+    .department-form-container input[type="text"],
+    .department-form-container select {
+        border: 1px solid #bfc9d1;
+        border-radius: 8px;
+        background: #f7fafc;
+        color: #222;
+        font-size: 15px;
+        padding: 10px 12px;
+        margin-bottom: 0;
+        box-shadow: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        width: 100%;
+    }
+    .department-form-container input:focus,
+    .department-form-container select:focus {
+        border-color: #38b2ac;
+        outline: none;
+        background: #fff;
+        box-shadow: 0 0 0 2px #e6fffa;
+    }
+    .department-form-container .form-actions {
+        display: flex;
+        gap: 14px;
+        margin-top: 24px;
+        justify-content: flex-end;
+    }
+    .department-form-container .btn {
+        background: #38b2ac;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        padding: 10px 22px;
+        font-size: 1rem;
+        transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+        box-shadow: 0 2px 8px rgba(56, 178, 172, 0.10);
+    }
+    .department-form-container .btn:hover {
+        background: #285e61;
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(56, 178, 172, 0.18);
+    }
+    .department-form-container .btn-secondary {
+        background: #fff;
+        color: #319795;
+        border: 1.5px solid #38b2ac;
+    }
+    .department-form-container .btn-secondary:hover {
+        background: #e6fffa;
+        color: #285e61;
+    }
+  </style>
 {% endblock %}
+
 {% block content %}
 <div class="department-form-container">
-<h1>Add New Department</h1>
-<form method="POST">
+  <h1>Add Department</h1>
+
+  <form method="POST" action="{{ url_for('add_department') }}" autocomplete="off">
+    <!-- Department Name -->
     <div class="form-group">
-        <label for="name">Department Name</label>
-        <input type="text" id="name" name="name" required>
+      <label for="department_name">Department Name</label>
+      <input type="text" id="department_name" name="department_name" required>
     </div>
+
+    <!-- Director -->
     <div class="form-group">
-        <label for="director_emp_id">Director (Employee)</label>
-        <input id="director_emp_id" name="director_emp_id" class="awesomplete" placeholder="Type to search..." autocomplete="off">
+      <label for="director_display">Director (Employee)</label>
+      <div class="combo-wrap">
+        <input type="text" id="director_display" placeholder="Type to search employees…">
+        <div id="director_dropdown" class="combo-dropdown"></div>
+        <input type="hidden" id="director_emp_id" name="director_emp_id">
+      </div>
     </div>
+
+    <!-- Parent Department -->
     <div class="form-group">
-        <label for="parent_department_id">Parent Department</label>
-        <input id="parent_department_id" name="parent_department_id" class="awesomplete" placeholder="Type to search..." autocomplete="off">
+      <label for="parent_department_display">Parent Department (optional)</label>
+      <div class="combo-wrap">
+        <input type="text" id="parent_department_display" placeholder="Type to search departments…">
+        <div id="parent_department_dropdown" class="combo-dropdown"></div>
+        <input type="hidden" id="parent_department_id" name="parent_department_id">
+      </div>
     </div>
+
     <div class="form-actions">
-        <button type="submit" class="btn">Save</button>
-        <a href="{{ url_for('list_departments') }}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn">Create Department</button>
+      <a href="{{ url_for('list_departments') }}" class="btn btn-secondary">Cancel</a>
     </div>
-</form>
+  </form>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+
+<!-- ✅ Store data safely in HTML attributes as JSON -->
+<div id="data-holder"
+     data-employees='[
+       {% for e in employees %}
+         {"emp_id": {{ e.emp_id }}, "english_name": "{{ e.english_name|e }}", "busness_id": "{{ e.busness_id|e }}"}{% if not loop.last %},{% endif %}
+       {% endfor %}
+     ]'
+     data-departments='[
+       {% for d in departments %}
+         {"department_id": {{ d.department_id }}, "department_name": "{{ d.department_name|e }}"}{% if not loop.last %},{% endif %}
+       {% endfor %}
+     ]'>
+</div>
+
 <script>
-// Prepare the options for Awesomplete
-var directorList = [
-    {% for emp in employees %}
-        "{{ emp.english_name|e }} ({{ emp.busness_id|e }})"{% if not loop.last %},{% endif %}
-    {% endfor %}
-];
-var departmentList = [
-    {% for dept in departments %}
-        "{{ dept.department_name|e }}"{% if not loop.last %},{% endif %}
-    {% endfor %}
-];
-new Awesomplete(document.getElementById("director_emp_id"), {
-    list: directorList,
-    minChars: 1,
-    maxItems: 10,
-    autoFirst: true
-});
-new Awesomplete(document.getElementById("parent_department_id"), {
-    list: departmentList,
-    minChars: 1,
-    maxItems: 10,
-    autoFirst: true
-});
+  const holder = document.getElementById("data-holder");
+  const EMPLOYEES = JSON.parse(holder.dataset.employees || "[]");
+  const DEPARTMENTS = JSON.parse(holder.dataset.departments || "[]");
+
+  function setupCombo({ inputEl, dropdownEl, items, getLabel, onPick }) {
+    inputEl.addEventListener("input", () => {
+      const q = inputEl.value.trim().toLowerCase();
+      const filtered = q
+        ? items.filter(it => getLabel(it).toLowerCase().includes(q)).slice(0, 12)
+        : [];
+      dropdownEl.innerHTML = "";
+      filtered.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "combo-item";
+        div.textContent = getLabel(item);
+        div.onclick = () => {
+          inputEl.value = getLabel(item);
+          onPick(item);
+          dropdownEl.innerHTML = "";
+        };
+        dropdownEl.appendChild(div);
+      });
+      dropdownEl.style.display = filtered.length ? "block" : "none";
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!inputEl.closest(".combo-wrap").contains(e.target)) {
+        dropdownEl.style.display = "none";
+      }
+    });
+  }
+
+  // Director autocomplete
+  setupCombo({
+    inputEl: document.getElementById("director_display"),
+    dropdownEl: document.getElementById("director_dropdown"),
+    items: EMPLOYEES,
+    getLabel: (e) => `${e.english_name} (${e.busness_id})`,
+    onPick: (e) => document.getElementById("director_emp_id").value = e.emp_id
+  });
+
+  // Parent Department autocomplete
+  setupCombo({
+    inputEl: document.getElementById("parent_department_display"),
+    dropdownEl: document.getElementById("parent_department_dropdown"),
+    items: DEPARTMENTS,
+    getLabel: (d) => d.department_name,
+    onPick: (d) => document.getElementById("parent_department_id").value = d.department_id
+  });
 </script>
 {% endblock %}

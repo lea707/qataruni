@@ -1,0 +1,56 @@
+{
+    "success": 10,
+    "errors": 0,
+    "details": [
+        {
+            "business_id": "BIZ00-11",
+            "name": "Elias Darwish",
+            "status": "success"
+        },
+        {
+            "business_id": "BIZ00-12",
+            "name": "Mira Suleiman",
+            "status": "success"
+        },
+        {
+            "business_id": "BIZ00-13",
+            "name": "Zayn Abboud",
+            "status": "success"
+        },
+        {
+            "business_id": "BIZ00-14",
+            "name": "Yara Taha",
+            "status": "success"
+        },
+        {
+            "business_id": "BIZ00-15",
+            "name": "Kareem Najjar",
+            "status": "success"
+        },
+        {
+            "business_id": "BIZ00-16",
+            "name": "Leena Asfour",
+            "status": "success"
+        },
+        {
+            "business_id": "BIZ00-17",
+            "name": "Tariq El-Masri",
+            "status": "success"
+        },
+        {
+            "business_id": "BIZ00-18",
+            "name": "Nada Barakat",
+            "status": "success"
+        },
+        {
+            "business_id": "BIZ00-19",
+            "name": "Samir Hadad",
+            "status": "success"
+        },
+        {
+            "business_id": "BIZ00-20",
+            "name": "Hana El-Khoury",
+            "status": "success"
+        }
+    ]
+}
