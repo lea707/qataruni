@@ -28,63 +28,56 @@ def extract_skills_from_text(text: str) -> dict:
         raise EnvironmentError("❌ GEMINI_API_KEY not set in environment.")
 
     client = genai.Client(api_key=api_key)
-    model = "gemini-2.5-pro"
+    model = "gemini-2.0-flash"  # Changed to a more reliable model
 
     predefined_categories = get_predefined_categories()
     
+    # Clean and truncate text to avoid token limits
+    text = text.strip()[:10000]  # Limit to 10k characters
+    
     prompt = f"""
-You are an expert at extracting skills from professional documents. 
-Analyze the following text and extract skills in JSON format.
+ANALYZE THIS TEXT AND EXTRACT PROFESSIONAL SKILLS:
 
-Required output format:
+{text}
+
+RETURN ONLY VALID JSON IN THIS EXACT FORMAT:
 {{
     "skills": [
         {{
             "name": "skill name",
-            "category": "category from predefined list"
+            "category": "category name"
         }}
-    ],
-    "business_id": "employee identifier if available"
+    ]
 }}
 
-Rules:
+RULES:
 1. Use ONLY these categories: {", ".join(predefined_categories)}
-2. Never include empty skill names
-3. Return only valid JSON (no markdown formatting)
-4. If no skills found, return empty "skills" array
-
-Text to analyze:
-{text}
+2. If no category matches, use "Other"
+3. Return empty array if no skills found
+4. NEVER include markdown formatting
+5. Return ONLY the JSON object, no other text
 """
 
-    contents = [
-        types.Content(role="user", parts=[types.Part.from_text(text=prompt)])
-    ]
-
-    tools = [types.Tool(googleSearch=types.GoogleSearch())]
-    config = types.GenerateContentConfig(
-        thinking_config=types.ThinkingConfig(thinking_budget=-1),
-        tools=tools,
-    )
-
-    full_response = ""
     try:
-        for chunk in client.models.generate_content_stream(
+        response = client.models.generate_content(
             model=model,
-            contents=contents,
-            config=config,
-        ):
-            full_response += chunk.text
-    except Exception as e:
-        print(f"⚠️ Gemini API error: {e}")
-        return {"skills": [], "error": str(e)}
+            contents=[prompt],
+            config=types.GenerateContentConfig(
+                temperature=0.1,  # More deterministic
+                max_output_tokens=2000
+            )
+        )
+        
+        full_response = response.text.strip()
+        print(f"🔍 Raw Gemini response: '{full_response}'")
 
-    print("🔍 Raw Gemini response:")
-    print(full_response)
-
-    try:
-        # Clean and parse response
-        full_response = full_response.replace("```json", "").replace("```", "")
+        # Clean the response
+        full_response = full_response.replace("```json", "").replace("```", "").strip()
+        
+        if not full_response:
+            raise ValueError("Empty response from Gemini")
+            
+        # Parse JSON
         result = json.loads(full_response)
         
         # Validate structure
@@ -94,8 +87,13 @@ Text to analyze:
             result["skills"] = []
             
         return result
+        
+    except json.JSONDecodeError as e:
+        print(f"⚠️ Failed to parse Gemini response as JSON: {e}")
+        print(f"💬 Response was: '{full_response}'")
+        return {"skills": [], "error": f"Invalid JSON: {str(e)}"}
     except Exception as e:
-        print(f"⚠️ Failed to parse Gemini response: {e}")
+        print(f"⚠️ Gemini API error: {e}")
         return {"skills": [], "error": str(e)}
 
 def extract_skills_from_file(path: str) -> dict:

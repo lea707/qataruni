@@ -7,9 +7,7 @@ import uuid
 from sqlalchemy.orm import joinedload 
 from flask import current_app, jsonify, render_template, request, redirect, url_for, flash
 from database.repositories.skill_category_repository import SkillCategoryRepository
-from models.document_type import DocumentType
-from processor.ai_employee_processor import process_file, save_json
-from processor.employee_profile_processor import EmployeeProfileProcessor
+from services.excel_reader import ExcelEmployeeReader
 from services.employee_service import EmployeeService
 from services.department_service import DepartmentService
 from flask import send_from_directory
@@ -39,10 +37,6 @@ from urllib.parse import urlencode
 import re
 from flask import g
 from utils.role_helpers import get_director_department_ids
-
-
-
-
 employee_service = EmployeeService()
 department_service = DepartmentService()
 employee_document_service = EmployeeDocumentService()
@@ -51,7 +45,7 @@ position_service = PositionService()
 skill_service = SkillService()
 employee_bp = Blueprint('employee_bp', __name__, url_prefix='/employees')
 UPLOAD_FOLDER = 'profiles/uploaded'
-ALLOWED_EXTENSIONS = {'pdf', 'docx', 'xlsx'}
+ALLOWED_EXTENSIONS = {'xlsx'}
 
 def init_routes(app):
     def allowed_file(filename):
@@ -62,23 +56,7 @@ def init_routes(app):
         user_role = session.get('role_name')
         return user_role in roles
 
-    def get_director_department_ids():
-        # Get the director's department and all sub-departments
-        user_role = session.get('role_name')
-        user_emp_id = session.get('emp_id')
-        if user_role != 'Director' or not user_emp_id:
-            return []
-        # Find the department where this user is the director
-        director_dept = db().query(Department).filter_by(director_emp_id=user_emp_id).first()
-        if not director_dept:
-            return []
-        # Recursively get all sub-department ids
-        def get_sub_dept_ids(dept):
-            ids = [dept.department_id]
-            for sub in db().query(Department).filter_by(parent_department_id=dept.department_id).all():
-                ids.extend(get_sub_dept_ids(sub))
-            return ids
-        return get_sub_dept_ids(director_dept)
+
 
     @app.route('/')
     def home():
@@ -351,16 +329,12 @@ def init_routes(app):
             
         print("start uploading file")
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        print("upload folder")
-        print(f"uploads folder{UPLOAD_FOLDER}")
+        print(f"uploads folder {UPLOAD_FOLDER}")
         
-        # Check if a file was uploaded
         if 'documents' not in request.files:
             return jsonify({'error': 'No file part'}), 400
         
         files = request.files.getlist('documents')
-        
-        # Check if any files were selected
         if not files or all(file.filename == '' for file in files):
             return jsonify({'error': 'No selected file'}), 400
         
@@ -368,30 +342,37 @@ def init_routes(app):
         for file in files:
             if file.filename != '' and allowed_file(file.filename):
                 try:
-                    # Save the file temporarily
-                    filename = secure_filename(file.filename)
-                    temp_path = os.path.join(UPLOAD_FOLDER, f"temp_{uuid.uuid4()}_{filename}")
+                    original_name = file.filename
+                    extension = Path(original_name).suffix
+                    safe_name = secure_filename(original_name)
+                    
+                    # Save once with UUID
+                    temp_path = os.path.join(UPLOAD_FOLDER, f"temp_{uuid.uuid4()}{extension}")
                     file.save(temp_path)
-                    
-                    # Process the file using the AI processor
-                    # Handle Excel separately
-                    if filename.lower().endswith(".xlsx"):
-                        processor = EmployeeProfileProcessor([temp_path])
-                        result = processor._process_excel(temp_path)
-                    else:
-                        # Process non-Excel files using AI processor
-                        result = process_file(temp_path)
 
+                    # Check it’s not empty
+                    if os.path.getsize(temp_path) == 0:
+                        raise ValueError(f"Uploaded file {original_name} is empty")
                     
+                    # Process the file - only Excel files supported
+                    if extension.lower() == ".xlsx":
+                        print("__________inside process excel______")
+                        result = ExcelEmployeeReader.import_employees(temp_path, update_existing=True)
+                    else:
+                        # Non-Excel files are not supported
+                        result = None
+                        current_app.logger.warning(f"File type {extension} not supported. Only Excel files (.xlsx) are processed.")
+
+
                     if result:
                         processed_files.append({
-                            'filename': filename,
+                            'filename': safe_name,
                             'result': result
                         })
                     
-                    # Clean up temp file
+                    # Clean up
                     os.remove(temp_path)
-                    
+                
                 except Exception as e:
                     current_app.logger.error(f"Error processing uploaded file {file.filename}: {str(e)}")
                     return jsonify({'error': f'Error processing {file.filename}: {str(e)}'}), 500
@@ -404,6 +385,7 @@ def init_routes(app):
         else:
             flash("No files were successfully processed.", "danger")
             return redirect(url_for('upload_file'))
+
 
     @app.route('/documents/download/<int:doc_id>')
     def download_document(doc_id):

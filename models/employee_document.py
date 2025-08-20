@@ -23,3 +23,12 @@ class EmployeeDocument(Base):
     employee = relationship("Employee", back_populates="documents")
     document_type = relationship("DocumentType", back_populates="documents")
     certificate_type = relationship("CertificateType", back_populates="documents")
+
+    # Compatibility alias for tests expecting 'validity_period'
+    @property
+    def validity_period(self):
+        return self.validity_period_months
+
+    @validity_period.setter
+    def validity_period(self, value):
+        self.validity_period_months = value

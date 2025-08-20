@@ -1,0 +1,6 @@
+// ERROR: No valid skills in 0 entries
+{
+    "skills": [],
+    "error": "Expecting value: line 1 column 1 (char 0)",
+    "business_id": "empl-1"
+}

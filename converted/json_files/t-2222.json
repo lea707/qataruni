@@ -1,0 +1,97 @@
+{
+    "skills": [
+        {
+            "name": "C++",
+            "category": "technical"
+        },
+        {
+            "name": "Java",
+            "category": "technical"
+        },
+        {
+            "name": "HTML",
+            "category": "technical"
+        },
+        {
+            "name": "CSS",
+            "category": "technical"
+        },
+        {
+            "name": "SQL",
+            "category": "technical"
+        },
+        {
+            "name": "Routing & Switching (Cisco)",
+            "category": "technical"
+        },
+        {
+            "name": "Red Hat Linux",
+            "category": "technical"
+        },
+        {
+            "name": "Visual Studio Code",
+            "category": "technical"
+        },
+        {
+            "name": "Breadboard-based circuit assembly",
+            "category": "technical"
+        },
+        {
+            "name": "Logic gates",
+            "category": "technical"
+        },
+        {
+            "name": "Amplifiers",
+            "category": "technical"
+        },
+        {
+            "name": "Transistors",
+            "category": "technical"
+        },
+        {
+            "name": "Analytical skills",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Problem-solving",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Team player",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Communication skills",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Fast learner",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Adaptable",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Organized",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Reliable",
+            "category": "Soft Skills"
+        },
+        {
+            "name": "Arabic",
+            "category": "language"
+        },
+        {
+            "name": "English",
+            "category": "language"
+        },
+        {
+            "name": "French",
+            "category": "language"
+        }
+    ],
+    "business_id": "t-2222"
+}

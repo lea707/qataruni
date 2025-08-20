@@ -1,0 +1,66 @@
+{
+    "success": 0,
+    "errors": 10,
+    "details": [
+        {
+            "business_id": null,
+            "name": "Elias Darwish",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": null,
+            "name": "Mira Suleiman",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": null,
+            "name": "Zayn Abboud",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": null,
+            "name": "Yara Taha",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": null,
+            "name": "Kareem Najjar",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": null,
+            "name": "Leena Asfour",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": null,
+            "name": "Tariq El-Masri",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": null,
+            "name": "Nada Barakat",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": null,
+            "name": "Samir Hadad",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": null,
+            "name": "Hana El-Khoury",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        }
+    ]
+}

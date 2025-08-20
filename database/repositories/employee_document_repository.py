@@ -79,6 +79,14 @@ class EmployeeDocumentRepository:
         finally:
             session.close()
     
+    def get_by_id(self, document_id):
+        """Fetch a single document by its ID"""
+        session = db()
+        try:
+            return session.query(EmployeeDocument).filter_by(document_id=document_id).first()
+        finally:
+            session.close()
+
     def get_by_employee(self, employee_id):
         """Get all documents for an employee"""
         session = db()

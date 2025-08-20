@@ -67,6 +67,7 @@ class EmployeeDocumentProcessor:
         except Exception as e:
             print(f"⚠️ Error saving text: {e}")
 
+   # employee_processor.py - update _process_with_ai method
     def _process_with_ai(self):
         """Process the output file with AI and save results to JSON"""
         try:
@@ -82,18 +83,33 @@ class EmployeeDocumentProcessor:
                 # ✅ Inject business_id if missing
                 if "business_id" not in result:
                     result["business_id"] = self.business_id
-
+                
+                # ✅ Check if AI processing actually failed
+                if "error" in result or not isinstance(result.get("skills"), list):
+                    print(f"⚠️ AI processing failed for {self.business_id}")
+                    # Create a minimal valid result instead of failing completely
+                    result = {"skills": [], "business_id": self.business_id}
+                
                 with open(json_output_path, "w", encoding="utf-8") as f:
                     json.dump(result, f, indent=4, ensure_ascii=False)
                 print(f"✅ Saved AI output to: {json_output_path}")
                 return True
             else:
                 print("⚠️ No valid results returned from AI processing")
+                # Create empty result file to avoid repeated processing
+                with open(json_output_path, "w", encoding="utf-8") as f:
+                    json.dump({"skills": [], "business_id": self.business_id}, f, indent=4)
                 return False
         except Exception as e:
             print(f"⚠️ AI processing failed: {e}")
+            # Create empty result file
+            try:
+                with open(json_output_path, "w", encoding="utf-8") as f:
+                    json.dump({"skills": [], "business_id": self.business_id}, f, indent=4)
+            except:
+                pass
             return False
-
+    
     def load_metadata(self):
         """Load document metadata from JSON file"""
         if os.path.exists(self.meta_path):

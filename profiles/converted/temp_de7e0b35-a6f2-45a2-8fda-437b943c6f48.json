@@ -1,0 +1,66 @@
+{
+    "success": 0,
+    "errors": 10,
+    "details": [
+        {
+            "business_id": "BIZ00-11",
+            "name": "Elias Darwish",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": "BIZ00-12",
+            "name": "Mira Suleiman",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": "BIZ00-13",
+            "name": "Zayn Abboud",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": "BIZ00-14",
+            "name": "Yara Taha",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": "BIZ00-15",
+            "name": "Kareem Najjar",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": "BIZ00-16",
+            "name": "Leena Asfour",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": "BIZ00-17",
+            "name": "Tariq El-Masri",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": "BIZ00-18",
+            "name": "Nada Barakat",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": "BIZ00-19",
+            "name": "Samir Hadad",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        },
+        {
+            "business_id": "BIZ00-20",
+            "name": "Hana El-Khoury",
+            "status": "error",
+            "message": "'business_id' is an invalid keyword argument for Employee"
+        }
+    ]
+}

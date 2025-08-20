@@ -30,22 +30,38 @@ def save_meta(data):
     except Exception as e:
         print(f"⚠️ Failed to save meta: {e}")
 
+# ai_processor.py - update process_file function
 def process_file(path: str):
     print(f"🧠 AIProcessor working on: {path}")
 
     try:
         with open(path, "r", encoding="utf-8") as f:
             text = f.read()
+            
+        # Check if text is meaningful
+        if len(text.strip()) < 50:
+            print("⚠️ Text content too short for meaningful analysis")
+            return {"skills": [], "business_id": os.path.basename(path).split('_')[0]}
+            
     except FileNotFoundError:
         print(f"❌ File not found: {path}")
         return None
 
     result = extract_skills_from_text(text)
-
+    
+    # Debug logging
+    print(f"🔍 AI result type: {type(result)}, content: {result}")
+    
     if result and isinstance(result, dict):
+        # Ensure we always have a skills array
+        if "skills" not in result:
+            result["skills"] = []
         return result
     else:
         print("⚠️ No valid dictionary returned from Gemini")
-        return None
+        return {"skills": [], "error": "Invalid response from AI"}
+
+
+
 if __name__ == "__main__":
     process_file("employee_documents/abc-1/documents/cv.txt")

@@ -158,12 +158,16 @@
             <!-- Status Toggle -->
             <div class="form-group">
                 <label class="checkbox-container">
+                    <!-- hidden ensures unchecked still submits -->
+                    <input type="hidden" name="is_active" value="false">
+                    
                     <input type="checkbox" name="is_active" value="true" 
                            {% if employee.is_active %}checked{% endif %}>
                     <span class="checkmark"></span>
                     Active Employee
                 </label>
             </div>
+            
         </div>
 
 
@@ -198,15 +202,12 @@
                                 <tr class="skill-row" data-skill-name="{{ skill.name }}">
                                     {% if loop.first %}
                                     <td rowspan="{{ skill_list|length }}" style="font-weight:700; color:#217a3a; background:#f6f7fa; vertical-align:middle;">
-                                        <select name="skill_category[{{ loop.index0 }}]">
-                                            {% for category in categories %}
-                                                <option value="{{ category.category_id }}"
-                                                    {% if skill.category and skill.category.category_id == category.category_id %}selected{% endif %}>
-                                                    {{ category.category_name }}
-                                                </option>
+                                        <select name="skill_category[]" class="form-control form-control-sm">
+                                            <option value="">Select category</option>
+                                            {% for category in skill_categories %}
+                                                <option value="{{ category.category_id }}" {% if type == category.category_name %}selected{% endif %}>{{ category.category_name }}</option>
                                             {% endfor %}
                                         </select>
-                                        
                                     </td>
                                     {% endif %}
                                     <td>
@@ -222,7 +223,7 @@
                                     </td>
                                     <td>
                                         <div class="custom-control custom-switch">
-                                            <input type="checkbox" class="custom-control-input" name="certified[]" id="certified-{{ loop.index }}" 
+                                            <input type="checkbox" class="custom-control-input" name="skill_certified[]" id="certified-{{ loop.index }}" 
                                                    {% if skill.certified %}checked{% endif %} onchange="toggleCertification(this)">
                                             <label class="custom-control-label" for="certified-{{ loop.index }}"></label>
                                         </div>
@@ -267,7 +268,8 @@
                                             <div class="form-group">
                                                 <label>Certificate File</label>
                                                 <div class="custom-file">
-                                                    <input type="file" name="document_file_{{ loop.index0 }}" class="custom-file-input">
+                                                    <input type="file" name="document_file[]" class="custom-file-input">
+
                                                     <label class="custom-file-label">
                                                         {% if skill.cert_details.document_name %}
                                                             Current: {{ skill.cert_details.document_name }}
@@ -364,8 +366,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% if employee_documents %}
-                            {% for doc in employee_documents %}
+                        {% set docs = employee_documents if employee_documents is defined and employee_documents else employee.documents %}
+                        {% if docs %}
+                            {% for doc in docs %}
                             <tr>
                                 <td>
                                     <strong>{{ doc.document_name or 'Unnamed Document' }}</strong>
@@ -399,9 +402,12 @@
                             </tr>
                             {% endfor %}
                         {% else %}
-                            <tr>
-                                <td colspan="5" style="text-align:center; color:#888;">No documents uploaded.</td>
-                            </tr>
+                            
+                                <tr class="no-docs-row">
+                                    <td colspan="5" class="text-center">No documents uploaded.</td>
+                                </tr>
+                                
+                            
                         {% endif %}
                     </tbody>
                 </table>
@@ -435,9 +441,12 @@
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="addNewDocumentRow()">
-                    <i class="fas fa-plus"></i> Add Another Document
-                </button>
+                <div class="form-group col-md-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addNewDocument()">
+                        <i class="fas fa-plus"></i> Add Document
+                    </button>
+                </div>
+                
             </div>
         </div>
 
@@ -653,18 +662,106 @@
         }
     });
 
+    function addNewDocument() {
+    const typeSelect = document.querySelector('#new-documents-container select[name="general_document_type_id[]"]');
+    const fileInput = document.querySelector('#new-documents-container input[name="general_document_file[]"]');
+
+    const docTypeId = typeSelect.value;
+    const docTypeText = typeSelect.options[typeSelect.selectedIndex].text;
+    const file = fileInput.files[0];
+
+    if (!docTypeId || !file) {
+        alert("Please select a document type and choose a file.");
+        return;
+    }
+
+    const tbody = document.querySelector('#documents-table tbody');
+
+    // Remove "No documents uploaded." row if it exists
+    const noDocsRow = tbody.querySelector('.no-docs-row');
+    if (noDocsRow) {
+        noDocsRow.remove();
+    }
+
+    // Create row in the table
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td><strong>${file.name}</strong></td>
+        <td><span class="document-type-badge">${docTypeText}</span></td>
+        <td>${new Date().toISOString().split('T')[0]}</td>
+        <td><span class="badge badge-secondary">General</span></td>
+        <td class="action-buttons">
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeDocumentRow(this)">
+                <i class="fas fa-trash-alt"></i> Remove
+            </button>
+        </td>
+    `;
+    tbody.appendChild(newRow);
+
+    // Attach type to form as hidden; move the actual file input into a hidden form container (keeps the selected File)
+    const form = document.querySelector('#employee-form');
+    const hiddenType = document.createElement('input');
+    hiddenType.type = 'hidden';
+    hiddenType.name = 'general_document_type_id[]';
+    hiddenType.value = docTypeId;
+    form.appendChild(hiddenType);
+
+    let hiddenBin = document.getElementById('hidden-doc-inputs');
+    if (!hiddenBin) {
+        hiddenBin = document.createElement('div');
+        hiddenBin.id = 'hidden-doc-inputs';
+        hiddenBin.style.display = 'none';
+        form.appendChild(hiddenBin);
+    }
+    // Move the input node itself so the File is submitted
+    hiddenBin.appendChild(fileInput);
+
+    // Create a fresh visible input for the user to add another document
+    const freshInput = document.createElement('input');
+    freshInput.type = 'file';
+    freshInput.name = 'general_document_file[]';
+    freshInput.className = 'custom-file-input';
+    // Replace the old input in the UI
+    const customFileDiv = document.querySelector('#new-documents-container .custom-file');
+    if (customFileDiv) {
+        customFileDiv.innerHTML = '';
+        customFileDiv.appendChild(freshInput);
+        const freshLabel = document.createElement('label');
+        freshLabel.className = 'custom-file-label';
+        freshLabel.textContent = 'Choose file';
+        customFileDiv.appendChild(freshLabel);
+        initFileInput(freshInput);
+    }
+
+    // Reset the type selector for next input
+    typeSelect.selectedIndex = 0;
+}
+
+
     // ====================== FORM SUBMISSION INDEXING ======================
     document.getElementById('employee-form').addEventListener('submit', function(e) {
-        // Ensure all skill data is properly indexed before submission
+        // Only index skill-related arrays; leave document inputs intact
         const skillRows = document.querySelectorAll('.skill-row');
         skillRows.forEach((row, index) => {
             const inputs = row.querySelectorAll('input, select');
             inputs.forEach(input => {
-                if (input.name.includes('[]')) {
-                    input.name = input.name.replace('[]', `[${index}]`);
+                const nm = input.name || '';
+                if ((nm.startsWith('skill_') || nm === 'certified[]') && nm.includes('[]')) {
+                    input.name = nm.replace('[]', `[${index}]`);
                 }
             });
         });
+
+        // Submit a skill_count to signal intent (including zero) so backend can clear when needed
+        let hidden = document.querySelector('input[name="skill_count"]');
+        if (!hidden) {
+            hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'skill_count';
+            this.appendChild(hidden);
+        }
+        hidden.value = String(skillRows.length);
     });
+
 </script>
 {% endblock %}

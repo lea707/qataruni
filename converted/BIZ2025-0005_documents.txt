@@ -1,0 +1,71 @@
+
+=== START DOCUMENT ===
+Path: employee_documents\BIZ2025-0005\documents\7b5452bf-5856-4be0-942e-f1a773d062b7_DOC-20250603-WA0040..docx
+Processed on: 2025-08-20 20:47:42
+
+Lea El Hajj Diab                                    3/6/2025
+Nationality-Lebanese
+20/11/2005
+Contact information-
++974 33404530
++961 70669361
+ Leadiab131@gmail.com
+
+
+Dear sir,
+
+I am writing to express my interest in the summer internship opportunity at Arab center for research and policy studies am currently a second-year student pursuing a Bachelor’s degree in Computer Engineering at Antonine University. I am eager to apply my academic knowledge and technical skills in a real-world setting and to gain valuable experience in the technology and engineering field.
+🎓 Education
+Lebanese School of Qatar (LSQ)
+High School Diploma – Terminal Class
+- Graduated in 2022-2023 with a final average of 17.89/20, demonstrating strong academic performance  
+- Successfully completed a rigorous curriculum aligned with Lebanese and international standards   
+Antonine University – Baabda, Lebanon
+Bachelor of Engineering in Computer Engineering
+Expected Graduation: [may, 2028]
+- currently in third year ( first and second year completed) 
+- Relevant courses: Programming (C++, Java), Data Structures, Object-Oriented Programming, Database Design, Routing & Switching, Open Source Systems (Red Hat Linux)  
+2023 2024 completed
+2024-2025 completed 
+💻 Technical Skills
+Programming Languages: C++, Java  
+Web Technologies: HTML, CSS  
+Database Management: SQL, relational & logical modeling  
+Networking & Operating Systems: Routing & Switching (Cisco), Red Hat Linux
+Development Tools: Visual Studio Code
+Circuit Design & Electronics: Breadboard-based circuit assembly, logic gates, amplifiers, transistors
+🛠 Projects & Coursework
+Car Rental System_(C++ Coursework | 2023) 
+Developed a back-end system for managing car rentals  
+Used file handling to store and retrieve rental information from text files
+Practiced object-oriented programming and data processing
+Recipe App_(Java Coursework | 2024) 
+Created a back-end recipe management system using Java
+Implemented  file-based data storage for saving and retrieving recipes  
+Focused on  logical structuring of code  without UI design  
+Web Design Project_(HTML & CSS | 2024) 
+Developed a website for a university course using HTML and CSS
+Focused on structuring content and styling elements for clear presentation  
+Applied responsive design principles for usability  
+Database Design – Hospital Patient Records_(SQL & Data Modeling | 2024) 
+Designed a database system for managing hospital patient records  
+Created logical and relational models to optimize data organization  
+Implemented SQL queries for efficient data retrieval and management  
+Fundamental Electronics Experiments_(Breadboard-Based Circuit Design | 2024) 
+- Built and tested circuits using logic gates, amplifiers, and transistors
+- Gained hands-on experience in electronic components and circuit troubleshooting
+- Explored basic electrical principles through practical lab applications  
+🌟 Soft Skills
+- Strong analytical and problem-solving abilities
+- Team player with good communication skills
+- Fast learner and highly adaptable
+- Organized and reliable under pressure
+🌐 Languages
+- Arabic – Native
+- English – Fluent
+- French – Fluent
+📌 Interests
+- Robotics and embedded systems
+- Software development and AI basics
+- Participating in university tech clubs and competitions
+=== END DOCUMENT ===

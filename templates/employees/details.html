@@ -108,7 +108,7 @@
         {% if show_documents %}
         <div class="info-section">
           <h3><i class="fas fa-file-alt"></i> Documents</h3>
-          {% if employee.documents %}
+          {% if employee.documents and employee.documents|length > 0 %}
             <div class="modern-documents-list">
               {% for doc in employee.documents %}
                 <div class="modern-document-list-card">

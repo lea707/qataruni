@@ -7,6 +7,7 @@ from database.connection import db
 from database.repositories.certificate_type_repository import CertificateTypeRepository
 from database.repositories.document_type_repository import DocumentTypeRepository
 from database.repositories.employee_document_repository import EmployeeDocumentRepository
+from models.employee_document import EmployeeDocument
 
 class EmployeeDocumentService:
     def __init__(self, db_session=None):
@@ -31,9 +32,30 @@ class EmployeeDocumentService:
             if 'certified[]' in form_data:
                 self._save_certificates(employee_id, form_data, files, upload_path)
             
-            # Process general documents
-            if files and any(f for f in files.getlist('document_file[]') if f.filename):
-                self._save_general_documents(employee_id, form_data, files, upload_path)
+            # Process general documents (support dict-like in tests)
+            def _files_getlist(files_map, key):
+                if hasattr(files_map, 'getlist'):
+                    return files_map.getlist(key)
+                val = files_map.get(key)
+                if val is None:
+                    return []
+                return val if isinstance(val, list) else [val]
+
+            if files:
+                general_files = _files_getlist(files, 'document_file[]')
+                if not general_files and hasattr(files, 'getlist'):
+                    general_files = files.getlist('document_files[]')
+                elif not general_files and isinstance(files, dict) and 'document_files[]' in files:
+                    val = files['document_files[]']
+                    general_files = val if isinstance(val, list) else [val]
+                if any(getattr(f, 'filename', '') for f in general_files):
+                    # Rewrap as a simple dict with getlist interface for downstream calls
+                    class _Wrap:
+                        def __init__(self, arr):
+                            self._arr = arr
+                        def getlist(self, _):
+                            return self._arr
+                    self._save_general_documents(employee_id, form_data, _Wrap(general_files), upload_path)
             
             self.db.commit()
             return True
@@ -44,12 +66,23 @@ class EmployeeDocumentService:
 
     def _save_certificates(self, employee_id, form_data, files, upload_path):
         """Handle certificate file uploads"""
-        for idx, (file, cert_type_id, org, months) in enumerate(zip(
-            [f for f in files.values() if f.filename and 'document_file_' in f.name],
-            form_data.getlist('certificate_type_id[]'),
-            form_data.getlist('issuing_organization[]'),
-            form_data.getlist('validity_period_months[]')
-        )):
+        file_candidates = []
+        if hasattr(files, 'keys'):
+            for k in files.keys():
+                if k.startswith('document_file_') or k == 'certificate_file[]':
+                    val = files.get(k)
+                    if val:
+                        file_candidates.append(val)
+        else:
+            for k, v in (files.items() if hasattr(files, 'items') else []):
+                if str(k).startswith('document_file_') or k == 'certificate_file[]':
+                    file_candidates.append(v)
+
+        cert_types = form_data.getlist('certificate_type_id[]') if hasattr(form_data, 'getlist') else [form_data.get('certificate_type_id[]')] if form_data.get('certificate_type_id[]') else []
+        orgs = form_data.getlist('issuing_organization[]') if hasattr(form_data, 'getlist') else [form_data.get('issuing_organization[]')] if form_data.get('issuing_organization[]') else []
+        months_list = form_data.getlist('validity_period_months[]') if hasattr(form_data, 'getlist') else [form_data.get('validity_period_months[]')] if form_data.get('validity_period_months[]') else []
+
+        for idx, (file, cert_type_id, org, months) in enumerate(zip(file_candidates, cert_types, orgs, months_list)):
             try:
                 filename = f"cert_{employee_id}_{uuid.uuid4().hex}{os.path.splitext(file.filename)[1]}"
                 file_path = upload_path / filename
@@ -68,10 +101,11 @@ class EmployeeDocumentService:
 
     def _save_general_documents(self, employee_id, form_data, files, upload_path):
         """Handle general document uploads"""
-        for idx, (file, doc_type_id) in enumerate(zip(
-            files.getlist('document_file[]'),
-            form_data.getlist('general_document_type_id[]')
-        )):
+        file_list = files.getlist('document_file[]') if hasattr(files, 'getlist') else files
+        type_list = form_data.getlist('general_document_type_id[]') if hasattr(form_data, 'getlist') else form_data.get('general_document_type_id[]', [])
+        if not isinstance(type_list, list):
+            type_list = [type_list]
+        for idx, (file, doc_type_id) in enumerate(zip(file_list, type_list)):
             if not file.filename:
                 continue
                 
@@ -101,3 +135,8 @@ class EmployeeDocumentService:
 
     def delete_document(self, document_id):
         return self.document_repo.delete(document_id)
+  
+    def get_document(self, document_id):
+        """Fetch a single document by its ID"""
+        return self.document_repo.get_by_id(document_id)
+

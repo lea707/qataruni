@@ -95,7 +95,14 @@ class SkillService:
 
     
     def _import_skills_data(self, json_data: Dict) -> Dict[str, int]:
-        """Internal method to process skill data"""
+        """Internal method to process skill data.
+        Accepts skills as a list of dicts with keys:
+          - 'skill' (required): skill name
+          - 'category_id' (optional): numeric category id
+          - 'category' or 'category_name' (optional): category name
+          - 'level' (optional): skill level string
+          - 'certified' (optional): boolean
+        """
         session = self.db() if callable(self.db) else self.db
         results = {
             'skills_added': 0,
@@ -121,19 +128,25 @@ class SkillService:
                 if not skill_name:
                     continue
 
-                # Process category
-                category_name = skill_data.get('category', '').strip()
+                # Process category by id first, then by name
                 category = None
-                if category_name:
+                category_id_val = skill_data.get('category_id')
+                if category_id_val is not None and str(category_id_val).isdigit():
                     category = session.execute(
-                        select(SkillCategory)
-                        .where(SkillCategory.category_name.ilike(category_name))
+                        select(SkillCategory).where(SkillCategory.category_id == int(category_id_val))
                     ).scalar_one_or_none()
-                    if not category:
-                        category = SkillCategory(category_name=category_name)
-                        session.add(category)
-                        session.flush()
-                        results['categories_created'] += 1
+                if category is None:
+                    category_name = (skill_data.get('category') or skill_data.get('category_name') or '').strip()
+                    if category_name:
+                        category = session.execute(
+                            select(SkillCategory)
+                            .where(SkillCategory.category_name.ilike(category_name))
+                        ).scalar_one_or_none()
+                        if not category:
+                            category = SkillCategory(category_name=category_name)
+                            session.add(category)
+                            session.flush()
+                            results['categories_created'] += 1
 
                 # Process skill
                 skill = session.execute(
@@ -159,7 +172,7 @@ class SkillService:
                             employee_id=employee.emp_id,
                             skill_id=skill.skill_id,
                             skill_level=skill_data.get('level'),
-                            certified=skill_data.get('certified', False)
+                            certified=bool(skill_data.get('certified', False))
                         )
                     )
                     results['skills_added'] += 1

@@ -42,6 +42,29 @@ def mock_file(filename='test.pdf', content_type='application/pdf'):
         name='document_files[]'
     )
 
+# Helper function to ensure foreign key records exist
+def ensure_fk_records(session):
+    from models import Department, Position, EmployeeLevel
+    # Add department if not exists
+    dept = session.query(Department).first()
+    if not dept:
+        dept = Department(department_name="TestDept")
+        session.add(dept)
+        session.commit()
+    # Add position if not exists
+    pos = session.query(Position).first()
+    if not pos:
+        pos = Position(position_name="TestPosition")
+        session.add(pos)
+        session.commit()
+    # Add level if not exists
+    lvl = session.query(EmployeeLevel).first()
+    if not lvl:
+        lvl = EmployeeLevel(level_name="TestLevel")
+        session.add(lvl)
+        session.commit()
+    return dept.department_id, pos.position_id, lvl.level_id
+
 # Main test class
 class TestEmployeeSaving:
     @pytest.fixture
@@ -55,50 +78,44 @@ class TestEmployeeSaving:
         """Test that skills are properly associated with employees"""
         from models.employee import Employee
         from services.employee_service import EmployeeService
-        
         with app.app_context():
             # Mock the form data with skills
+            session = db()
+            ensure_fk_records(session)
             mock_request.form.update(build_employee_data())
             mock_request.form.update(build_document_data())
-            
             service = EmployeeService()
             employee_id = service.create_employee(mock_request.form)
-            
             # Verify skills were saved
             employee = Employee.query.options(
                 joinedload(Employee.skills) # type: ignore
             ).get(employee_id)
-            
             assert len(employee.skills) == 2
             assert {s.skill_id for s in employee.skills} == {1, 2}
 
     def test_document_saving(self, app, client, mock_request):
         """Test that documents are properly saved and linked"""
         from models.employee_document import EmployeeDocument
-        
         with app.app_context():
+            session = db()
+            ensure_fk_records(session)
             # Mock the form data with documents
             mock_request.form.update(build_employee_data())
             mock_request.form.update(build_document_data())
-            
             # Call the service that handles document saving
             from services.employee_document_service import EmployeeDocumentService
             doc_service = EmployeeDocumentService()
-            
             # We need an employee ID first - could use a fixture in real tests
             from services.employee_service import EmployeeService
             emp_service = EmployeeService()
             employee_id = emp_service.create_employee(mock_request.form)
-            
             # Save documents
             result = doc_service.save_employee_documents(
                 employee_id=employee_id,
                 form_data=mock_request.form,
                 files=mock_request.files
             )
-            
             assert result is True
-            
             # Verify documents were saved
             documents = EmployeeDocument.query.filter_by(employee_id=employee_id).all()
             assert len(documents) == 2
@@ -109,19 +126,17 @@ class TestEmployeeSaving:
     def test_certificate_association(self, app, client, mock_request):
         """Test that certificates are properly linked to documents"""
         from models.employee_document import EmployeeDocument
-        
         with app.app_context():
+            session = db()
+            ensure_fk_records(session)
             # Setup test data
             mock_request.form.update(build_employee_data())
             mock_request.form.update(build_document_data())
-            
             # Get services
             from services.employee_service import EmployeeService
             from services.employee_document_service import EmployeeDocumentService
-            
             emp_service = EmployeeService()
             doc_service = EmployeeDocumentService()
-            
             # Create employee and documents
             employee_id = emp_service.create_employee(mock_request.form)
             doc_service.save_employee_documents(
@@ -129,7 +144,6 @@ class TestEmployeeSaving:
                 form_data=mock_request.form,
                 files=mock_request.files
             )
-            
             # Verify certificate associations
             documents = EmployeeDocument.query.filter_by(employee_id=employee_id).all()
             assert documents[0].certificate_type is not None
@@ -141,8 +155,10 @@ class TestEmployeeSaving:
         """Test that failed document saves don't leave partial data"""
         from models.employee import Employee
         from models.employee_document import EmployeeDocument
-        
         with app.app_context():
+            # Ensure foreign key records exist
+            ensure_fk_records(db.session)
+            
             # Setup failing case
             mock_request.form.update(build_employee_data())
             mock_request.form.update(build_document_data())
@@ -231,15 +247,17 @@ class TestEmployeeSaving:
                     assert args[1] == '1,2,3'  # Should handle string input
 
 def test_edit_employee_skill_certification():
+    from app import app
+    from services.employee_service import EmployeeService
+    from database.connection import db
     with app.app_context():
         service = EmployeeService()
         session = db()
-
+        ensure_fk_records(session)
         # Clean up
         session.query(EmployeeDocument).delete()
         session.query(Employee).delete()
         session.commit()
-
         # Create employee with a certified skill
         form_data = {
             'arab_name': 'Test',
@@ -307,17 +325,60 @@ def test_edit_employee_skill_certification():
         assert cert.validity_period == 24
         session.close()
 
-def test_print_employee_skills_and_documents():
+def test_delete_employee():
     from app import app
+    from services.employee_service import EmployeeService
     from database.connection import db
     with app.app_context():
+        service = EmployeeService()
         session = db()
-        # Print all employee_skills
-        print("--- employee_skills table ---")
-        for row in session.execute(text("SELECT * FROM employee_skills")).fetchall():
-            print(row)
-        # Print all employee_documents
-        print("--- employee_documents table ---")
-        for row in session.execute(text("SELECT * FROM employee_documents")).fetchall():
-            print(row)
+        ensure_fk_records(session)
+        # Clean up
+        session.query(Employee).delete()
+        session.commit()
+        # Create employee
+        form_data = {
+            'arab_name': 'DeleteTest',
+            'english_name': 'DeleteTest',
+            'email': 'delete@example.com',
+            'hire_date': '2024-01-01',
+            'position_id': 1,
+            'department_id': 1,
+            'level_id': 1
+        }
+        emp_id = service.create_employee(form_data)
+        employee = session.query(Employee).get(emp_id)
+        assert employee is not None
+        # Delete employee
+        result = service.delete_employee(emp_id)
+        assert result is True
+        deleted = session.query(Employee).get(emp_id)
+        assert deleted is None
+        session.close()
+
+def test_get_employee_details():
+    from app import app
+    from services.employee_service import EmployeeService
+    from database.connection import db
+    with app.app_context():
+        service = EmployeeService()
+        session = db()
+        ensure_fk_records(session)
+        # Clean up
+        session.query(Employee).delete()
+        session.commit()
+        # Create employee
+        form_data = {
+            'arab_name': 'DetailTest',
+            'english_name': 'DetailTest',
+            'email': 'detail@example.com',
+            'hire_date': '2024-01-01',
+            'position_id': 1,
+            'department_id': 1,
+            'level_id': 1
+        }
+        emp_id = service.create_employee(form_data)
+        employee = service.get_employee(emp_id)
+        assert employee is not None
+        assert employee.english_name == 'DetailTest'
         session.close()
