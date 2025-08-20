@@ -19,7 +19,7 @@
                 <a href="/">Home</a>
                 <a href="/employees">Employees</a>
                 <a href="/about">About</a>
-                {% if 'upload' in session.permissions %}
+                {% if 'add_employee' in session.permissions %}
                 <a href="/upload">Upload</a>
                 {%endif%}
                 {% if 'search_employees' in session.permissions or 'view_department' in session.permissions %}
