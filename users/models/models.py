@@ -38,3 +38,4 @@ class User(Base):
     business_user_id = Column(String)
     email = Column(String, unique=True)
     phone_number = Column(String)
+   

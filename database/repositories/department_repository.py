@@ -63,9 +63,19 @@ class DepartmentRepository:
             department = session.query(Department).filter_by(department_id=department_id).first()
             if not department:
                 return False
+            
+            # Prevent deletion if child departments exist
+            child_departments = session.query(Department).filter_by(
+                parent_department_id=department_id
+            ).count()
+            
+            if child_departments > 0:
+                return False
+                
             # Prevent deletion if employees exist
             if department.employees and len(department.employees) > 0:
                 return False
+                
             session.delete(department)
             session.commit()
             return True

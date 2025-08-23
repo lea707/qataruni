@@ -36,6 +36,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 import re
 from flask import g
+
 from utils.role_helpers import get_director_department_ids
 employee_service = EmployeeService()
 department_service = DepartmentService()
@@ -55,8 +56,6 @@ def init_routes(app):
     def has_role(*roles):
         user_role = session.get('role_name')
         return user_role in roles
-
-
 
     @app.route('/')
     def home():
@@ -386,7 +385,6 @@ def init_routes(app):
             flash("No files were successfully processed.", "danger")
             return redirect(url_for('upload_file'))
 
-
     @app.route('/documents/download/<int:doc_id>')
     def download_document(doc_id):
         doc = employee_document_service.get_document(doc_id)
@@ -434,8 +432,6 @@ def init_routes(app):
                 employees=employee_service.get_all_employees(),
                 departments=department_service.get_all_departments()
             )
-
-
 
     @app.route('/departments/<int:department_id>')
     def department_detail(department_id):
@@ -528,15 +524,14 @@ def init_routes(app):
             employees=employees
         )
 
-
     @app.route('/departments/delete/<int:department_id>', methods=['POST'])
     def delete_department(department_id):
         if department_service.delete_department(department_id):
             flash('Department deleted successfully!', 'success')
         else:
-            flash('Department not found or could not be deleted', 'error')
+            flash('Cannot delete department. It may have child departments or employees.', 'danger')
         return redirect(url_for('list_departments'))
-
+  
     @app.route('/search')
     def search():
         page = request.args.get('page', 1, type=int)

@@ -21,14 +21,6 @@
             "category": "technical"
         },
         {
-            "name": "relational modeling",
-            "category": "technical"
-        },
-        {
-            "name": "logical modeling",
-            "category": "technical"
-        },
-        {
             "name": "Routing & Switching (Cisco)",
             "category": "technical"
         },
@@ -99,7 +91,23 @@
         {
             "name": "French",
             "category": "language"
+        },
+        {
+            "name": "Database Design",
+            "category": "technical"
+        },
+        {
+            "name": "Data Structures",
+            "category": "technical"
+        },
+        {
+            "name": "Object-Oriented Programming",
+            "category": "technical"
+        },
+        {
+            "name": "relational & logical modeling",
+            "category": "technical"
         }
     ],
-    "business_id": "BIZ2025-0005"
+    "business_id": "BIZ00-11"
 }
