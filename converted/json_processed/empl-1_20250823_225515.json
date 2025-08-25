@@ -21,14 +21,6 @@
             "category": "technical"
         },
         {
-            "name": "relational modeling",
-            "category": "technical"
-        },
-        {
-            "name": "logical modeling",
-            "category": "technical"
-        },
-        {
             "name": "Routing & Switching (Cisco)",
             "category": "technical"
         },
@@ -45,47 +37,43 @@
             "category": "technical"
         },
         {
-            "name": "logic gates",
+            "name": "Logic gates",
             "category": "technical"
         },
         {
-            "name": "amplifiers",
+            "name": "Amplifiers",
             "category": "technical"
         },
         {
-            "name": "transistors",
+            "name": "Transistors",
             "category": "technical"
         },
         {
-            "name": "analytical skills",
+            "name": "Strong analytical and problem-solving abilities",
             "category": "Soft Skills"
         },
         {
-            "name": "problem-solving",
+            "name": "Team player",
             "category": "Soft Skills"
         },
         {
-            "name": "team player",
+            "name": "Good communication skills",
             "category": "Soft Skills"
         },
         {
-            "name": "communication skills",
+            "name": "Fast learner",
             "category": "Soft Skills"
         },
         {
-            "name": "fast learner",
+            "name": "Highly adaptable",
             "category": "Soft Skills"
         },
         {
-            "name": "adaptable",
+            "name": "Organized",
             "category": "Soft Skills"
         },
         {
-            "name": "organized",
-            "category": "Soft Skills"
-        },
-        {
-            "name": "reliable",
+            "name": "Reliable under pressure",
             "category": "Soft Skills"
         },
         {
@@ -99,6 +87,26 @@
         {
             "name": "French",
             "category": "language"
+        },
+        {
+            "name": "Data Structures",
+            "category": "technical"
+        },
+        {
+            "name": "Object-Oriented Programming",
+            "category": "technical"
+        },
+        {
+            "name": "Database Design",
+            "category": "technical"
+        },
+        {
+            "name": "Relational Modeling",
+            "category": "technical"
+        },
+        {
+            "name": "Logical Modeling",
+            "category": "technical"
         }
     ],
     "business_id": "empl-1"

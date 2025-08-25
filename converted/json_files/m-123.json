@@ -57,35 +57,31 @@
             "category": "technical"
         },
         {
-            "name": "analytical skills",
+            "name": "Strong analytical and problem-solving abilities",
             "category": "Soft Skills"
         },
         {
-            "name": "problem-solving",
+            "name": "Team player",
             "category": "Soft Skills"
         },
         {
-            "name": "team player",
+            "name": "Good communication skills",
             "category": "Soft Skills"
         },
         {
-            "name": "communication skills",
+            "name": "Fast learner",
             "category": "Soft Skills"
         },
         {
-            "name": "fast learner",
+            "name": "Highly adaptable",
             "category": "Soft Skills"
         },
         {
-            "name": "adaptable",
+            "name": "Organized",
             "category": "Soft Skills"
         },
         {
-            "name": "organized",
-            "category": "Soft Skills"
-        },
-        {
-            "name": "reliable",
+            "name": "Reliable under pressure",
             "category": "Soft Skills"
         },
         {
@@ -101,5 +97,5 @@
             "category": "language"
         }
     ],
-    "business_id": "empl-1"
+    "business_id": "m-123"
 }

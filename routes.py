@@ -529,9 +529,10 @@ def init_routes(app):
         if department_service.delete_department(department_id):
             flash('Department deleted successfully!', 'success')
         else:
-            flash('Cannot delete department. It may have child departments or employees.', 'danger')
+            # More specific error message
+            flash('Cannot delete department. It may have child departments, employees, or positions assigned.', 'danger')
         return redirect(url_for('list_departments'))
-  
+
     @app.route('/search')
     def search():
         page = request.args.get('page', 1, type=int)
@@ -599,6 +600,7 @@ def init_routes(app):
             g=g
         )
 
+
     @app.errorhandler(404)
     def not_found(error):
         employee_id = request.view_args.get('employee_id') if request.view_args else None
@@ -610,3 +612,26 @@ def init_routes(app):
     def internal_error(error):
         db.session.rollback()
         return render_template('500.html', error=error), 500
+    @app.route('/debug/department/<int:department_id>')
+    def debug_department(department_id):
+        session = db()
+        try:
+            department = session.query(Department).get(department_id)
+            if not department:
+                return "Department not found"
+            
+            # Check constraints
+            child_count = session.query(Department).filter_by(parent_department_id=department_id).count()
+            employee_count = session.query(Employee).filter_by(department_id=department_id).count()
+            position_count = session.query(Position).filter_by(department_id=department_id).count()
+            
+            return f"""
+            Department: {department.department_name} (ID: {department.department_id})<br>
+            Director ID: {department.director_emp_id}<br>
+            Child departments: {child_count}<br>
+            Employees: {employee_count}<br>
+            Positions: {position_count}<br>
+            Can delete: {child_count == 0 and employee_count == 0 and position_count == 0}
+            """
+        finally:
+            session.close()

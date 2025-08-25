@@ -57,11 +57,11 @@
             "category": "technical"
         },
         {
-            "name": "analytical skills",
+            "name": "analytical abilities",
             "category": "Soft Skills"
         },
         {
-            "name": "problem-solving",
+            "name": "problem-solving abilities",
             "category": "Soft Skills"
         },
         {
@@ -101,5 +101,5 @@
             "category": "language"
         }
     ],
-    "business_id": "empl-1"
+    "business_id": "BIZ2025-0005"
 }

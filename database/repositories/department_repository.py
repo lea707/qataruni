@@ -3,7 +3,7 @@ from models.department import Department
 from typing import List, Optional
 from sqlalchemy.orm import joinedload
 from models.employee import Employee
-
+from models.position import Position 
 class DepartmentRepository:
     def get_all_departments(self) -> List[Department]:
         session = SessionLocal()
@@ -72,12 +72,34 @@ class DepartmentRepository:
             if child_departments > 0:
                 return False
                 
-            # Prevent deletion if employees exist
-            if department.employees and len(department.employees) > 0:
+            # Prevent deletion if employees exist in this department
+            employee_count = session.query(Employee).filter_by(department_id=department_id).count()
+            if employee_count > 0:
                 return False
+            
+            # Handle positions FIRST - reassign them to a different department
+            positions = session.query(Position).filter_by(department_id=department_id).all()
+            
+            for position in positions:
+                # Reassign position to unassigned department (ID 57) instead of deleting
+                position.department_id = 57  # Unassigned department
+            
+            # Clear director reference
+            if department.director_emp_id:
+                department.director_emp_id = None
+            
+            # FLUSH all changes before deletion
+            session.flush()
                 
+            # Now delete the department
             session.delete(department)
             session.commit()
             return True
+        except Exception as e:
+            session.rollback()
+            print(f"Error deleting department: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
         finally:
             session.close()

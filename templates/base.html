@@ -19,7 +19,7 @@
                 <a href="/">Home</a>
                 <a href="/employees">Employees</a>
                 <a href="/about">About</a>
-                {% if 'add_employee' in session.permissions %}
+                {% if 'upload' in session.permissions %}
                 <a href="/upload">Upload</a>
                 {%endif%}
                 {% if 'search_employees' in session.permissions or 'view_department' in session.permissions %}
@@ -31,9 +31,9 @@
                 {% if session.username %}
                   <a href="/user/account" class="nav-account-btn">My Account</a>
                 {% endif %}
-                {% if session.role_name == 'Admin' %}
-                  <a href="{{ url_for('user.list_roles') }}">Role Management</a>
-                {% endif %}
+                  {% if session.role_name == 'Admin' %}
+                    <a href="{{ url_for('user.list_roles') }}">Role Management</a>
+                  {% endif %}
             </div>
             <img src="{{ url_for('static', filename='images/doha institute.png') }}" class="logo" alt="Company Logo">
         </div>

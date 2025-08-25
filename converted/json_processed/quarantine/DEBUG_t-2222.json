@@ -1,3 +1,4 @@
+// ERROR: No employee found for business_id: t-2222
 {
     "skills": [
         {
@@ -21,14 +22,6 @@
             "category": "technical"
         },
         {
-            "name": "relational modeling",
-            "category": "technical"
-        },
-        {
-            "name": "logical modeling",
-            "category": "technical"
-        },
-        {
             "name": "Routing & Switching (Cisco)",
             "category": "technical"
         },
@@ -45,47 +38,47 @@
             "category": "technical"
         },
         {
-            "name": "logic gates",
+            "name": "Logic gates",
             "category": "technical"
         },
         {
-            "name": "amplifiers",
+            "name": "Amplifiers",
             "category": "technical"
         },
         {
-            "name": "transistors",
+            "name": "Transistors",
             "category": "technical"
         },
         {
-            "name": "analytical skills",
+            "name": "Analytical skills",
             "category": "Soft Skills"
         },
         {
-            "name": "problem-solving",
+            "name": "Problem-solving",
             "category": "Soft Skills"
         },
         {
-            "name": "team player",
+            "name": "Team player",
             "category": "Soft Skills"
         },
         {
-            "name": "communication skills",
+            "name": "Communication skills",
             "category": "Soft Skills"
         },
         {
-            "name": "fast learner",
+            "name": "Fast learner",
             "category": "Soft Skills"
         },
         {
-            "name": "adaptable",
+            "name": "Adaptable",
             "category": "Soft Skills"
         },
         {
-            "name": "organized",
+            "name": "Organized",
             "category": "Soft Skills"
         },
         {
-            "name": "reliable",
+            "name": "Reliable",
             "category": "Soft Skills"
         },
         {
@@ -101,5 +94,5 @@
             "category": "language"
         }
     ],
-    "business_id": "empl-1"
+    "business_id": "t-2222"
 }
